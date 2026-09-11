@@ -13,6 +13,18 @@ window.REKENVRAGEN = {
   /* ----- KLEUREN ----- */
   KLEUREN: ["#FF4D6D","#1FB877","#2A94E8","#8B5CF6","#FFB61E","#FF7A3D"],
 
+  /* ----- ICOONKLEUREN -----
+     De kleuren waaruit je kiest voor het app-icoon. ster is de kleur van het
+     sterretje rechtsboven; die moet afsteken tegen de achtergrond. */
+  ICOONKLEUREN: [
+    {id:"framboos", naam:"Roze",   kleur:"#FF4D6D", ster:"#FFB61E"},
+    {id:"gras",     naam:"Groen",  kleur:"#1FB877", ster:"#FFB61E"},
+    {id:"zee",      naam:"Blauw",  kleur:"#2A94E8", ster:"#FFB61E"},
+    {id:"druif",    naam:"Paars",  kleur:"#8B5CF6", ster:"#FFB61E"},
+    {id:"zon",      naam:"Geel",   kleur:"#FFB61E", ster:"#FF4D6D"},
+    {id:"vlam",     naam:"Oranje", kleur:"#FF7A3D", ster:"#FFFFFF"}
+  ],
+
   /* ----- LOF ----- */
   /* Wordt willekeurig gekozen bij een goed antwoord. Kort houden: er komt nog
      " +1 punt" achter. Nieuwe regels mogen overal in deze lijst. */

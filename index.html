@@ -522,6 +522,12 @@
     body[data-scherm="ronde"] .kop{display:none}
   }
 
+  /* Tijdens het instappen is er nog geen score en horen de instellingen en de
+     installatieknop er nog niet te zijn: die knop komt pas als alles ingevuld is. */
+  body[data-scherm="inrichten"] .kopknoppen,
+  body[data-scherm="inrichten"] .tabletstrook,
+  body[data-scherm="inrichten"] .score{display:none}
+
   /* de voetregels en het versienummer horen alleen op het beginscherm */
   #regels, .versieregel{display:none}
   body[data-scherm="thuis"] #regels,
@@ -1011,6 +1017,33 @@
   /* ruim genoeg voor zes cijfers: een bovengrens mag tot 100000 lopen */
   .velden input[type="number"]{width:96px}
   .velden input:focus{border-color:var(--zee)}
+  /* ---------- de eerste keer instellen ---------- */
+  .inrichtkop h2{font-size:clamp(24px,6.4vw,32px);margin-bottom:8px}
+  .kleurrij{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+  .kleurknop{
+    width:54px;height:54px;flex:none;cursor:pointer;
+    border-radius:16px;border:3px solid transparent;
+    box-shadow:0 4px 12px var(--schaduw);
+    transition:transform .1s ease;
+  }
+  .kleurknop:hover{transform:translateY(-2px)}
+  .kleurknop.aan{border-color:var(--inkt);transform:translateY(-2px)}
+  .codekaart{display:flex;align-items:center;gap:14px}
+  .codekaart b{font-family:"Lilita One",Impact,sans-serif;font-weight:400;font-size:17px;display:block}
+  .codekaart span span{font-size:13px;font-weight:700;color:var(--inkt-zacht);display:block;margin-top:3px}
+  .codegetal{display:inline !important;font-size:16px !important;color:var(--inkt) !important}
+  /* de jaarlijkse vraag of de groep omhoog gaat */
+  .jaarstrook{display:block}
+  .groepstrook.jaarvraag{
+    display:grid;grid-template-columns:auto 1fr;gap:6px 13px;
+    cursor:default;text-align:left;
+  }
+  .jaarknoppen{
+    grid-column:1 / -1;
+    display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;
+  }
+  .jaarknoppen .knop{flex:1 1 150px;font-size:17px;padding:12px 14px}
+
   /* ---------- tabbladen in de instellingen ---------- */
   .tabrij{
     display:flex;gap:6px;
@@ -1069,6 +1102,9 @@
 
   /* ---------- groep en onderwerpschakelaars ---------- */
   .groepen{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+  .groepen + .voorbeeld{margin-top:14px}
+  /* een uitlegregel onder een veldenrij staat anders vlak tegen het invoerveld */
+  .velden + .voorbeeld{margin-top:9px}
   .groepknop{
     font-family:"Lilita One",Impact,sans-serif;font-size:22px;
     cursor:pointer;border:2px solid transparent;border-radius:14px;
@@ -1113,7 +1149,7 @@
   .vakblok{
     border:2px solid var(--rand);border-radius:16px;
     background:var(--kaart);
-    margin-bottom:10px;
+    margin:12px 0;
     overflow:hidden;
   }
   .vakblok > summary{
@@ -1319,7 +1355,7 @@
   }
 
   var R = window.REKENVRAGEN;
-  var NODIG = ["STICKERS","KLEUREN","LOF","TROOST","BEREIKEN","GROEPEN","VAKKEN","UURNAAM","NIVEAUS",
+  var NODIG = ["STICKERS","KLEUREN","ICOONKLEUREN","LOF","TROOST","BEREIKEN","GROEPEN","VAKKEN","UURNAAM","NIVEAUS",
                "KLOKSOORTEN","MAATEN","MAANDEN","DAGEN","NOEMERWOORD","SPULLEN","NAMEN","GROEPGETALLEN",
                "DINGEN","SJABLONEN","ONDERWERPEN"];
   if(!R || typeof R !== "object"){
@@ -1338,6 +1374,7 @@
   var SLEUTEL = "saar-rekenwereld-v1";
   var STICKERS    = R.STICKERS;
   var KLEUREN     = R.KLEUREN;
+  var ICOONKLEUREN = R.ICOONKLEUREN;
   var LOF         = R.LOF;
   var TROOST      = R.TROOST;
 
@@ -1365,8 +1402,9 @@
     return {van:van, tot:tot};
   }
 
-  var APPVERSIE = "26";         /* hoog dit samen met VERSIE in sw.js op */
+  var APPVERSIE = "27";         /* hoog dit samen met VERSIE in sw.js op */
   var NAAM = "Saar";            /* van wie is deze app; in de instellingen aan te passen */
+  var ICOONKLEUR = "framboos";  /* kleur van het app-icoon */
   var WACHTWOORD = "0000";      /* standaardcode; in de instellingen aan te passen */
   var PUNTEN_PER_STICKER = 10;  /* standaardwaarden */
   var STICKERS_PER_BELONING = 10;
@@ -1603,6 +1641,9 @@
     beloningGegeven: {},         /* velnummer -> {datum, notitie}; door de ouder afgevinkt */
     superStickers: [],           /* volgnummers van stickers uit een foutloze challenge */
     naam: NAAM,                  /* wiens app dit is; staat in de titel en op het icoon */
+    icoonKleur: ICOONKLEUR,      /* welke kleur het app-icoon krijgt */
+    ingericht: false,            /* of de eerste keer instellen achter de rug is */
+    groepGevraagd: 0,            /* voor welk schooljaar al gevraagd is of de groep omhoog moet */
     wachtwoord: WACHTWOORD,      /* code voor de instellingen */
     challengeStickers: 2,        /* stickers voor een gehaalde challenge */
     superAan: true,              /* extra sticker bij een foutloze challenge */
@@ -1650,7 +1691,12 @@
   /* ----- opslag ----- */
   function laad(){
     try{
-      var r = JSON.parse(localStorage.getItem(SLEUTEL) || "{}");
+      var ruw = localStorage.getItem(SLEUTEL);
+      var r = JSON.parse(ruw || "{}");
+      /* Staat er nog helemaal niets, dan is dit een verse app en hoort het
+         instapscherm. Wie al gegevens heeft, gebruikt de app al — ook als die
+         gegevens van vóór het instapscherm komen en dat veld dus missen. */
+      S.ingericht = ruw ? (r.ingericht !== false) : false;
       if(typeof r.punten === "number") S.punten = r.punten;
       if(typeof r.geluid === "boolean") S.geluid = r.geluid;
       if(r.bereik){
@@ -1717,6 +1763,8 @@
       S.bonusStickers = schoonGetal(r.bonusStickers, 0, 99999, 0);
       if(/^\d{4}$/.test(r.wachtwoord)) S.wachtwoord = r.wachtwoord;
       if(schoonNaam(r.naam)) S.naam = schoonNaam(r.naam);
+      if(kleurBestaat(r.icoonKleur)) S.icoonKleur = r.icoonKleur;
+      S.groepGevraagd = schoonGetal(r.groepGevraagd, 0, 9999, 0);
       S.challengeStickers = schoonGetal(r.challengeStickers, 0, 10, 2);
       if(typeof r.superAan === "boolean") S.superAan = r.superAan;
       if(r.stats){
@@ -1760,6 +1808,9 @@
         beloningGegeven: S.beloningGegeven,
         superStickers: S.superStickers,
         naam: S.naam,
+        icoonKleur: S.icoonKleur,
+        ingericht: S.ingericht,
+        groepGevraagd: S.groepGevraagd,
         wachtwoord: S.wachtwoord,
         challengeStickers: S.challengeStickers,
         superAan: S.superAan,
@@ -1795,6 +1846,33 @@
     if(typeof waarde !== "string") return "";
     var n = waarde.replace(/[^A-Za-zÀ-ÖØ-öø-ÿ' \-]/g, "").replace(/\s+/g, " ").trim();
     return n.slice(0, 12);
+  }
+
+  function kleurBestaat(id){
+    var uit = false;
+    ICOONKLEUREN.forEach(function(k){ if(k.id === id) uit = true; });
+    return uit;
+  }
+
+  function icoonThema(){
+    var uit = ICOONKLEUREN[0];
+    ICOONKLEUREN.forEach(function(k){ if(k.id === S.icoonKleur) uit = k; });
+    return uit;
+  }
+
+  /* Welk schooljaar er nu loopt. Vanaf 31 juli hoort een nieuw jaar erbij, want
+     dan is het oude schooljaar afgelopen. */
+  function schooljaar(nu){
+    var d = nu || new Date();
+    var m = d.getMonth(), dag = d.getDate(), jaar = d.getFullYear();
+    return (m > 6 || (m === 6 && dag >= 31)) ? jaar : jaar - 1;
+  }
+
+  /* Moet er gevraagd worden of de groep omhoog gaat? Alleen als dit schooljaar nog
+     niet beantwoord is, en alleen zolang er een groep bóven de huidige bestaat. */
+  function groepVraagOpen(){
+    if(!S.leerjaarGekozen || S.leerjaar >= 8) return false;
+    return schooljaar() > S.groepGevraagd;
   }
 
   /* "Saar" wordt "Saar's Rekenwereld", maar een naam op s, x of z krijgt alleen
@@ -2834,7 +2912,175 @@
   }
 
 
+  /* ---------- de eerste keer, in de browser ----------
+     Het icoon en de naam van een app worden vastgelegd op het moment dat je hem
+     op je beginscherm zet. Daarom eerst deze vragen, en pas daarna de knop om te
+     installeren: anders staat er een icoon met de verkeerde naam of kleur, en
+     dat krijg je er alleen af door hem te verwijderen en opnieuw toe te voegen. */
+  function toonInrichten(){
+    verlaatRonde();
+    zetSchermstand("inrichten");
+
+    var html = '<section class="sectie inrichtkop"><h2>Welkom bij de Rekenwereld!</h2>' +
+               '<p class="uitlegregel">Nog drie vragen, dan zetten we de app op je ' +
+               'beginscherm met de goede naam en kleur.</p></section>';
+
+    html += '<section class="sectie" style="margin-top:22px"><h2>1 · Van wie is de app?</h2>' +
+            '<div class="kaart"><div class="naamrij">' +
+            '<div class="naamveld">' +
+              '<div class="velden"><label for="in-naam">naam ' +
+              '<input type="text" id="in-naam" maxlength="12" autocomplete="off" ' +
+              'placeholder="' + NAAM + '" value=""></label></div>' +
+              '<p class="voorbeeld" id="in-naam-vb"></p>' +
+            '</div>' +
+            '<div class="naamicoon"><img id="in-icoon" alt="Zo komt het app-icoon eruit te zien" ' +
+              'width="96" height="96"><span>het app-icoon</span></div>' +
+            '</div></div></section>';
+
+    html += '<section class="sectie" style="margin-top:22px"><h2>2 · Welke kleur?</h2>' +
+            '<div class="kaart"><div class="kleurrij">';
+    ICOONKLEUREN.forEach(function(k){
+      html += '<button class="kleurknop' + (k.id === S.icoonKleur ? " aan" : "") + '" type="button" ' +
+              'data-kleur="' + k.id + '" aria-label="' + k.naam + '" title="' + k.naam + '" ' +
+              'style="background:' + k.kleur + '"></button>';
+    });
+    html += '</div></div></section>';
+
+    html += '<section class="sectie" style="margin-top:22px"><h2>3 · In welke groep zit je?</h2>' +
+            '<div class="kaart"><div class="groepen">';
+    for(var g = 3; g <= 8; g++){
+      html += '<button class="groepknop' + (S.ingerichtGroep === g ? "" : " uit") +
+              '" type="button" data-ingroep="' + g + '" ' +
+              'aria-pressed="' + (S.ingerichtGroep === g) + '">' + g + '</button>';
+    }
+    html += '</div><p class="voorbeeld" id="in-groep-vb">De groep bepaalt hoe moeilijk de sommen zijn. ' +
+            'Later aan te passen in de instellingen.</p></div></section>';
+
+    html += '<section class="sectie" style="margin-top:22px"><div class="kaart codekaart">' +
+            '<span class="merk slot">🔒</span>' +
+            '<span><b>De instellingen zitten achter een code</b>' +
+            '<span>Die is om te beginnen <b class="codegetal">0000</b>. In de instellingen ' +
+            'kun je hem veranderen.</span></span></div></section>';
+
+    html += '<div class="knoppen" id="in-knoppen" style="margin-top:22px" hidden>' +
+            '<button class="knop" type="button" id="in-installeren">Op mijn beginscherm zetten</button>' +
+            '<button class="knop stil" type="button" id="in-browser">Verder in de browser</button>' +
+            '</div>';
+    html += '<p class="voorbeeld" id="in-mist" style="margin-top:16px;text-align:center"></p>';
+
+    scherm.innerHTML = html;
+
+    var naamVeld = document.getElementById("in-naam");
+
+    function verver(){
+      var naam = schoonNaam(naamVeld.value);
+      var kleur = icoonThema();
+      document.getElementById("in-naam-vb").innerHTML = naam
+        ? "De app gaat <b>" + veiligeTekst(naam + (/[sxz]$/i.test(naam) ? "'" : "'s") + " Rekenwereld") + "</b> heten."
+        : "Vul de naam in van wie de app gaat gebruiken.";
+      metLettertype(function(){
+        var bron = tekenIcoon(naam || NAAM, 192, 1, kleur);
+        var plaatje = document.getElementById("in-icoon");
+        if(plaatje && bron) plaatje.src = bron;
+      });
+      /* de titel bovenaan loopt mee, zodat je meteen ziet wat het wordt */
+      var logo = document.querySelector(".logo");
+      if(logo){
+        var toon = naam || NAAM;
+        logo.innerHTML = veiligeTekst(toon) +
+          (/[sxz]$/i.test(toon) ? "'" : "'s") + ' Reken<span class="w">wereld</span>';
+      }
+      var klaar = !!naam && !!S.ingerichtGroep;
+      document.getElementById("in-knoppen").hidden = !klaar;
+      document.getElementById("in-mist").textContent = klaar ? ""
+        : (!naam ? "Vul eerst een naam in" : "Kies nog een groep");
+    }
+
+    naamVeld.addEventListener("input", verver);
+    [].forEach.call(scherm.querySelectorAll("[data-kleur]"), function(k){
+      k.addEventListener("click", function(){
+        S.icoonKleur = k.getAttribute("data-kleur");
+        [].forEach.call(scherm.querySelectorAll("[data-kleur]"), function(a){
+          a.classList.toggle("aan", a === k);
+        });
+        verver();
+      });
+    });
+    [].forEach.call(scherm.querySelectorAll("[data-ingroep]"), function(k){
+      k.addEventListener("click", function(){
+        S.ingerichtGroep = parseInt(k.getAttribute("data-ingroep"), 10);
+        [].forEach.call(scherm.querySelectorAll("[data-ingroep]"), function(a){
+          a.classList.toggle("uit", a !== k);
+          a.setAttribute("aria-pressed", a === k ? "true" : "false");
+        });
+        verver();
+      });
+    });
+
+    document.getElementById("in-installeren").addEventListener("click", function(){
+      rondInrichtenAf(naamVeld.value, true);
+    });
+    document.getElementById("in-browser").addEventListener("click", function(){
+      rondInrichtenAf(naamVeld.value, false);
+    });
+
+    verver();
+  }
+
+  /* Alles vastleggen, en bij installeren de pagina herladen. Dat laatste moet:
+     de browser leest het manifest één keer per paginabezoek, dus zonder herladen
+     zou hij nog het oude icoon en de oude naam gebruiken bij het installeren. */
+  function rondInrichtenAf(naamTekst, installeren){
+    S.naam = schoonNaam(naamTekst) || NAAM;
+    S.ingericht = true;
+    S.groepGevraagd = schooljaar();
+    zetGroep(S.ingerichtGroep || S.leerjaar);    /* zet ook de bereiken en tafels */
+    zetAppNaam();
+    bewaar();
+    if(!installeren){ zetAppIcoon(); toonHome(); return; }
+    try{ sessionStorage.setItem("net-ingericht", "1"); }catch(e){}
+    /* eerst het manifest wegschrijven, dan pas herladen */
+    zetAppIcoon(function(){ location.reload(); });
+  }
+
+  /* Na het herladen: alles staat klaar, nu alleen nog installeren. */
+  function toonInstallatiestap(){
+    verlaatRonde();
+    zetSchermstand("inrichten");
+    var html = '<section class="sectie inrichtkop"><h2>Alles staat klaar!</h2>' +
+               '<p class="uitlegregel">Zet ' + veiligeTekst(appTitel()) + ' nu op je beginscherm. ' +
+               'Daarna opent de app zonder adresbalk, met dit icoon, en werkt hij ook zonder internet.</p>' +
+               '</section>';
+    html += '<section class="sectie" style="margin-top:22px"><div class="kaart" style="text-align:center">' +
+            '<img id="klaar-icoon" alt="Het app-icoon" width="120" height="120" ' +
+            'style="border-radius:26px;box-shadow:0 8px 20px var(--schaduw)">' +
+            '</div></section>';
+    html += '<div class="knoppen" style="margin-top:22px">' +
+            '<button class="knop" type="button" id="klaar-installeren">Op mijn beginscherm zetten</button>' +
+            '<button class="knop stil" type="button" id="klaar-later">Later, ga naar de app</button>' +
+            '</div>';
+    scherm.innerHTML = html;
+
+    metLettertype(function(){
+      var bron = tekenIcoon(S.naam, 192, 1);
+      var plaatje = document.getElementById("klaar-icoon");
+      if(plaatje && bron) plaatje.src = bron;
+    });
+
+    function klaar(){
+      try{ sessionStorage.removeItem("net-ingericht"); }catch(e){}
+      toonHome();
+    }
+    document.getElementById("klaar-installeren").addEventListener("click", function(){
+      if(wachtendeVraag) vraagInstallatie(klaar);
+      else { klaar(); toonInstalleren(); }
+    });
+    document.getElementById("klaar-later").addEventListener("click", klaar);
+  }
+
   function toonHome(){
+    /* eerst inrichten: in de browser, en alleen zolang dat nog niet gebeurd is */
+    if(!S.ingericht && !alsApp()){ toonInrichten(); return; }
     verlaatRonde();
     zetSchermstand("thuis");
     var st = stickers();
@@ -2854,6 +3100,17 @@
               '<span class="teken">🎓</span>' +
               '<span><b>Klopt groep ' + S.leerjaar + '?</b>' +
               '<span>De groep bepaalt hoe moeilijk het is. Even nakijken?</span></span></button>';
+    } else if(groepVraagOpen()){
+      /* Elk jaar na 31 juli één keer: is de zomervakantie voorbij en zit Saar
+         in de volgende groep? De vraag blijft staan tot er ja of nee gekozen is. */
+      html += '<div class="groepstrook jaarvraag">' +
+              '<span class="teken">🎓</span>' +
+              '<span><b>Zit ' + veiligeTekst(S.naam) + ' na de zomer in groep ' + (S.leerjaar + 1) + '?</b>' +
+              '<span>De sommen gaan dan mee omhoog. Je kunt dit later altijd nog aanpassen.</span></span>' +
+              '<span class="jaarknoppen">' +
+                '<button class="knop" type="button" id="groep-ja">Ja, groep ' + (S.leerjaar + 1) + '</button>' +
+                '<button class="knop stil" type="button" id="groep-nee">Nee, blijft groep ' + S.leerjaar + '</button>' +
+              '</span></div>';
     }
 
     html += '<div class="snelrij">' +
@@ -2901,6 +3158,21 @@
     koppelVelKnoppen(toonHome);
     if(!S.leerjaarGekozen){
       document.getElementById("groep-vragen").addEventListener("click", opnaarInstellingen);
+    }
+    var groepJa = document.getElementById("groep-ja");
+    if(groepJa){
+      groepJa.addEventListener("click", function(){
+        S.groepGevraagd = schooljaar();
+        zetGroep(Math.min(8, S.leerjaar + 1));
+        tekenScore();
+        toonHome();
+        toast("Groep " + S.leerjaar + " ingesteld. De sommen zijn meegegroeid.");
+      });
+      document.getElementById("groep-nee").addEventListener("click", function(){
+        S.groepGevraagd = schooljaar();
+        bewaar();
+        toonHome();
+      });
     }
     [].forEach.call(scherm.querySelectorAll("[data-cat]"), function(k){
       k.addEventListener("click", function(){
@@ -4937,13 +5209,20 @@
      verandert, krijgt hier hetzelfde ontwerp opnieuw getekend op een canvas:
      framboosroze met ruitjes, de naam in witte letters met een schaduw, en een
      sterretje rechtsboven. */
-  function tekenIcoon(naam, maat, schaal){
+  /* Een browser die geen canvas wil geven mag de app niet meeslepen; dan blijft
+     het bestaande icoon gewoon staan. */
+  function tekenIcoon(naam, maat, schaal, thema){
+    try{ return tekenIcoonRuw(naam, maat, schaal, thema || icoonThema()); }
+    catch(e){ return null; }
+  }
+
+  function tekenIcoonRuw(naam, maat, schaal, thema){
     var c = document.createElement("canvas");
     c.width = c.height = maat;
     var g = c.getContext("2d");
     if(!g) return null;
 
-    g.fillStyle = "#FF4D6D";
+    g.fillStyle = thema.kleur;
     g.fillRect(0, 0, maat, maat);
 
     /* ruitjespapier, net als de achtergrond van de app zelf */
@@ -5004,7 +5283,7 @@
     g.lineJoin = "round";
     g.strokeStyle = "#ffffff";
     g.stroke();
-    g.fillStyle = "#FFB61E";
+    g.fillStyle = thema.ster;
     g.fill();
 
     try{ return c.toDataURL("image/png"); }catch(e){ return null; }
@@ -5051,16 +5330,18 @@
      inhoud wisselt. De service worker kijkt eerst in deze cache, dus de browser
      ziet de aangepaste naam en het nieuwe icoon op een echt, vast adres — dat
      is wat hij nodig heeft om een geïnstalleerde app later bij te werken. */
-  function bewaarManifest(doc){
-    if(!window.caches || !window.Response) return;
+  function bewaarManifest(doc, klaar){
+    function af(){ if(klaar){ var k = klaar; klaar = null; k(); } }
+    if(!window.caches || !window.Response){ af(); return; }
     try{
       caches.open(EIGEN_CACHE).then(function(c){
-        c.put("./manifest.webmanifest",
+        return c.put("./manifest.webmanifest",
               new Response(JSON.stringify(doc),
-                           {headers:{"Content-Type":"application/manifest+json"}}))
-         .catch(function(){});
-      }).catch(function(){});
-    }catch(e){}
+                           {headers:{"Content-Type":"application/manifest+json"}}));
+      }).then(af, af);
+    }catch(e){ af(); }
+    /* nooit eindeloos blijven wachten op de cache */
+    setTimeout(af, 2500);
   }
 
   function wisEigenManifest(){
@@ -5072,20 +5353,23 @@
     }catch(e){}
   }
 
-  function zetAppIcoon(){
-    if(S.naam === NAAM){
+  function eigenUiterlijk(){ return S.naam !== NAAM || S.icoonKleur !== ICOONKLEUR; }
+
+  function zetAppIcoon(klaar){
+    if(!eigenUiterlijk()){
       Object.keys(vasteLinks).forEach(function(soort){
         var el = document.querySelector('link[rel="' + soort + '"]');
         if(el) el.href = vasteLinks[soort];
       });
       wisEigenManifest();
+      if(klaar) setTimeout(klaar, 0);
       return;
     }
     metLettertype(function(){
       var i192 = tekenIcoon(S.naam, 192, 1);
       var i512 = tekenIcoon(S.naam, 512, 1);
       var iMask = tekenIcoon(S.naam, 512, 0.68);
-      if(!i192 || !i512 || !iMask) return;
+      if(!i192 || !i512 || !iMask){ if(klaar) klaar(); return; }
 
       var icoon = document.querySelector('link[rel="icon"]');
       if(icoon) icoon.href = i192;
@@ -5112,7 +5396,7 @@
           {src: i512,  sizes: "512x512", type: "image/png", purpose: "any"},
           {src: iMask, sizes: "512x512", type: "image/png", purpose: "maskable"}
         ]
-      });
+      }, klaar);
     });
   }
 
@@ -5312,7 +5596,11 @@
   zetAppIcoon();
   ververGeluid();
   tekenScore();
-  toonHome();
+  /* net ingericht en herladen: dan alleen nog de knop om te installeren */
+  var netIngericht = false;
+  try{ netIngericht = sessionStorage.getItem("net-ingericht") === "1"; }catch(e){}
+  if(netIngericht && !alsApp()) toonInstallatiestap();
+  else toonHome();
 })();
 </script>
 

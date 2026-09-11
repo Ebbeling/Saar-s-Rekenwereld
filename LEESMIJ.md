@@ -36,6 +36,26 @@ Installeren en offline werken gaan alleen via **https://** (of via `http://local
 tijdens het testen). Op gewoon http laadt de app wel, maar kun je hem niet op het
 beginscherm zetten en werkt hij niet offline.
 
+## De eerste keer openen
+
+Wie de app voor het eerst in een browser opent, krijgt niet meteen de sommen te zien maar
+eerst drie vragen: **van wie is de app**, **welke kleur** het icoon krijgt, en **in welke
+groep** je zit. Daarbij staat dat de code van de instellingen om te beginnen **0000** is.
+Pas als de naam en de groep ingevuld zijn, verschijnen er twee knoppen: *Op mijn
+beginscherm zetten* en *Verder in de browser*.
+
+Dat is met opzet zo. Een tablet legt de naam en het icoon vast op het moment dat je de app
+toevoegt; staat er dan nog "Saar" in het roze terwijl je Lotte in het paars wilde, dan krijg
+je dat er alleen af door de app te verwijderen en opnieuw toe te voegen.
+
+Kies je *Op mijn beginscherm zetten*, dan **herlaadt de pagina eerst**. Dat is nodig: de
+browser leest het manifest — waar naam en icoon in staan — één keer per paginabezoek. De
+app schrijft het nieuwe manifest weg, herlaadt, en biedt dan pas de installatieknop aan.
+Zonder die stap zou je alsnog het oude icoon krijgen.
+
+Dit scherm komt alleen bij een lege app. Wie de app al gebruikt — er staan punten of
+instellingen in — merkt er niets van, ook niet na een update.
+
 ## Op de tablet zetten
 
 **Android / Chrome:** open de pagina. Rechtsboven verschijnt een groene knop
@@ -51,8 +71,8 @@ Daarna start de app vanaf het beginscherm met eigen icoon, zonder adresbalk.
 
 De service worker bewaart de app op het apparaat. Als je `index.html` of `vragen.js` aanpast:
 
-1. Pas in `sw.js` de regel `var VERSIE = "rekenwereld-v26";` aan naar `v27`, `v28`, enzovoort.
-2. Pas in `index.html` de regel `var APPVERSIE = "26";` aan naar hetzelfde nummer.
+1. Pas in `sw.js` de regel `var VERSIE = "rekenwereld-v27";` aan naar `v28`, `v29`, enzovoort.
+2. Pas in `index.html` de regel `var APPVERSIE = "27";` aan naar hetzelfde nummer.
 3. Upload de gewijzigde bestanden.
 
 Zonder die ophoging blijven al geïnstalleerde tablets de oude versie tonen.
@@ -102,8 +122,11 @@ Onder *Van wie is deze app?* (tabblad **De app**) vul je een naam in, hoogstens 
 letters. Die naam gaat overal mee: de titel, het logo, de welkomkaart, de kopjes in de
 instellingen en het rapport, en de verhaaltjes over geld, tijd en gemiddelde. Naast het
 veld zie je meteen hoe het **app-icoon** eruit komt te zien; dat wordt met dezelfde
-vormgeving opnieuw getekend met de nieuwe naam. Laat je het veld leeg, dan valt alles
-terug op *Saar*.
+vormgeving opnieuw getekend met de nieuwe naam, in de kleur die bij het eerste openen
+gekozen is. Laat je het veld leeg, dan valt alles terug op *Saar*.
+
+De zes kleuren staan in `vragen.js` onder `ICOONKLEUREN`, elk met een achtergrondkleur en
+een kleur voor het sterretje. Een kleur erbij is één regel.
 
 **Hoe het icoon op een beginscherm meeverandert.** In de browser — tabbladicoon en titel —
 is het meteen goed. Voor een app die al op een beginscherm staat ligt het anders: de
@@ -147,6 +170,12 @@ handmatig bijstelt blijft staan tot de volgende groepswissel.
 Onder de knoppen staat een zin die vertelt wat de gekozen groep betekent en welke
 onderwerpen er nieuw bij komen. Die zin wordt uit de instellingen zelf afgeleid, dus hij
 kan niet verouderen.
+
+**Elk jaar na de zomer** vraagt de app zelf of de groep omhoog moet. Vanaf 31 juli staat er
+op het beginscherm *Zit Saar na de zomer in groep 6?* met een ja en een nee. Die vraag blijft
+staan tot er een van beide gekozen is — hij verdwijnt dus niet als je hem wegklikt. Bij *ja*
+gaat de groep één omhoog en groeien de sommen mee; bij *nee* verandert er niets. Daarna komt
+hij pas het jaar erop weer terug. In groep 8 wordt er niets meer gevraagd.
 
 ### Welke onderwerpen ziet Saar?
 
