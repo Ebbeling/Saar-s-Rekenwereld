@@ -51,8 +51,8 @@ Daarna start de app vanaf het beginscherm met eigen icoon, zonder adresbalk.
 
 De service worker bewaart de app op het apparaat. Als je `index.html` of `vragen.js` aanpast:
 
-1. Pas in `sw.js` de regel `var VERSIE = "rekenwereld-v24";` aan naar `v25`, `v26`, enzovoort.
-2. Pas in `index.html` de regel `var APPVERSIE = "24";` aan naar hetzelfde nummer.
+1. Pas in `sw.js` de regel `var VERSIE = "rekenwereld-v25";` aan naar `v26`, `v27`, enzovoort.
+2. Pas in `index.html` de regel `var APPVERSIE = "25";` aan naar hetzelfde nummer.
 3. Upload de gewijzigde bestanden.
 
 Zonder die ophoging blijven al geïnstalleerde tablets de oude versie tonen.

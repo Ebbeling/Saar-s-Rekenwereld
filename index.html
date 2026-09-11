@@ -1363,7 +1363,7 @@
     return {van:van, tot:tot};
   }
 
-  var APPVERSIE = "24";         /* hoog dit samen met VERSIE in sw.js op */
+  var APPVERSIE = "25";         /* hoog dit samen met VERSIE in sw.js op */
   var NAAM = "Saar";            /* van wie is deze app; in de instellingen aan te passen */
   var WACHTWOORD = "0000";      /* standaardcode; in de instellingen aan te passen */
   var PUNTEN_PER_STICKER = 10;  /* standaardwaarden */
@@ -2015,7 +2015,11 @@
     });
 
     if(soort === "alle"){
-      var top = kies(wens, "heel", function(){ return rnd(2, alleTot); });
+      /* Een misser van vóór deze vorm heeft alleen heel in het zaad. Dat getal
+         kan groter zijn dan waar deze opgave voor bedoeld is, dus begrenzen we
+         het — anders komt er ineens een lijst van twintig regels uit. */
+      var top = Math.max(2, Math.min(alleTot,
+                kies(wens, "heel", function(){ return rnd(2, alleTot); })));
       var rijen = [], antwoorden = [];
       for(var d = 0; d <= top; d++){ rijen.push(d); antwoorden.push(top - d); }
       return {groep:"getallen", vorm:"lijst", lijf:"splitslijst", soort:"alle",
