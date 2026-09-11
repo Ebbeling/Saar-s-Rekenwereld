@@ -343,6 +343,7 @@ window.REKENVRAGEN = {
                     6:{dec:[1,2], ops:["+","−","×"], heel:20},
                     7:{ops:["+","−","×",":"], heel:50},
                     8:{heel:100}},
+            bereik:{sleutel:"heel", uitleg:"het hele getal vóór de komma"},
             zaad:{"a":"a", "b":"b", "op":"op", "decimalen":"decimalen"}},
 
     negatief: {naam:"Onder nul", teken:"−5°", vak:"getallen", klasse:"negatief",
@@ -364,12 +365,14 @@ window.REKENVRAGEN = {
                    6:{maxCent:10000, stap:5},
                    7:{maxCent:20000, stap:1, drie:true},
                    8:{maxCent:50000}},
+           bereik:{sleutel:"maxCent", deel:100, uitleg:"het hoogste bedrag in hele euro's"},
            zaad:{"soort":"soort", "centen":"centen", "betaald":"betaald", "aantal":"aantal"}},
 
     meten: {naam:"Meten", teken:"📏", vak:"meten", klasse:"meten", kleur:"var(--druif)",
             vanaf:4, maak:"maakMeten",
             niveau:{4:{tot:9, omhoog:false}, 5:{tot:12, omhoog:true},
                     6:{tot:25}, 7:{tot:60}, 8:{tot:120}},
+            bereik:{uitleg:"het getal vóór het omrekenen, dus 9 bij 9 m = 900 cm"},
             zaad:{"m":"m", "n":"n", "omhoog":"omhoog"}},
 
     duur: {naam:"Tijdsduur", teken:"⏱", vak:"meten", klasse:"duur", kleur:"var(--klok)",
@@ -380,6 +383,7 @@ window.REKENVRAGEN = {
                    6:{stap:5, max:180, duo:true},
                    7:{max:240},
                    8:{max:300}},
+           bereik:{sleutel:"max", uitleg:"de langste tijdsduur in minuten"},
            zaad:{"u1":"u1", "m1":"m1", "duur":"duur"}},
 
     kalender: {naam:"Kalender", teken:"📅", vak:"meten", klasse:"kalender",
@@ -421,6 +425,7 @@ window.REKENVRAGEN = {
            kleur:"var(--framboos)", vanaf:5, maak:"maakRest",
            niveau:{5:{deler:6, uitkomst:9}, 6:{deler:10, uitkomst:12},
                    7:{deler:12, uitkomst:25}, 8:{deler:20, uitkomst:30}},
+           bereik:{sleutel:"uitkomst", uitleg:"de uitkomst vóór de rest"},
            zaad:{"b":"b", "q":"ant", "r":"ant2"}},
 
     deeltafels: {naam:"Deeltafels", teken:"🔄", vak:"rekenen", klasse:"deeltafels",

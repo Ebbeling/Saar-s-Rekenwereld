@@ -51,8 +51,8 @@ Daarna start de app vanaf het beginscherm met eigen icoon, zonder adresbalk.
 
 De service worker bewaart de app op het apparaat. Als je `index.html` of `vragen.js` aanpast:
 
-1. Pas in `sw.js` de regel `var VERSIE = "rekenwereld-v25";` aan naar `v26`, `v27`, enzovoort.
-2. Pas in `index.html` de regel `var APPVERSIE = "25";` aan naar hetzelfde nummer.
+1. Pas in `sw.js` de regel `var VERSIE = "rekenwereld-v26";` aan naar `v27`, `v28`, enzovoort.
+2. Pas in `index.html` de regel `var APPVERSIE = "26";` aan naar hetzelfde nummer.
 3. Upload de gewijzigde bestanden.
 
 Zonder die ophoging blijven al geïnstalleerde tablets de oude versie tonen.
@@ -168,9 +168,26 @@ Uitzetten wist geen cijfers: het rapport blijft alles bijhouden.
 
 ### Getallen voor de sommen
 
-Voor plus, min, keer en deel kun je het bereik daarnaast nog handmatig zetten, met een
-voorbeeldsom die meteen meeverandert. De andere onderwerpen halen hun moeilijkheid
-volledig uit de groep.
+Elk onderwerp krijgt zijn getallen van de groep, maar je kunt ze per onderwerp bijstellen.
+Plus, min, keer en deel staan bovenaan met een voorbeeldsom die meteen meeverandert. De
+overige onderwerpen staan eronder, per vak ingeklapt; achter de vaknaam zie je of er iets
+zelf ingesteld is of dat alles de groep volgt. Onder elk veld staat welke groep het nu
+volgt, of wat de groep zou geven als je het zelf hebt gezet.
+
+Negentien onderwerpen zijn zo bij te stellen. Bij de meeste is het simpelweg het grootste
+getal dat in de som mag voorkomen; bij een paar betekent het iets specifieks, en dat staat
+er dan bij: bij *Kommagetallen* het hele getal vóór de komma, bij *Geld* het hoogste bedrag
+in hele euro's, bij *Meten* het getal vóór het omrekenen (9 bij `9 m = 900 cm`), bij
+*Tijdsduur* de langste duur in minuten, en bij *Deel met rest* de uitkomst vóór de rest.
+
+Alleen *Splitsen* heeft een ondergrens én een bovengrens. Bij de andere bepaalt de
+generator zelf waar hij begint — meestal 1 of 2 — en stel je alleen het maximum in.
+
+**Een andere groep kiezen zet alles weer terug**, ook deze bereiken; hetzelfde geldt voor
+*Standaard terugzetten*. Wat je niet aanraakt blijft de groep volgen, ook na een wissel.
+
+*Afronden*, *Kalender* en *Verhoudingen* staan er niet bij: daar bepaalt niet één getal de
+moeilijkheid. De tafels en het klokkijken houden hun eigen keuzescherm.
 
 Bij min wordt het grootste getal altijd vooraan gezet, dus de uitkomst is nooit negatief.
 Bij *Deel* gaat het altijd zonder rest; daarvoor is er een apart onderwerp *Deel met rest*.

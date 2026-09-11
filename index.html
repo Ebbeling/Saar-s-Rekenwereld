@@ -1008,6 +1008,8 @@
     border:2px solid var(--rand);
     background:var(--papier);color:var(--inkt);
   }
+  /* ruim genoeg voor zes cijfers: een bovengrens mag tot 100000 lopen */
+  .velden input[type="number"]{width:96px}
   .velden input:focus{border-color:var(--zee)}
   /* ---------- tabbladen in de instellingen ---------- */
   .tabrij{
@@ -1363,7 +1365,7 @@
     return {van:van, tot:tot};
   }
 
-  var APPVERSIE = "25";         /* hoog dit samen met VERSIE in sw.js op */
+  var APPVERSIE = "26";         /* hoog dit samen met VERSIE in sw.js op */
   var NAAM = "Saar";            /* van wie is deze app; in de instellingen aan te passen */
   var WACHTWOORD = "0000";      /* standaardcode; in de instellingen aan te passen */
   var PUNTEN_PER_STICKER = 10;  /* standaardwaarden */
@@ -1490,18 +1492,90 @@
     return uit;
   }
 
-  /* de parameters van één onderwerp bij het ingestelde leerjaar, met de schuif erbij */
-  function par(id, lj){
+  /* welke groep er voor dit onderwerp geldt, met de schuif erbij */
+  function effGroep(id, lj){
     var o = ONDERWERPEN[id];
-    if(!o) return {};
+    if(!o) return Math.max(3, Math.min(8, lj || S.leerjaar));
     var schuif = S.schuif[id] || 0;
     var eff = Math.max(3, Math.min(8, (lj || S.leerjaar) + schuif));
     /* Een onderwerp kan met de schakelaar aangezet worden onder de groep waar het
        hoort. Zonder deze ondergrens levert de trap dan lege parameters op. */
     if(o.vanaf && eff < o.vanaf) eff = o.vanaf;
+    return eff;
+  }
+
+  /* De parameters van één onderwerp bij het ingestelde leerjaar. Is er met de hand
+     een getalbereik ingesteld, dan gaat dat over de trap heen. Dat gebeurt hier, op
+     één plek, zodat geen enkele generator ervan hoeft te weten. */
+  function par(id, lj){
+    var o = ONDERWERPEN[id];
+    if(!o) return {};
+    var eff = effGroep(id, lj);
     var p = trap(o.niveau, eff);
     p.lj = eff;
+    var eigen = S.bereik[id];
+    if(eigen && !klassiekBereik(id)){
+      var sleutel = (o.bereik && o.bereik.sleutel) || "tot";
+      var deel = (o.bereik && o.bereik.deel) || 1;
+      if(typeof eigen.tot === "number") p[sleutel] = eigen.tot * deel;
+      if(typeof eigen.van === "number" && typeof p.van === "number") p.van = eigen.van;
+    }
     return p;
+  }
+
+  /* plus, min, keer en deel hebben hun eigen tabel; die lezen S.bereik rechtstreeks */
+  function klassiekBereik(id){
+    var uit = false;
+    BEREIKEN.forEach(function(r){ if(r.id === id) uit = true; });
+    return uit;
+  }
+
+  /* Het bereik dat bij de groep hoort, dus zonder wat er met de hand is ingesteld.
+     Levert null als dit onderwerp geen getalbereik heeft om aan te draaien. */
+  function niveauBereik(id, lj){
+    var o = ONDERWERPEN[id];
+    if(!o || !o.niveau || o.meta) return null;
+    var p = trap(o.niveau, effGroep(id, lj));
+    var sleutel = (o.bereik && o.bereik.sleutel) || "tot";
+    var deel = (o.bereik && o.bereik.deel) || 1;
+    if(typeof p[sleutel] !== "number") return null;
+    return {van: typeof p.van === "number" ? p.van : null,
+            tot: Math.round(p[sleutel] / deel)};
+  }
+
+  /* Wat er nu geldt: het ingestelde bereik, of anders dat van de groep. */
+  function huidigBereik(id, lj){
+    if(klassiekBereik(id)) return S.bereik[id];
+    var basis = niveauBereik(id, lj);
+    if(!basis) return null;
+    var eigen = S.bereik[id];
+    if(!eigen) return basis;
+    return {van: typeof eigen.van === "number" ? eigen.van : basis.van,
+            tot: typeof eigen.tot === "number" ? eigen.tot : basis.tot};
+  }
+
+  /* alle onderwerpen waarvan het getalbereik in te stellen is, op volgorde van vak */
+  function bereikLijst(){
+    var uit = [];
+    onderwerpLijst().forEach(function(o){
+      if(o.meta || klassiekBereik(o.id)) return;
+      if(niveauBereik(o.id)) uit.push(o);
+    });
+    return uit;
+  }
+
+  function schoonAnderBereik(id, van, tot){
+    var basis = niveauBereik(id) || {van:null, tot:10};
+    tot = Math.round(Number(tot));
+    if(!isFinite(tot)) tot = basis.tot;
+    tot = Math.max(1, Math.min(100000, tot));
+    if(basis.van === null) return {tot:tot};
+    van = Math.round(Number(van));
+    if(!isFinite(van)) van = basis.van;
+    van = Math.max(0, Math.min(100000, van));
+    if(tot < van){ var h = van; van = tot; tot = h; }
+    if(tot === van) tot = van + 1;
+    return {van:van, tot:tot};
   }
 
   function legeStats(){
@@ -1583,6 +1657,13 @@
         BEREIKEN.forEach(function(regel){
           var b = r.bereik[regel.id];
           if(b) S.bereik[regel.id] = schoonBereik(regel.id, b.van, b.tot);
+        });
+        /* de overige onderwerpen: alleen overnemen wat bij een bestaand onderwerp
+           met een getalbereik hoort, zodat rommel in de opslag niets kan breken */
+        Object.keys(r.bereik).forEach(function(id){
+          if(klassiekBereik(id) || !ONDERWERPEN[id] || !niveauBereik(id)) return;
+          var b = r.bereik[id];
+          if(b) S.bereik[id] = schoonAnderBereik(id, b.van, b.tot);
         });
       }
       S.puntenPerSticker = schoonGetal(r.puntenPerSticker, 1, 100, PUNTEN_PER_STICKER);
@@ -3277,6 +3358,8 @@
     S.leerjaarGekozen = true;
     var b = groepBereik(lj);
     BEREIKEN.forEach(function(r){ S.bereik[r.id] = schoonBereik(r.id, b[r.id].van, b[r.id].tot); });
+    /* de overige onderwerpen volgen de groep weer, dus hun eigen instelling eraf */
+    Object.keys(S.bereik).forEach(function(id){ if(!klassiekBereik(id)) delete S.bereik[id]; });
     S.tafels = lj >= 5 ? [1,2,3,4,5,6,7,8,9,10] : [1,2,3,4,5,10];
     S.klokNiveau = lj <= 3 ? 1 : lj === 4 ? 2 : 3;
     bewaar();
@@ -3364,7 +3447,8 @@
     html += '</section>';
 
     html += '<section class="sectie" style="margin-top:22px"><h2>Welke getallen mag ' + veiligeTekst(S.naam) + ' krijgen?</h2>';
-    html += '<p class="uitlegregel">Je stelt in met welke getallen de sommen gemaakt worden. ' +
+    html += '<p class="uitlegregel">Elk onderwerp krijgt zijn getallen van de groep, maar je kunt ' +
+            'ze hier bijstellen. Een andere groep kiezen zet ze allemaal weer terug. ' +
             'Bij min komt het grootste getal altijd vooraan, dus de uitkomst wordt nooit negatief. ' +
             'Bij deel gaat het altijd zonder rest. De tafels en het klokkijken hebben hun eigen keuzescherm.</p>';
     html += '<div class="kaart"><div class="instellingen">';
@@ -3381,7 +3465,62 @@
                 '<p class="voorbeeld" id="' + r.id + '-vb">Bijvoorbeeld: ' + voorbeeldSom(r.id, b.van, b.tot) + '</p>' +
               '</div>';
     });
-    html += '</div></div></section>';
+    html += '</div></div>';
+
+    /* De overige onderwerpen, per vak ingeklapt. Alleen wie een bovengrens heeft
+       staat erbij; de rest volgt de groep of heeft een eigen keuzescherm. */
+    var anders = bereikLijst();
+    VAKKEN.forEach(function(vak){
+      var lijst = anders.filter(function(o){ return o.vak === vak.id; });
+      if(!lijst.length) return;
+      var gezet = lijst.filter(function(o){ return !!S.bereik[o.id]; }).length;
+      html += '<details class="vakblok"><summary>' +
+              '<span class="vaknaam">' + vak.naam + '</span>' +
+              '<span class="vaktelling">' + (gezet ? gezet + " zelf ingesteld" : "volgt de groep") + '</span>' +
+              '</summary><div class="kaart"><div class="instellingen">';
+      lijst.forEach(function(o){
+        var b = huidigBereik(o.id);
+        var basis = niveauBereik(o.id);
+        var eigen = !!S.bereik[o.id];
+        var hint = (o.bereik && o.bereik.uitleg) || "";
+        html += '<div class="instelling">' +
+                  /* het merkje krijgt de eigen kleur van het onderwerp; zonder achtergrond
+                     valt een teken als ⌗ of ½ weg tegen de witte kaart */
+                  '<div class="titel"><span class="merk" style="background:' + o.kleur + '">' +
+                  o.teken + '</span><b>' + o.naam + '</b></div>' +
+                  '<div class="velden">';
+        if(basis.van !== null){
+          html += '<label for="b-' + o.id + '-van">van <input type="number" inputmode="numeric" ' +
+                  'id="b-' + o.id + '-van" data-anderbereik="' + o.id + '" min="0" max="100000" ' +
+                  'value="' + b.van + '"></label>';
+        }
+        html += '<label for="b-' + o.id + '-tot">tot en met <input type="number" inputmode="numeric" ' +
+                'id="b-' + o.id + '-tot" data-anderbereik="' + o.id + '" min="1" max="100000" ' +
+                'value="' + b.tot + '"></label>' +
+                '</div>' +
+                '<p class="voorbeeld" id="b-' + o.id + '-vb">' + hint +
+                (hint ? " · " : "") + (eigen ? "zelf ingesteld; groep " + effGroep(o.id) + " geeft " +
+                  (basis.van !== null ? basis.van + " t/m " : "t/m ") + basis.tot
+                  : "volgt groep " + effGroep(o.id)) + '</p>' +
+                '</div>';
+      });
+      html += '</div></div></details>';
+    });
+
+    /* wat er niet bij staat, en waarom: anders blijft het gissen */
+    var zonder = [];
+    onderwerpLijst().forEach(function(o){
+      if(o.meta || klassiekBereik(o.id) || niveauBereik(o.id)) return;
+      if(o.id === "tafels" || o.id === "klok" || o.id === "deeltafels") return;
+      zonder.push(o.naam);
+    });
+    if(zonder.length){
+      html += '<p class="uitlegregel" style="margin-top:14px">Bij <b>' + zonder.join('</b>, <b>') +
+              '</b> bepaalt niet één getal hoe moeilijk het is — bij afronden hangt het aan ' +
+              'waar je op afrondt, bij de andere aan de soort vraag. Die volgen dus alleen de groep, ' +
+              'net als de tafels en het klokkijken, die hun eigen keuzescherm hebben.</p>';
+    }
+    html += '</section>';
 
     html += '</div>';
 
@@ -3673,6 +3812,17 @@
         S.bereik[r.id] = schoonBereik(r.id,
           document.getElementById(r.id + "-van").value,
           document.getElementById(r.id + "-tot").value);
+      });
+      /* de overige onderwerpen: alleen bewaren wat afwijkt van de groep, zodat een
+         onaangeraakt onderwerp de groep blijft volgen als die verandert */
+      bereikLijst().forEach(function(o){
+        var totVeld = document.getElementById("b-" + o.id + "-tot");
+        if(!totVeld) return;
+        var vanVeld = document.getElementById("b-" + o.id + "-van");
+        var nieuw = schoonAnderBereik(o.id, vanVeld ? vanVeld.value : null, totVeld.value);
+        var basis = niveauBereik(o.id);
+        if(nieuw.tot === basis.tot && (basis.van === null || nieuw.van === basis.van)) delete S.bereik[o.id];
+        else S.bereik[o.id] = nieuw;
       });
       S.puntenPerSticker = schoonGetal(document.getElementById("per-sticker").value, 1, 100, PUNTEN_PER_STICKER);
       S.stickersPerBeloning = schoonGetal(document.getElementById("per-beloning").value, 1, 50, STICKERS_PER_BELONING);
