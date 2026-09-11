@@ -56,6 +56,13 @@ Zonder die stap zou je alsnog het oude icoon krijgen.
 Dit scherm komt alleen bij een lege app. Wie de app al gebruikt — er staan punten of
 instellingen in — merkt er niets van, ook niet na een update.
 
+**De ingevulde gegevens reizen mee in de app zelf.** Het startadres in het manifest wordt
+`index.html?naam=…&kleur=…&groep=…`. Een app op een beginscherm opent altijd dat adres, dus
+komt hij hoe dan ook met de goede naam, kleur en groep op — ook op een apparaat waar de
+geïnstalleerde app de opslag van de browser niet deelt. Bij het opstarten worden die
+waarden alleen gebruikt als er nog helemaal niets bewaard is; wat je later in de
+instellingen verandert wordt er dus nooit door overschreven.
+
 ## Op de tablet zetten
 
 **Android / Chrome:** open de pagina. Rechtsboven verschijnt een groene knop
@@ -71,8 +78,8 @@ Daarna start de app vanaf het beginscherm met eigen icoon, zonder adresbalk.
 
 De service worker bewaart de app op het apparaat. Als je `index.html` of `vragen.js` aanpast:
 
-1. Pas in `sw.js` de regel `var VERSIE = "rekenwereld-v27";` aan naar `v28`, `v29`, enzovoort.
-2. Pas in `index.html` de regel `var APPVERSIE = "27";` aan naar hetzelfde nummer.
+1. Pas in `sw.js` de regel `var VERSIE = "rekenwereld-v28";` aan naar `v29`, `v30`, enzovoort.
+2. Pas in `index.html` de regel `var APPVERSIE = "28";` aan naar hetzelfde nummer.
 3. Upload de gewijzigde bestanden.
 
 Zonder die ophoging blijven al geïnstalleerde tablets de oude versie tonen.
@@ -125,8 +132,9 @@ veld zie je meteen hoe het **app-icoon** eruit komt te zien; dat wordt met dezel
 vormgeving opnieuw getekend met de nieuwe naam, in de kleur die bij het eerste openen
 gekozen is. Laat je het veld leeg, dan valt alles terug op *Saar*.
 
-De zes kleuren staan in `vragen.js` onder `ICOONKLEUREN`, elk met een achtergrondkleur en
-een kleur voor het sterretje. Een kleur erbij is één regel.
+Onder het naamveld staan de zes kleuren, zodat je het icoon ook later nog kunt omkleuren.
+Ze staan in `vragen.js` onder `ICOONKLEUREN`, elk met een achtergrondkleur en een kleur voor
+het sterretje. Een kleur erbij is één regel.
 
 **Hoe het icoon op een beginscherm meeverandert.** In de browser — tabbladicoon en titel —
 is het meteen goed. Voor een app die al op een beginscherm staat ligt het anders: de

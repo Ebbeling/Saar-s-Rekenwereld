@@ -1402,7 +1402,7 @@
     return {van:van, tot:tot};
   }
 
-  var APPVERSIE = "27";         /* hoog dit samen met VERSIE in sw.js op */
+  var APPVERSIE = "28";         /* hoog dit samen met VERSIE in sw.js op */
   var NAAM = "Saar";            /* van wie is deze app; in de instellingen aan te passen */
   var ICOONKLEUR = "framboos";  /* kleur van het app-icoon */
   var WACHTWOORD = "0000";      /* standaardcode; in de instellingen aan te passen */
@@ -1689,9 +1689,49 @@
   function zetInvoer(t){ if(S.veld === 1) S.invoer2 = t; else S.invoer = t; }
 
   /* ----- opslag ----- */
+  /* of er bij het opstarten al iets in de opslag stond */
+  var hadOpslag = false;
+
+  /* Wat er in het adres meegegeven is. Een app op het beginscherm opent zijn
+     startadres, en daar zetten we bij het installeren de naam, de kleur en de
+     groep in — zodat de app ook goed opkomt als hij de opslag van de browser
+     niet deelt. */
+  function uitAdres(){
+    var uit = {};
+    String(location.search || "").replace(/^\?/, "").split("&").forEach(function(stuk){
+      if(!stuk) return;
+      var is = stuk.indexOf("=");
+      var sleutel = is === -1 ? stuk : stuk.slice(0, is);
+      var waarde = is === -1 ? "" : stuk.slice(is + 1);
+      try{
+        uit[decodeURIComponent(sleutel)] = decodeURIComponent(waarde.replace(/\+/g, " "));
+      }catch(e){}
+    });
+    return uit;
+  }
+
+  /* Alleen als er nog helemaal niets bewaard is: dan is dit de eerste start van
+     een net geïnstalleerde app. Later zelf iets aanpassen wordt dus nooit
+     overschreven door wat er ooit in het startadres is gezet. */
+  function neemUitAdres(){
+    if(hadOpslag) return false;
+    var q = uitAdres();
+    var naam = schoonNaam(q.naam);
+    if(!naam) return false;
+    S.naam = naam;
+    if(kleurBestaat(q.kleur)) S.icoonKleur = q.kleur;
+    S.ingericht = true;
+    S.groepGevraagd = schooljaar();
+    var groep = schoonGetal(q.groep, 3, 8, 0);
+    if(groep) zetGroep(groep);
+    else bewaar();
+    return true;
+  }
+
   function laad(){
     try{
       var ruw = localStorage.getItem(SLEUTEL);
+      hadOpslag = !!ruw;
       var r = JSON.parse(ruw || "{}");
       /* Staat er nog helemaal niets, dan is dit een verse app en hoort het
          instapscherm. Wie al gegevens heeft, gebruikt de app al — ook als die
@@ -3857,6 +3897,17 @@
             '<div class="naamicoon"><img id="icoon-vb" alt="Zo komt het icoon eruit te zien" ' +
               'width="88" height="88"><span>het app-icoon</span></div>' +
             '</div>' +
+            '<div class="kleurrij" style="margin-top:16px">' +
+            (function(){
+              var uit = "";
+              ICOONKLEUREN.forEach(function(k){
+                uit += '<button class="kleurknop' + (k.id === S.icoonKleur ? " aan" : "") + '" ' +
+                       'type="button" data-instelkleur="' + k.id + '" aria-label="' + k.naam + '" ' +
+                       'title="' + k.naam + '" style="background:' + k.kleur + '"></button>';
+              });
+              return uit;
+            })() +
+            '</div>' +
             '<p class="voorbeeld" style="margin-top:14px">In de browser verandert het icoon ' +
             'meteen. Staat de app al op een beginscherm, dan hangt het van de tablet af wanneer ' +
             'die het nieuwe icoon overneemt — dat kan een dag duren. Wil je het nu al zien, ' +
@@ -4011,20 +4062,33 @@
       wwToon.setAttribute("aria-pressed", stondOpen ? "false" : "true");
     });
 
-    /* de naam: meteen laten zien wat de titel en het icoon worden */
+    /* De naam en de kleur: meteen laten zien wat het wordt, maar pas vastleggen
+       bij Opslaan — zoals elk ander veld in dit scherm. */
     var naamVeld = document.getElementById("app-naam");
+    var gekozenKleur = S.icoonKleur;
     function ververNaam(){
       var n = schoonNaam(naamVeld.value) || NAAM;
+      var thema = ICOONKLEUREN[0];
+      ICOONKLEUREN.forEach(function(k){ if(k.id === gekozenKleur) thema = k; });
       document.getElementById("naam-vb").innerHTML =
         "De app gaat dan <b>" + veiligeTekst(n + (/[sxz]$/i.test(n) ? "'" : "'s") + " Rekenwereld") +
         "</b> heten." + (schoonNaam(naamVeld.value) ? "" : " Leeg laten betekent " + NAAM + ".");
       metLettertype(function(){
-        var bron = tekenIcoon(n, 176, 1);
+        var bron = tekenIcoon(n, 176, 1, thema);
         var plaatje = document.getElementById("icoon-vb");
         if(plaatje && bron) plaatje.src = bron;
       });
     }
     naamVeld.addEventListener("input", ververNaam);
+    [].forEach.call(scherm.querySelectorAll("[data-instelkleur]"), function(k){
+      k.addEventListener("click", function(){
+        gekozenKleur = k.getAttribute("data-instelkleur");
+        [].forEach.call(scherm.querySelectorAll("[data-instelkleur]"), function(a){
+          a.classList.toggle("aan", a === k);
+        });
+        ververNaam();
+      });
+    });
     ververNaam();
 
     /* voor wie niet wil wachten tot de app zelf een nieuwe versie opmerkt */
@@ -4108,13 +4172,14 @@
       var wwGoed = ww.length === 4;
       if(wwGoed) S.wachtwoord = ww;
 
-      /* naam: leeg of onbruikbaar valt terug op de standaardnaam */
+      /* naam en kleur: leeg of onbruikbaar valt terug op de standaardnaam */
       var nieuweNaam = schoonNaam(document.getElementById("app-naam").value) || NAAM;
-      var naamAnders = nieuweNaam !== S.naam;
+      var uiterlijkAnders = nieuweNaam !== S.naam || gekozenKleur !== S.icoonKleur;
       S.naam = nieuweNaam;
+      if(kleurBestaat(gekozenKleur)) S.icoonKleur = gekozenKleur;
 
       bewaar();
-      if(naamAnders){ zetAppNaam(); zetAppIcoon(); }
+      if(uiterlijkAnders){ zetAppNaam(); zetAppIcoon(); }
       tekenScore();
       toonHome();
       toast(wwGoed ? "Opgeslagen!" : "Opgeslagen — maar het wachtwoord moet vier cijfers zijn, dus dat is niet gewijzigd.");
@@ -5383,7 +5448,14 @@
         description: "Oefenen met plus, min, keer, deel, de tafels en klokkijken. " +
                      "Punten sparen voor stickers en beloningen.",
         lang: "nl", dir: "ltr",
-        start_url: new URL("./index.html", location.href).href,
+        /* De naam, de kleur en de groep reizen mee in het startadres. Een app op
+           het beginscherm opent altijd dat adres, dus komt hij hoe dan ook met de
+           goede instellingen op — ook als hij de opslag van de browser niet ziet.
+           Bij het opstarten worden ze alleen gebruikt als er nog niets bewaard is. */
+        start_url: new URL("./index.html", location.href).href +
+                   "?naam=" + encodeURIComponent(S.naam) +
+                   "&kleur=" + encodeURIComponent(S.icoonKleur) +
+                   "&groep=" + S.leerjaar,
         scope: new URL("./", location.href).href,
         display: "standalone",
         display_override: ["standalone", "fullscreen", "minimal-ui"],
@@ -5592,6 +5664,7 @@
 
   /* ----- starten ----- */
   laad();
+  neemUitAdres();
   zetAppNaam();
   zetAppIcoon();
   ververGeluid();
