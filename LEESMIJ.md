@@ -51,7 +51,7 @@ Daarna start de app vanaf het beginscherm met eigen icoon, zonder adresbalk.
 
 De service worker bewaart de app op het apparaat. Als je `index.html` of `vragen.js` aanpast:
 
-1. Pas in `sw.js` de regel `var VERSIE = "rekenwereld-v18";` aan naar `v19`, `v20`, enzovoort.
+1. Pas in `sw.js` de regel `var VERSIE = "rekenwereld-v19";` aan naar `v20`, `v21`, enzovoort.
 2. Pas in `index.html` de regel `var APPVERSIE = "18";` aan naar hetzelfde nummer.
 3. Upload de gewijzigde bestanden.
 

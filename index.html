@@ -401,6 +401,61 @@
 
   .pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
   .toets.breed{grid-column:1 / -1}
+
+  /* ---------- tijdens het rekenen ----------
+     Het toetsenbord stond mee te scrollen, wat bij het typen erg in de weg zit.
+     Toetsenbord en stopknop staan nu samen vast onderaan; de som en de score
+     blijven daarboven in beeld. */
+  .rekenbalk{display:flex;flex-direction:column;gap:10px}
+  body[data-scherm="ronde"] .rekenbalk{
+    position:fixed;
+    left:50%;
+    transform:translateX(-50%);
+    bottom:0;
+    width:calc(min(620px, 100vw) - 36px - env(safe-area-inset-left) - env(safe-area-inset-right));
+    padding:12px 0 calc(10px + env(safe-area-inset-bottom));
+    background:var(--papier);
+    box-shadow:0 -10px 20px -12px var(--schaduw);
+    z-index:15;
+  }
+  /* te krap om vast te zetten: dan loopt de balk gewoon mee in de pagina */
+  body[data-scherm="ronde"].krap .rekenbalk{
+    position:static;transform:none;width:auto;
+    padding:0;background:none;box-shadow:none;
+  }
+  /* Wat tijdens het rekenen niet nodig is, gaat weg: zo blijven de som en de
+     score boven het toetsenbord staan, ook op een telefoon. */
+  body[data-scherm="ronde"] .kopknoppen{display:none}
+  body[data-scherm="ronde"] .tabletstrook{display:none}
+  body[data-scherm="ronde"] .logo{font-size:clamp(21px,5.5vw,28px)}
+  body[data-scherm="ronde"] .wrap{
+    gap:14px;
+    padding-block-start:calc(12px + env(safe-area-inset-top));
+  }
+  body[data-scherm="ronde"] .score div{padding:7px 6px}
+  body[data-scherm="ronde"] .score b{font-size:21px}
+  body[data-scherm="ronde"] .somkaart{padding:16px 14px}
+
+  /* Op een laag scherm (telefoon rechtop) moet de vaste balk minder hoog zijn,
+     anders schuift hij over de som heen. De toetsen blijven ruim boven de
+     44 px die een vinger nodig heeft. */
+  @media (max-height:800px){
+    body[data-scherm="ronde"] .rekenbalk{gap:8px;padding-top:10px}
+    body[data-scherm="ronde"] .pad{gap:8px}
+    body[data-scherm="ronde"] .toets{padding:10px 0;font-size:24px}
+    body[data-scherm="ronde"] .knop{padding:9px 14px;font-size:17px}
+    body[data-scherm="ronde"] .somkaart{padding:12px 14px}
+  }
+  /* Is het scherm echt kort, dan gaat de titel er tijdens het rekenen ook af:
+     de som en de score zijn dan belangrijker dan de kop. */
+  @media (max-height:640px){
+    body[data-scherm="ronde"] .kop{display:none}
+  }
+
+  /* de voetregels en het versienummer horen alleen op het beginscherm */
+  #regels, .versieregel{display:none}
+  body[data-scherm="thuis"] #regels,
+  body[data-scherm="thuis"] .versieregel{display:block}
   .toets{
     font-family:"Nunito",sans-serif;
     font-weight:900;font-size:27px;
@@ -456,10 +511,11 @@
   /* Verbergen met visibility, niet door hem omlaag te schuiven: een verschuiving
      van een percentage van de eigen hoogte valt op een telefoon weg tegen de
      veilige zone onderaan, en dan blijft de melding op de rand staan. */
+  /* Bovenaan, niet onderaan: onderin kwam hij over het cijfertoetsenbord heen. */
   .toast{
     position:fixed;left:50%;
-    bottom:calc(22px + env(safe-area-inset-bottom));
-    transform:translateX(-50%) translateY(16px);
+    top:calc(12px + env(safe-area-inset-top));
+    transform:translateX(-50%) translateY(-16px);
     opacity:0;
     visibility:hidden;
     background:var(--inkt);color:var(--papier);
@@ -1197,7 +1253,7 @@
     return {van:van, tot:tot};
   }
 
-  var APPVERSIE = "18";         /* hoog dit samen met VERSIE in sw.js op */
+  var APPVERSIE = "19";         /* hoog dit samen met VERSIE in sw.js op */
   var WACHTWOORD = "0000";      /* standaardcode; in de instellingen aan te passen */
   var PUNTEN_PER_STICKER = 10;  /* standaardwaarden */
   var STICKERS_PER_BELONING = 10;
@@ -2529,6 +2585,7 @@
 
   function toonHome(){
     verlaatRonde();
+    zetSchermstand("thuis");
     var st = stickers();
     var plekken = S.stickersPerBeloning;
     var opKaart = st % plekken;
@@ -3770,6 +3827,7 @@
   }
 
   function tekenQuiz(){
+    zetSchermstand("ronde");
     var v = S.vragen[S.i];
     var html = '<div style="display:flex;flex-direction:column;gap:18px">';
 
@@ -3821,6 +3879,10 @@
     html += '<div class="reactie" id="reactie"></div>';
     html += '</div>';
 
+    /* Het cijfertoetsenbord en de stopknop horen bij elkaar: samen vormen ze de
+       balk die tijdens het rekenen onderaan vast blijft staan. */
+    if(v.vorm !== "keuze") html += '<div class="rekenbalk">';
+
     if(v.vorm === "keuze"){
       html += '<div class="keuzes' + (v.opties.length === 3 ? " drie" : "") + '">';
       v.opties.forEach(function(o, n){
@@ -3860,6 +3922,7 @@
     }
 
     html += '<div class="knoppen"><button class="knop stil" type="button" id="stop">Stoppen</button></div>';
+    if(v.vorm !== "keuze") html += '</div>';
     html += '</div>';
 
     scherm.innerHTML = html;
@@ -4032,6 +4095,42 @@
   function verlaatRonde(){
     S.vragen = [];
     S.bezig = false;
+    zetSchermstand("");
+  }
+
+  /* Welk scherm er in beeld is, zodat de opmaak zich kan aanpassen: tijdens het
+     rekenen staat het toetsenbord vast onderaan en verdwijnt alles eromheen dat
+     niet nodig is. */
+  function zetSchermstand(naam){
+    document.body.setAttribute("data-scherm", naam);
+    var wrap = document.querySelector(".wrap");
+    if(!wrap) return;
+    if(naam !== "ronde"){
+      document.body.classList.remove("krap");
+      wrap.style.paddingBottom = "";
+      return;
+    }
+    setTimeout(meetToetsenbord, 0);
+  }
+
+  function meetToetsenbord(){
+    var wrap = document.querySelector(".wrap");
+    var balk = scherm.querySelector(".rekenbalk");
+    if(!wrap) return;
+    document.body.classList.remove("krap");
+    wrap.style.paddingBottom = "";
+    if(!balk) return;
+    /* Past de som niet boven de vaste balk, bijvoorbeeld op een klein scherm of
+       in liggende stand, dan is vastzetten erger dan meescrollen: dan laten we
+       de balk gewoon meelopen, zodat de som bereikbaar blijft. */
+    var kaart = scherm.querySelector(".somkaart");
+    var onder = kaart ? kaart.offsetTop + kaart.offsetHeight : 0;
+    if(onder + balk.offsetHeight + 14 > window.innerHeight){
+      document.body.classList.add("krap");
+      return;
+    }
+    /* het vaste toetsenbord bedekt de onderkant; geef de pagina die ruimte terug */
+    wrap.style.paddingBottom = (balk.offsetHeight + 14) + "px";
   }
 
   function volgende(){
@@ -4046,6 +4145,7 @@
   }
 
   function toonKlaar(){
+    zetSchermstand("klaar");
     var aantal = S.vragen.length;
     var challenge = S.challenge;
     var gehaald = challenge ? (S.goed >= challenge.nodig) : false;
@@ -4200,6 +4300,15 @@
     bewaar();
     ververGeluid();
     if(S.geluid) klankGoed();
+  });
+
+  /* Draaien of een schermtoetsenbord dat opkomt verandert de hoogte van het
+     cijfertoetsenbord; dan moet de onderruimte opnieuw gemeten worden. */
+  window.addEventListener("resize", function(){
+    if(document.body.getAttribute("data-scherm") === "ronde") meetToetsenbord();
+  });
+  window.addEventListener("orientationchange", function(){
+    if(document.body.getAttribute("data-scherm") === "ronde") setTimeout(meetToetsenbord, 120);
   });
 
   /* ----- als app op het beginscherm ----- */
