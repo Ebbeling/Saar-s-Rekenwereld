@@ -945,7 +945,47 @@
   .schakelrij .naam{font-weight:900;font-size:14.5px;flex:1 1 140px}
   .schakelrij .naam i{
     display:block;font-style:normal;font-size:12px;font-weight:700;color:var(--inkt-zacht);
+    margin-left:17px;
   }
+  /* stoplichtje: staat dit onderwerp op dit moment aan? */
+  .bol{
+    display:inline-block;width:10px;height:10px;border-radius:50%;
+    margin-right:7px;vertical-align:.02em;
+  }
+  .bol.aan{background:var(--goed)}
+  .bol.uit{background:var(--fout)}
+
+  /* ingeklapte vakken, zodat het scherm niet eindeloos lang wordt */
+  .vakblok{
+    border:2px solid var(--rand);border-radius:16px;
+    background:var(--kaart);
+    margin-bottom:10px;
+    overflow:hidden;
+  }
+  .vakblok > summary{
+    cursor:pointer;list-style:none;
+    padding:13px 16px;
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+  }
+  .vakblok > summary::-webkit-details-marker{display:none}
+  .vakblok > summary::after{
+    content:"▾";font-size:15px;color:var(--inkt-zacht);flex:none;
+    transition:transform .18s ease;
+  }
+  .vakblok[open] > summary::after{transform:rotate(180deg)}
+  .vaknaam{
+    font-family:"Lilita One",Impact,sans-serif;font-size:17px;letter-spacing:.02em;
+    flex:1;
+  }
+  .vaktelling{font-size:12.5px;font-weight:700;color:var(--inkt-zacht);white-space:nowrap}
+  .vakblok .kaart{border:none;border-radius:0;padding:0 16px 16px}
+
+  .velden label.vinkje{gap:9px;font-size:13.5px}
+  .velden input[type="checkbox"]{
+    width:22px;height:22px;flex:none;accent-color:var(--zee);
+  }
+  .merk.slot{background:var(--inkt);font-size:17px}
+  #wachtwoord{width:96px;letter-spacing:.3em;text-align:center}
   .standen{display:flex;gap:4px;background:var(--papier);border-radius:999px;padding:3px;flex:none}
   .stand{
     font:inherit;font-size:12px;font-weight:900;
@@ -1157,8 +1197,8 @@
     return {van:van, tot:tot};
   }
 
-  var APPVERSIE = "17";         /* hoog dit samen met VERSIE in sw.js op */
-  var CODE = "1985";            /* code voor de instellingen; hier aan te passen */
+  var APPVERSIE = "18";         /* hoog dit samen met VERSIE in sw.js op */
+  var WACHTWOORD = "0000";      /* standaardcode; in de instellingen aan te passen */
   var PUNTEN_PER_STICKER = 10;  /* standaardwaarden */
   var STICKERS_PER_BELONING = 10;
   var RONDE_LENGTE = 10;
@@ -1321,6 +1361,9 @@
     aan: {},                     /* onderwerp -> true (altijd aan) of false (uit) */
     beloningGegeven: {},         /* velnummer -> {datum, notitie}; door de ouder afgevinkt */
     superStickers: [],           /* volgnummers van stickers uit een foutloze challenge */
+    wachtwoord: WACHTWOORD,      /* code voor de instellingen */
+    challengeStickers: 2,        /* stickers voor een gehaalde challenge */
+    superAan: true,              /* extra sticker bij een foutloze challenge */
     schuif: {},                  /* onderwerp -> -1, 0 of +1 leerjaar */
     instellingenVrij: false,     /* blijft alleen open zolang de app draait */
     code: "",
@@ -1423,6 +1466,9 @@
       if(r.klokNiveau === 1 || r.klokNiveau === 2 || r.klokNiveau === 3) S.klokNiveau = r.klokNiveau;
       if(r.klokSoort === "analoog" || r.klokSoort === "digitaal" || r.klokSoort === "mix") S.klokSoort = r.klokSoort;
       S.bonusStickers = schoonGetal(r.bonusStickers, 0, 99999, 0);
+      if(/^\d{4}$/.test(r.wachtwoord)) S.wachtwoord = r.wachtwoord;
+      S.challengeStickers = schoonGetal(r.challengeStickers, 0, 10, 2);
+      if(typeof r.superAan === "boolean") S.superAan = r.superAan;
       if(r.stats){
         GROEPEN.forEach(function(g){
           var b = r.stats.groep && r.stats.groep[g.id];
@@ -1463,6 +1509,9 @@
         aan: S.aan,
         beloningGegeven: S.beloningGegeven,
         superStickers: S.superStickers,
+        wachtwoord: S.wachtwoord,
+        challengeStickers: S.challengeStickers,
+        superAan: S.superAan,
         schuif: S.schuif,
         stats: S.stats
       }));
@@ -2503,8 +2552,8 @@
             '<button class="snel uitdaging" type="button" id="naar-challenges">' +
               '<span class="teken">🏅</span>' +
               '<span><b>Challenges</b><span>' +
-              (S.stats.challenges.gehaald ? S.stats.challenges.gehaald + " gehaald · 2 stickers per stuk"
-                                          : S.challengeLengte + " vragen · 2 stickers als je slaagt") +
+              (S.stats.challenges.gehaald ? S.stats.challenges.gehaald + " gehaald · " + S.challengeStickers + " stickers per stuk"
+                                          : S.challengeLengte + " vragen · " + S.challengeStickers + " stickers als je slaagt") +
               '</span></span></button>' +
             '<button class="snel voortgang" type="button" id="naar-rapport">' +
               '<span class="teken">📈</span>' +
@@ -2894,7 +2943,7 @@
     html += '<p class="uitlegregel" style="margin:0 auto 14px">Typ de code om ' +
             (codeReden || "de instellingen te openen") + '.</p>';
     html += '<div class="codevakjes" id="code-vakjes">';
-    for(var n = 0; n < CODE.length; n++) html += '<div class="codevak"><i></i></div>';
+    for(var n = 0; n < S.wachtwoord.length; n++) html += '<div class="codevak"><i></i></div>';
     html += '</div>';
     html += '<div class="reactie" id="code-reactie"></div>';
     html += '</div></section>';
@@ -2931,14 +2980,14 @@
       return;
     }
     if(t === "ok"){ codeNakijken(); return; }
-    if(S.code.length >= CODE.length) return;
+    if(S.code.length >= S.wachtwoord.length) return;
     S.code += t;
     ververCode();
-    if(S.code.length === CODE.length) setTimeout(codeNakijken, 180);
+    if(S.code.length === S.wachtwoord.length) setTimeout(codeNakijken, 180);
   }
 
   function codeNakijken(){
-    if(S.code === CODE){
+    if(S.code === S.wachtwoord){
       S.instellingenVrij = true;
       klankGoed();
       var vervolg = naCode || toonInstellingen;
@@ -3003,6 +3052,28 @@
     bewaar();
   }
 
+  /* Eén rij in de onderwerpenlijst: naam, een stoplichtje of hij aanstaat, en
+     de drie standen. Bij "volgt groep" staat erbij wat dat op dit moment betekent. */
+  function schakelRij(o){
+    var stand = S.aan[o.id] === true ? "aan" : S.aan[o.id] === false ? "uit" : "volgt";
+    var nuAan = zichtbaar(o.id);
+    var onder = stand === "volgt"
+      ? "vanaf groep " + o.vanaf + " · staat nu " + (nuAan ? "aan" : "uit")
+      : (stand === "aan" ? "altijd aan, ook onder groep " + o.vanaf : "uitgezet");
+    return '<div class="schakelrij">' +
+             '<span class="naam"><b class="bol ' + (nuAan ? "aan" : "uit") + '" ' +
+               'title="' + (nuAan ? "staat aan" : "staat uit") + '"></b>' + o.naam +
+               '<i>' + onder + '</i></span>' +
+             '<span class="standen">' +
+               '<button type="button" class="stand' + (stand === "uit" ? " nu" : "") +
+                 '" data-schakel="' + o.id + '" data-stand="uit">uit</button>' +
+               '<button type="button" class="stand' + (stand === "volgt" ? " nu" : "") +
+                 '" data-schakel="' + o.id + '" data-stand="volgt">volgt groep</button>' +
+               '<button type="button" class="stand' + (stand === "aan" ? " nu" : "") +
+                 '" data-schakel="' + o.id + '" data-stand="aan">aan</button>' +
+             '</span></div>';
+  }
+
   function toonInstellingen(){
     verlaatRonde();
     var html = '';
@@ -3022,28 +3093,25 @@
     html += '<section class="sectie" style="margin-top:22px"><h2>Welke onderwerpen ziet Saar?</h2>';
     html += '<p class="uitlegregel">Standaard volgt elk onderwerp de groep. Je kunt er hier ' +
             'eentje alvast aanzetten of juist weglaten.</p>';
-    html += '<div class="kaart"><div class="schakelaars">';
+    /* Per vak ingeklapt: zesentwintig rijen open maken het scherm onwerkbaar lang. */
     VAKKEN.forEach(function(vak){
       var lijst = [];
       onderwerpLijst().forEach(function(o){ if(o.vak === vak.id && !o.meta) lijst.push(o); });
       if(!lijst.length) return;
       lijst.sort(function(a, b){ return (a.orde || 50) - (b.orde || 50); });
-      html += '<h3 class="vakkop">' + vak.naam + '</h3>';
+      var aanTal = 0;
+      lijst.forEach(function(o){ if(zichtbaar(o.id)) aanTal++; });
+
+      html += '<details class="vakblok"><summary>' +
+              '<span class="vaknaam">' + vak.naam + '</span>' +
+              '<span class="vaktelling">' + aanTal + ' van de ' + lijst.length + ' aan</span>' +
+              '</summary><div class="kaart"><div class="schakelaars">';
       lijst.forEach(function(o){
-        var stand = S.aan[o.id] === true ? "aan" : S.aan[o.id] === false ? "uit" : "volgt";
-        html += '<div class="schakelrij">' +
-                  '<span class="naam">' + o.naam + '<i>vanaf groep ' + o.vanaf + '</i></span>' +
-                  '<span class="standen">' +
-                    '<button type="button" class="stand' + (stand === "uit" ? " nu" : "") +
-                      '" data-schakel="' + o.id + '" data-stand="uit">uit</button>' +
-                    '<button type="button" class="stand' + (stand === "volgt" ? " nu" : "") +
-                      '" data-schakel="' + o.id + '" data-stand="volgt">volgt groep</button>' +
-                    '<button type="button" class="stand' + (stand === "aan" ? " nu" : "") +
-                      '" data-schakel="' + o.id + '" data-stand="aan">aan</button>' +
-                  '</span></div>';
+        html += schakelRij(o);
       });
+      html += '</div></div></details>';
     });
-    html += '</div></div></section>';
+    html += '</section>';
 
     html += '<section class="sectie" style="margin-top:22px"><h2>Welke getallen mag Saar krijgen?</h2>';
     html += '<p class="uitlegregel">Je stelt in met welke getallen de sommen gemaakt worden. ' +
@@ -3079,6 +3147,12 @@
               '<div class="velden"><label for="challenge-lengte">' +
                 '<input type="number" inputmode="numeric" id="challenge-lengte" data-lengte="1" min="5" max="100" value="' +
                 S.challengeLengte + '"> vragen per challenge</label></div>' +
+              '<div class="velden"><label for="challenge-stickers">levert ' +
+                '<input type="number" inputmode="numeric" id="challenge-stickers" data-lengte="1" min="0" max="10" value="' +
+                S.challengeStickers + '"> stickers op</label></div>' +
+              '<div class="velden"><label class="vinkje" for="super-aan">' +
+                '<input type="checkbox" id="super-aan" data-lengte="1"' + (S.superAan ? " checked" : "") + '>' +
+                ' bij alles goed ook de supersticker</label></div>' +
               '<p class="voorbeeld" id="lengte-vb"></p>' +
             '</div>';
     html += '</div></div></section>';
@@ -3102,6 +3176,15 @@
               'dan destijds, en de afgevinkte beloningen schuiven mee.</p>' +
             '</div>';
     html += '</div></div></section>';
+
+    html += '<section class="sectie" style="margin-top:22px"><h2>De code van dit scherm</h2>' +
+            '<div class="kaart"><div class="instellingen"><div class="instelling">' +
+            '<div class="titel"><span class="merk slot">🔒</span><b>Wachtwoord</b></div>' +
+            '<div class="velden"><label for="wachtwoord">vier cijfers ' +
+            '<input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="wachtwoord" ' +
+            'value="' + S.wachtwoord + '"></label></div>' +
+            '<p class="voorbeeld" id="ww-vb">Hiermee kom je in dit scherm. Vergeet hem niet.</p>' +
+            '</div></div></div></section>';
 
     html += '<section class="sectie" style="margin-top:22px"><h2>Opnieuw beginnen</h2>' +
             '<div class="kaart" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">' +
@@ -3137,28 +3220,54 @@
       });
     });
 
-    [].forEach.call(scherm.querySelectorAll("[data-schakel]"), function(k){
-      k.addEventListener("click", function(){
-        var id = k.getAttribute("data-schakel");
-        var stand = k.getAttribute("data-stand");
-        if(stand === "aan") S.aan[id] = true;
-        else if(stand === "uit") S.aan[id] = false;
-        else delete S.aan[id];
-        bewaar();
-        /* alleen de knoppen van deze rij verversen, niet het hele scherm */
-        [].forEach.call(scherm.querySelectorAll('[data-schakel="' + id + '"]'), function(b){
-          b.classList.toggle("nu", b.getAttribute("data-stand") === stand);
-        });
+    /* Eén luisteraar voor alle schakelaars. De rijen worden na een klik opnieuw
+       getekend, dus losse luisteraars per knop zouden zich opstapelen. */
+    scherm.addEventListener("click", function(e){
+      var knop = e.target;
+      while(knop && knop !== scherm && !knop.getAttribute("data-schakel")) knop = knop.parentNode;
+      if(!knop || knop === scherm) return;
+
+      var id = knop.getAttribute("data-schakel");
+      var stand = knop.getAttribute("data-stand");
+      if(stand === "aan") S.aan[id] = true;
+      else if(stand === "uit") S.aan[id] = false;
+      else delete S.aan[id];
+      bewaar();
+
+      /* alleen deze rij opnieuw tekenen, zodat het ingeklapte deel blijft staan */
+      var rij = knop;
+      while(rij && rij.className !== "schakelrij") rij = rij.parentNode;
+      if(!rij) return;
+      var blok = rij.parentNode;
+      var houder = document.createElement("div");
+      houder.innerHTML = schakelRij(ONDERWERPEN[id]);
+      blok.replaceChild(houder.firstChild, rij);
+
+      /* en de teller in de kop van dit vak */
+      var details = blok;
+      while(details && details.tagName !== "DETAILS") details = details.parentNode;
+      if(!details) return;
+      var telling = details.querySelector(".vaktelling");
+      var knoppen = details.querySelectorAll('[data-stand="aan"]');
+      var aantalAan = 0;
+      [].forEach.call(knoppen, function(b){
+        if(zichtbaar(b.getAttribute("data-schakel"))) aantalAan++;
       });
+      if(telling) telling.textContent = aantalAan + " van de " + knoppen.length + " aan";
     });
 
     function ververLengte(){
       var lang = schoonGetal(document.getElementById("challenge-lengte").value, 5, 100, S.challengeLengte);
+      var st = schoonGetal(document.getElementById("challenge-stickers").value, 0, 10, S.challengeStickers);
+      var super_ = !!document.getElementById("super-aan").checked;
       document.getElementById("lengte-vb").innerHTML =
-        "Een challenge is dan gehaald met <b>" + challengeNodig(lang) + " van de " + lang + "</b> goed.";
+        "Gehaald met <b>" + challengeNodig(lang) + " van de " + lang + "</b> goed, en dat levert <b>" +
+        st + (st === 1 ? " sticker" : " stickers") + "</b> op" +
+        (super_ ? ", bij alles goed <b>" + (st + 1) + "</b>." : ".");
     }
     [].forEach.call(scherm.querySelectorAll("[data-lengte]"), function(veld){
       veld.addEventListener("input", ververLengte);
+      veld.addEventListener("change", ververLengte);
     });
     ververLengte();
 
@@ -3183,10 +3292,17 @@
       S.stickersPerBeloning = schoonGetal(document.getElementById("per-beloning").value, 1, 50, STICKERS_PER_BELONING);
       S.rondeLengte = schoonGetal(document.getElementById("ronde-lengte").value, 3, 50, RONDE_LENGTE);
       S.challengeLengte = schoonGetal(document.getElementById("challenge-lengte").value, 5, 100, CHALLENGE_LENGTE);
+      S.challengeStickers = schoonGetal(document.getElementById("challenge-stickers").value, 0, 10, 2);
+      S.superAan = !!document.getElementById("super-aan").checked;
+
+      /* wachtwoord: alleen overnemen als het echt vier cijfers zijn */
+      var ww = String(document.getElementById("wachtwoord").value || "").replace(/\D/g, "");
+      var wwGoed = ww.length === 4;
+      if(wwGoed) S.wachtwoord = ww;
       bewaar();
       tekenScore();
       toonHome();
-      toast("Opgeslagen!");
+      toast(wwGoed ? "Opgeslagen!" : "Opgeslagen — maar het wachtwoord moet vier cijfers zijn, dus dat is niet gewijzigd.");
     });
 
     document.getElementById("standaard-knop").addEventListener("click", function(){
@@ -3196,6 +3312,8 @@
       S.stickersPerBeloning = STICKERS_PER_BELONING;
       S.rondeLengte = RONDE_LENGTE;
       S.challengeLengte = CHALLENGE_LENGTE;
+      S.challengeStickers = 2;
+      S.superAan = true;
       zetGroep(S.leerjaar);        /* zet meteen de bereiken, tafels en klok terug */
       bewaar();
       tekenScore();
@@ -3590,8 +3708,9 @@
     var lijst = challengeLijst();
     var html = '<section class="sectie"><h2>Challenges</h2>';
     html += '<p class="uitlegregel">Een challenge is ' + S.challengeLengte + ' vragen lang en wat pittiger ' +
-            'dan gewoon oefenen. Heb je er ' + challengeNodig(S.challengeLengte) +
-            ' goed? Dan krijg je <b>2 stickers</b> erbij.</p>';
+            'dan gewoon oefenen. Heb je er ' + challengeNodig(S.challengeLengte) + ' goed? Dan krijg je <b>' +
+            S.challengeStickers + (S.challengeStickers === 1 ? " sticker" : " stickers") + '</b> erbij' +
+            (S.superAan ? ', en bij <b>alles goed</b> nog de supersticker.' : '.') + '</p>';
     html += '<div class="challenges">';
     lijst.forEach(function(c){
       html += '<button class="challenge" type="button" data-challenge="' + c.id + '" ' +
@@ -3931,19 +4050,19 @@
     var challenge = S.challenge;
     var gehaald = challenge ? (S.goed >= challenge.nodig) : false;
 
-    var foutloos = challenge && gehaald && S.goed === aantal;
+    var foutloos = challenge && gehaald && S.goed === aantal && S.superAan;
     if(challenge){
       S.stats.challenges.gedaan++;
       if(gehaald){
         S.stats.challenges.gehaald++;
-        /* Alles goed geeft een derde sticker: de supersticker. Die onthouden we
+        /* Alles goed geeft een sticker extra: de supersticker. Die onthouden we
            op zijn volgnummer, zodat hij op het stickervel bijzonder blijft. */
         if(foutloos){
-          S.superStickers.push(stickers() + 2);
+          S.superStickers.push(stickers() + S.challengeStickers);
           S.stats.challenges.foutloos = (S.stats.challenges.foutloos || 0) + 1;
-          S.bonusStickers += 3;
+          S.bonusStickers += S.challengeStickers + 1;
         } else {
-          S.bonusStickers += 2;
+          S.bonusStickers += S.challengeStickers;
         }
       }
       bewaar();
@@ -3972,10 +4091,13 @@
             (challenge ? ' · ' + challenge.nodig + ' nodig' : '') + '</div>';
     html += '<p class="woord">' + woord + '</p>';
     if(challenge && gehaald){
+      var aantalStickers = S.challengeStickers + (S.challengeStickers === 1 ? " sticker" : " stickers");
       html += foutloos
-        ? '<p class="prijs super">🌟 Alles goed! Je verdient 2 stickers ' +
-          '<b>plus de supersticker</b>!</p>'
-        : '<p class="prijs">🎉 Je verdient 2 extra stickers!</p>';
+        ? '<p class="prijs super">🌟 Alles goed! Je verdient ' + aantalStickers +
+          ' <b>plus de supersticker</b>!</p>'
+        : (S.challengeStickers > 0
+            ? '<p class="prijs">🎉 Je verdient ' + aantalStickers + ' erbij!</p>'
+            : '');
     }
     if(S.fouten.length){
       html += '<div class="foutenlijst"><h3>Deze mag je nog een keer oefenen</h3><ul>';
@@ -4003,12 +4125,13 @@
 
     if(gehaald){
       klankBeloning();
+      var stickerWoord = S.challengeStickers + (S.challengeStickers === 1 ? " sticker" : " stickers");
       if(foutloos){
         vierFeest();
         klankSuper();
-        toast("Foutloos! 2 stickers én de supersticker 🌟");
+        toast("Foutloos! " + stickerWoord + " én de supersticker 🌟");
       } else {
-        toast("Challenge gehaald! 2 stickers erbij 🏅");
+        toast("Challenge gehaald! " + stickerWoord + " erbij 🏅");
       }
     }
 

@@ -51,8 +51,8 @@ Daarna start de app vanaf het beginscherm met eigen icoon, zonder adresbalk.
 
 De service worker bewaart de app op het apparaat. Als je `index.html` of `vragen.js` aanpast:
 
-1. Pas in `sw.js` de regel `var VERSIE = "rekenwereld-v15";` aan naar `v16`, `v17`, enzovoort.
-2. Pas in `index.html` de regel `var APPVERSIE = "15";` aan naar hetzelfde nummer.
+1. Pas in `sw.js` de regel `var VERSIE = "rekenwereld-v18";` aan naar `v19`, `v20`, enzovoort.
+2. Pas in `index.html` de regel `var APPVERSIE = "18";` aan naar hetzelfde nummer.
 3. Upload de gewijzigde bestanden.
 
 Zonder die ophoging blijven al geïnstalleerde tablets de oude versie tonen.
@@ -77,14 +77,15 @@ de app wordt afgesloten. Onderin de app staat *opnieuw beginnen* om de punten te
 de getallen zet je terug met *Standaard terugzetten* in het instellingenscherm. Ook de
 gekozen groep, de onderwerpschakelaars en het rapport horen bij die opgeslagen gegevens.
 
-## Instellingen (code: 1985)
+## Instellingen (code: 0000)
 
 Rechtsboven in de app staat **Instellingen**. Die zitten achter een code, zodat Saar ze
-niet zelf verzet: **1985**. De code blijft geldig zolang de app open is; na afsluiten
-moet hij opnieuw ingetypt worden.
+niet zelf verzet. De code is standaard **0000** en kun je in dat scherm zelf wijzigen naar
+vier andere cijfers. De code blijft geldig zolang de app open is; na afsluiten moet hij
+opnieuw ingetypt worden.
 
-De code staat in `index.html` in de regel `var CODE = "1985";` — daar pas je hem aan.
-Het is een drempel voor een kind, geen beveiliging: wie de broncode bekijkt, ziet hem staan.
+**Vergeet hem niet.** Ben je hem kwijt, dan kun je hem terugzetten door in de browser de
+opgeslagen gegevens van de app te wissen — daarmee verdwijnen ook de punten en stickers.
 
 ### De groep (3 t/m 8)
 
@@ -111,9 +112,15 @@ kan niet verouderen.
 
 ### Welke onderwerpen ziet Saar?
 
-De app heeft vijfentwintig onderwerpen. Standaard ziet Saar alleen wat bij haar groep
-past — groep 3 geeft tien tegels, groep 8 alle zesentwintig. Per onderwerp kun je dat
-overrulen met een schakelaar van drie standen:
+De app heeft zesentwintig onderwerpen, verdeeld over vier vakken. Elk vak staat
+**ingeklapt** met een teller erachter — *3 van de 8 aan* — zodat het scherm kort blijft.
+Tik een vak open om de onderwerpen te zien.
+
+Per onderwerp staat er een **groen of rood bolletje** voor de naam: staat dit onderwerp op
+dit moment op het beginscherm of niet. Daaronder staat wat de gekozen stand betekent,
+bijvoorbeeld *vanaf groep 4 · staat nu uit*.
+
+Elk onderwerp heeft drie standen:
 
 - **volgt groep** (standaard) — zichtbaar zodra de groep het toelaat
 - **aan** — ook zichtbaar onder de eigen groep, om vooruit te werken
@@ -138,6 +145,11 @@ Ook in het instellingenscherm: hoeveel sommen een gewone ronde telt (3 t/m 50, s
 en hoeveel vragen een challenge telt (5 t/m 100, standaard 25). De slaaggrens van een
 challenge schuift automatisch mee: vier van de vijf goed, dus 20 bij 25 vragen en 8 bij 10.
 Er mag altijd minstens één fout gemaakt worden.
+
+Bij de challenge stel je daar ook in **hoeveel stickers** hij oplevert (0 t/m 10, standaard
+2) en of er **bij alles goed een supersticker** bij komt. Zet je die uit, dan is een
+foutloze challenge gewoon een gehaalde challenge. Onder de velden staat meteen wat je
+keuzes betekenen.
 
 ### Sparen voor een beloning
 
@@ -184,8 +196,8 @@ alleen als de challenge gehaald is.
 | Uitkomst | Wat je krijgt |
 | --- | --- |
 | minder dan vier van de vijf goed | niets |
-| gehaald | 2 stickers |
-| **alles goed** | 2 stickers **plus de supersticker** — een gouden ster die op het stickervel blijft glanzen, met een confettiregen erbij |
+| gehaald | het ingestelde aantal stickers (standaard 2) |
+| **alles goed** | datzelfde aantal **plus de supersticker** — een gouden ster die op het stickervel blijft glanzen, met een confettiregen erbij |
 
 Er zijn vier soorten challenges, en de app beveelt er één aan op basis van het rapport:
 
