@@ -51,8 +51,8 @@ Daarna start de app vanaf het beginscherm met eigen icoon, zonder adresbalk.
 
 De service worker bewaart de app op het apparaat. Als je `index.html` of `vragen.js` aanpast:
 
-1. Pas in `sw.js` de regel `var VERSIE = "rekenwereld-v22";` aan naar `v23`, `v24`, enzovoort.
-2. Pas in `index.html` de regel `var APPVERSIE = "22";` aan naar hetzelfde nummer.
+1. Pas in `sw.js` de regel `var VERSIE = "rekenwereld-v23";` aan naar `v24`, `v25`, enzovoort.
+2. Pas in `index.html` de regel `var APPVERSIE = "23";` aan naar hetzelfde nummer.
 3. Upload de gewijzigde bestanden.
 
 Zonder die ophoging blijven al geïnstalleerde tablets de oude versie tonen.
@@ -85,21 +85,38 @@ vier andere cijfers. Hij wordt **elke keer opnieuw gevraagd** — ook als je net
 instellingen was, en ook voor het afvinken van een beloning. Zo staat de app nooit open
 omdat iemand de code een keer eerder heeft ingetypt.
 
+Het scherm is verdeeld in drie tabbladen: **Niveau** (groep, onderwerpen, getallen),
+**Sparen** (lengte van een reeks, challenge, punten en stickers) en **De app** (naam en
+icoon, de code, de versie, opnieuw beginnen). *Opslaan* onderaan bewaart alle drie
+tegelijk; je hoeft dus niet eerst terug naar het tabblad waar je iets hebt gewijzigd.
+
+Het wachtwoord staat als stipjes in beeld. Met de knop **Tonen** ernaast kun je even
+kijken wat er staat.
+
 **Vergeet hem niet.** Ben je hem kwijt, dan kun je hem terugzetten door in de browser de
 opgeslagen gegevens van de app te wissen — daarmee verdwijnen ook de punten en stickers.
 
 ### Van wie is deze app?
 
-Onder *Van wie is deze app?* vul je een naam in (hoogstens twaalf letters). Die naam gaat
-overal mee: de titel, het logo, de welkomkaart, de kopjes in de instellingen en het
-rapport, en de verhaaltjes over geld, tijd en gemiddelde. Naast het veld zie je meteen hoe
-het **app-icoon** eruit komt te zien; dat wordt met dezelfde vormgeving opnieuw getekend
-met de nieuwe naam. Laat je het veld leeg, dan valt alles terug op *Saar*.
+Onder *Van wie is deze app?* (tabblad **De app**) vul je een naam in, hoogstens twaalf
+letters. Die naam gaat overal mee: de titel, het logo, de welkomkaart, de kopjes in de
+instellingen en het rapport, en de verhaaltjes over geld, tijd en gemiddelde. Naast het
+veld zie je meteen hoe het **app-icoon** eruit komt te zien; dat wordt met dezelfde
+vormgeving opnieuw getekend met de nieuwe naam. Laat je het veld leeg, dan valt alles
+terug op *Saar*.
 
-**Het icoon op een beginscherm verandert niet vanzelf.** Een tablet legt naam en icoon vast
-op het moment dat je de app toevoegt. Staat de app er al op, haal hem er dan af en zet hem
-opnieuw op het beginscherm. In de browser zelf — het tabbladicoon en de titel — verandert
-het meteen.
+**Hoe het icoon op een beginscherm meeverandert.** In de browser — tabbladicoon en titel —
+is het meteen goed. Voor een app die al op een beginscherm staat ligt het anders: de
+tablet heeft naam en icoon vastgelegd toen je hem toevoegde. De app biedt de browser nu
+wel het juiste aan: `manifest.webmanifest` houdt zijn gewone adres, maar de service worker
+serveert er een versie met de nieuwe naam en het nieuwe icoon. Chrome kijkt daar uit
+zichzelf periodiek naar en werkt het beginscherm-icoon dan bij — dat is zijn eigen
+schema, meestal binnen een dag. Wil je het meteen goed hebben, gebruik dan de knop
+**Op het beginscherm zetten**: haal de app er één keer af (icoon ingedrukt houden,
+verwijderen) en zet hem opnieuw neer.
+
+Er bestaat geen manier waarop een webpagina dat zelf kan afdwingen; dit is zo dicht als
+je erbij kunt komen.
 
 ### Staat er een nieuwe versie klaar?
 

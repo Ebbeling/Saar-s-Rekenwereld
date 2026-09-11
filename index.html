@@ -949,6 +949,35 @@
     background:var(--papier);color:var(--inkt);
   }
   .velden input:focus{border-color:var(--zee)}
+  /* ---------- tabbladen in de instellingen ---------- */
+  .tabrij{
+    display:flex;gap:6px;
+    background:var(--kaart);
+    border:2px solid var(--rand);
+    border-radius:16px;
+    padding:5px;
+    margin-bottom:20px;
+  }
+  .tabknop{
+    flex:1 1 0;
+    font-family:"Lilita One",Impact,sans-serif;font-weight:400;
+    font-size:16px;letter-spacing:.02em;
+    cursor:pointer;border:none;border-radius:11px;
+    padding:11px 6px;
+    background:transparent;color:var(--inkt-zacht);
+    transition:background .15s ease, color .15s ease;
+  }
+  .tabknop:hover{color:var(--inkt)}
+  .tabknop.aan{background:var(--zee);color:#fff}
+
+  /* het wachtwoord staat standaard verborgen; hiermee kun je even kijken */
+  .toonknop{
+    font-family:"Nunito",sans-serif;font-weight:900;font-size:12.5px;
+    letter-spacing:.04em;cursor:pointer;
+    padding:8px 12px;border-radius:10px;
+    border:2px solid var(--rand);background:transparent;color:var(--inkt-zacht);
+  }
+  .toonknop:hover{color:var(--inkt)}
   .voorbeeld{
     margin:0;font-size:13.5px;font-weight:700;
     color:var(--inkt-zacht);font-variant-numeric:tabular-nums;
@@ -1274,7 +1303,7 @@
     return {van:van, tot:tot};
   }
 
-  var APPVERSIE = "22";         /* hoog dit samen met VERSIE in sw.js op */
+  var APPVERSIE = "23";         /* hoog dit samen met VERSIE in sw.js op */
   var NAAM = "Saar";            /* van wie is deze app; in de instellingen aan te passen */
   var WACHTWOORD = "0000";      /* standaardcode; in de instellingen aan te passen */
   var PUNTEN_PER_STICKER = 10;  /* standaardwaarden */
@@ -3185,9 +3214,29 @@
              '</span></div>';
   }
 
+  /* Het instellingenscherm werd te lang om in één keer te overzien. De vlakken
+     staan er alle drie in en worden alleen verborgen, zodat Opslaan ook de
+     velden van een tabblad kan lezen dat niet in beeld staat. */
+  var TABS = [
+    {id:"niveau", naam:"Niveau"},
+    {id:"sparen", naam:"Sparen"},
+    {id:"app",    naam:"De app"}
+  ];
+  var instelTab = "niveau";
+
   function toonInstellingen(){
     verlaatRonde();
     var html = '';
+
+    html += '<div class="tabrij" role="tablist">';
+    TABS.forEach(function(tab){
+      html += '<button class="tabknop' + (tab.id === instelTab ? ' aan' : '') + '" type="button" ' +
+              'role="tab" aria-selected="' + (tab.id === instelTab) + '" data-tab="' + tab.id + '">' +
+              tab.naam + '</button>';
+    });
+    html += '</div>';
+
+    html += '<div class="tabvlak" data-vlak="niveau"' + (instelTab === 'niveau' ? '' : ' hidden') + '>';
 
     html += '<section class="sectie"><h2>In welke groep zit ' + veiligeTekst(S.naam) + '?</h2>';
     html += '<p class="uitlegregel">De groep bepaalt hoe moeilijk alles is en welke onderwerpen ' +
@@ -3244,7 +3293,11 @@
     });
     html += '</div></div></section>';
 
-    html += '<section class="sectie" style="margin-top:22px"><h2>Hoe lang is een reeks?</h2>';
+    html += '</div>';
+
+    html += '<div class="tabvlak" data-vlak="sparen"' + (instelTab === 'sparen' ? '' : ' hidden') + '>';
+
+    html += '<section class="sectie"><h2>Hoe lang is een reeks?</h2>';
     html += '<div class="kaart"><div class="instellingen">';
     html += '<div class="instelling">' +
               '<div class="titel"><span class="merk ronde">●</span><b>Gewoon oefenen</b></div>' +
@@ -3288,7 +3341,11 @@
             '</div>';
     html += '</div></div></section>';
 
-    html += '<section class="sectie" style="margin-top:22px"><h2>Van wie is deze app?</h2>' +
+    html += '</div>';
+
+    html += '<div class="tabvlak" data-vlak="app"' + (instelTab === 'app' ? '' : ' hidden') + '>';
+
+    html += '<section class="sectie"><h2>Van wie is deze app?</h2>' +
             '<div class="kaart"><div class="naamrij">' +
             '<div class="naamveld">' +
               '<div class="velden"><label for="app-naam">naam ' +
@@ -3299,17 +3356,22 @@
             '<div class="naamicoon"><img id="icoon-vb" alt="Zo komt het icoon eruit te zien" ' +
               'width="88" height="88"><span>het app-icoon</span></div>' +
             '</div>' +
-            '<p class="voorbeeld" style="margin-top:14px">Staat de app al op een beginscherm? ' +
-            'Dan blijft daar het oude icoon staan: een tablet legt het icoon vast op het moment ' +
-            'dat je de app toevoegt. Haal hem eraf en zet hem er opnieuw op om het nieuwe te zien.</p>' +
-            '</div></section>';
+            '<p class="voorbeeld" style="margin-top:14px">In de browser verandert het icoon ' +
+            'meteen. Staat de app al op een beginscherm, dan hangt het van de tablet af wanneer ' +
+            'die het nieuwe icoon overneemt — dat kan een dag duren. Wil je het nu al zien, ' +
+            'zet hem dan opnieuw op het beginscherm.</p>' +
+            '<div class="knoppen" style="margin-top:12px">' +
+            '<button class="knop stil" type="button" id="naar-beginscherm" style="flex:0 1 auto">' +
+            'Op het beginscherm zetten</button>' +
+            '</div></div></section>';
 
     html += '<section class="sectie" style="margin-top:22px"><h2>De code van dit scherm</h2>' +
             '<div class="kaart"><div class="instellingen"><div class="instelling">' +
             '<div class="titel"><span class="merk slot">🔒</span><b>Wachtwoord</b></div>' +
             '<div class="velden"><label for="wachtwoord">vier cijfers ' +
-            '<input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="wachtwoord" ' +
-            'value="' + S.wachtwoord + '"></label></div>' +
+            '<input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" ' +
+            'id="wachtwoord" autocomplete="off" value="' + S.wachtwoord + '"></label>' +
+            '<button class="toonknop" type="button" id="toon-ww" aria-pressed="false">Tonen</button></div>' +
             '<p class="voorbeeld" id="ww-vb">Hiermee kom je in dit scherm. Vergeet hem niet.</p>' +
             '</div></div></div></section>';
 
@@ -3329,11 +3391,30 @@
             '<button class="knop stil" type="button" id="wis-alles" style="flex:0 1 auto">Punten wissen</button>' +
             '</div></section>';
 
+    html += '</div>';
+
     html += '<div class="knoppen" style="margin-top:18px">' +
             '<button class="knop" type="button" id="bewaar-knop">Opslaan</button>' +
             '<button class="knop stil" type="button" id="standaard-knop">Standaard terugzetten</button>' +
             '<button class="knop stil" type="button" id="terug">Terug</button></div>';
     scherm.innerHTML = html;
+
+    /* van tabblad wisselen: alleen tonen en verbergen, niets opnieuw opbouwen,
+       zodat half ingevulde velden blijven staan */
+    [].forEach.call(scherm.querySelectorAll("[data-tab]"), function(knop){
+      knop.addEventListener("click", function(){
+        instelTab = knop.getAttribute("data-tab");
+        [].forEach.call(scherm.querySelectorAll("[data-tab]"), function(k){
+          var aan = k.getAttribute("data-tab") === instelTab;
+          k.classList.toggle("aan", aan);
+          k.setAttribute("aria-selected", aan ? "true" : "false");
+        });
+        [].forEach.call(scherm.querySelectorAll("[data-vlak]"), function(v){
+          v.hidden = v.getAttribute("data-vlak") !== instelTab;
+        });
+        scherm.scrollIntoView({block:"start"});
+      });
+    });
 
     function ververVoorbeeld(id){
       var van = document.getElementById(id + "-van").value;
@@ -3416,6 +3497,18 @@
       veld.addEventListener("input", ververSpaar);
     });
     ververSpaar();
+
+    document.getElementById("naar-beginscherm").addEventListener("click", toonInstalleren);
+
+    /* het wachtwoord staat verborgen; even kijken kan met de knop ernaast */
+    var wwVeld = document.getElementById("wachtwoord");
+    var wwToon = document.getElementById("toon-ww");
+    wwToon.addEventListener("click", function(){
+      var stondOpen = wwVeld.type === "text";
+      wwVeld.type = stondOpen ? "password" : "text";
+      wwToon.textContent = stondOpen ? "Tonen" : "Verbergen";
+      wwToon.setAttribute("aria-pressed", stondOpen ? "false" : "true");
+    });
 
     /* de naam: meteen laten zien wat de titel en het icoon worden */
     var naamVeld = document.getElementById("app-naam");
@@ -4567,17 +4660,43 @@
   /* De <link>-iconen en het manifest opnieuw opbouwen. Gebeurt alleen als de
      naam is aangepast: bij de standaardnaam blijven de bestaande bestanden
      staan, en dan is er niets dat stuk kan gaan aan het installeren. */
-  var manifestUrl = null;
   /* de oorspronkelijke verwijzingen, om op terug te vallen zodra de naam weer
      de standaardnaam is */
   var vasteLinks = (function(){
     var uit = {};
-    ["icon", "apple-touch-icon", "manifest"].forEach(function(soort){
+    ["icon", "apple-touch-icon"].forEach(function(soort){
       var el = document.querySelector('link[rel="' + soort + '"]');
       if(el) uit[soort] = el.getAttribute("href");
     });
     return uit;
   })();
+
+  var EIGEN_CACHE = "rekenwereld-eigen";
+
+  /* Het manifest houdt zijn gewone adres (./manifest.webmanifest); alleen de
+     inhoud wisselt. De service worker kijkt eerst in deze cache, dus de browser
+     ziet de aangepaste naam en het nieuwe icoon op een echt, vast adres — dat
+     is wat hij nodig heeft om een geïnstalleerde app later bij te werken. */
+  function bewaarManifest(doc){
+    if(!window.caches || !window.Response) return;
+    try{
+      caches.open(EIGEN_CACHE).then(function(c){
+        c.put("./manifest.webmanifest",
+              new Response(JSON.stringify(doc),
+                           {headers:{"Content-Type":"application/manifest+json"}}))
+         .catch(function(){});
+      }).catch(function(){});
+    }catch(e){}
+  }
+
+  function wisEigenManifest(){
+    if(!window.caches) return;
+    try{
+      caches.open(EIGEN_CACHE).then(function(c){
+        c.delete("./manifest.webmanifest").catch(function(){});
+      }).catch(function(){});
+    }catch(e){}
+  }
 
   function zetAppIcoon(){
     if(S.naam === NAAM){
@@ -4585,7 +4704,7 @@
         var el = document.querySelector('link[rel="' + soort + '"]');
         if(el) el.href = vasteLinks[soort];
       });
-      if(manifestUrl){ try{ URL.revokeObjectURL(manifestUrl); }catch(e){} manifestUrl = null; }
+      wisEigenManifest();
       return;
     }
     metLettertype(function(){
@@ -4599,11 +4718,8 @@
       var appel = document.querySelector('link[rel="apple-touch-icon"]');
       if(appel) appel.href = tekenIcoon(S.naam, 180, 1) || i192;
 
-      var mf = document.querySelector('link[rel="manifest"]');
-      if(!mf || !window.Blob || !window.URL || !URL.createObjectURL) return;
-      /* een manifest uit het geheugen: alle verwijzingen absoluut, anders zou de
-         browser ze naast de blob-URL gaan zoeken in plaats van naast de app */
-      var doc = {
+      /* verwijzingen absoluut, zodat ze kloppen waar de app ook staat */
+      bewaarManifest({
         name: appTitel(),
         short_name: "Rekenwereld",
         description: "Oefenen met plus, min, keer, deel, de tafels en klokkijken. " +
@@ -4622,13 +4738,7 @@
           {src: i512,  sizes: "512x512", type: "image/png", purpose: "any"},
           {src: iMask, sizes: "512x512", type: "image/png", purpose: "maskable"}
         ]
-      };
-      try{
-        if(manifestUrl) URL.revokeObjectURL(manifestUrl);
-        manifestUrl = URL.createObjectURL(
-          new Blob([JSON.stringify(doc)], {type: "application/manifest+json"}));
-        mf.href = manifestUrl;
-      }catch(e){}
+      });
     });
   }
 
@@ -4740,7 +4850,14 @@
 
     var html = '<section class="sectie"><h2>De app op je tablet zetten</h2>';
     html += '<p class="uitlegregel">Daarna opent hij zonder adresbalk, met een eigen icoon, ' +
-            'en werkt hij ook zonder internet.</p></section>';
+            'en werkt hij ook zonder internet.</p>';
+    if(S.naam !== NAAM){
+      html += '<p class="uitlegregel"><b>Nieuw icoon met de naam ' + veiligeTekst(S.naam) + '?</b> ' +
+              'Haal de app dan eerst van het beginscherm af — houd het icoon ingedrukt en kies ' +
+              'verwijderen — en zet hem daarna opnieuw neer. Anders blijft het oude icoon staan ' +
+              'tot de tablet hem uit zichzelf bijwerkt.</p>';
+    }
+    html += '</section>';
 
     if(wachtendeVraag){
       html += '<div class="knoppen" style="margin-bottom:18px">' +

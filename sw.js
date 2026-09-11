@@ -1,6 +1,12 @@
 /* Service worker voor Saar's Rekenwereld.
    Verhoog VERSIE na elke wijziging aan index.html of vragen.js, dan halen tablets de nieuwe versie op. */
-var VERSIE = "rekenwereld-v22";
+var VERSIE = "rekenwereld-v23";
+
+/* Hier legt de app een zelfgemaakt manifest neer als de naam is aangepast. Deze
+   cache hoort niet bij een versie en wordt dus nooit opgeruimd: zo houdt het
+   manifest een echt, vast adres, en ziet de browser bij het installeren (en bij
+   zijn eigen controles) de nieuwe naam en het nieuwe icoon. */
+var EIGEN = "rekenwereld-eigen";
 
 var SCHIL = [
   "./",
@@ -35,7 +41,7 @@ self.addEventListener("activate", function(e){
   e.waitUntil(
     caches.keys().then(function(namen){
       return Promise.all(namen.map(function(naam){
-        if(naam !== VERSIE) return caches.delete(naam);
+        if(naam !== VERSIE && naam !== EIGEN) return caches.delete(naam);
       }));
     }).then(function(){ return self.clients.claim(); })
   );
@@ -79,6 +85,21 @@ self.addEventListener("fetch", function(e){
         }).catch(function(){ return hit; });
         return hit || vanNet;
       })
+    );
+    return;
+  }
+
+  /* Het manifest: heeft de app er zelf een neergelegd, dan gaat die voor. Zo
+     staat de aangepaste naam in het manifest zonder dat het adres verandert. */
+  if(verzoek.url.indexOf("manifest.webmanifest") !== -1){
+    e.respondWith(
+      caches.open(EIGEN).then(function(c){ return c.match("./manifest.webmanifest"); })
+        .then(function(eigen){
+          if(eigen) return eigen;
+          return caches.match(verzoek).then(function(hit){
+            return hit || fetch(verzoek);
+          });
+        }).catch(function(){ return fetch(verzoek); })
     );
     return;
   }
