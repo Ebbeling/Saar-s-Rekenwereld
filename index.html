@@ -105,6 +105,9 @@
   }
 
   *{box-sizing:border-box}
+  /* Een eigen display-regel wint van de standaard van de browser, waardoor een
+     element met hidden tóch zichtbaar blijft. Deze regel sluit dat uit. */
+  [hidden]{display:none !important}
   html{-webkit-text-size-adjust:100%;height:100%}
   body{
     margin:0;
@@ -1121,7 +1124,7 @@
     return {van:van, tot:tot};
   }
 
-  var APPVERSIE = "14";         /* hoog dit samen met VERSIE in sw.js op */
+  var APPVERSIE = "15";         /* hoog dit samen met VERSIE in sw.js op */
   var CODE = "1985";            /* code voor de instellingen; hier aan te passen */
   var PUNTEN_PER_STICKER = 10;  /* standaardwaarden */
   var STICKERS_PER_BELONING = 10;
