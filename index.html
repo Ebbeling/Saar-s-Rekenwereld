@@ -445,10 +445,12 @@
     body[data-scherm="ronde"] .toets{padding:10px 0;font-size:24px}
     body[data-scherm="ronde"] .knop{padding:9px 14px;font-size:17px}
     body[data-scherm="ronde"] .somkaart{padding:12px 14px}
+    /* een verhaaltje van vier regels duwt het toetsenbord anders van het scherm */
+    body[data-scherm="ronde"] .zin{font-size:15px;line-height:1.4;max-width:40ch;margin-bottom:10px}
   }
-  /* Is het scherm echt kort, dan gaat de titel er tijdens het rekenen ook af:
+  /* Is het scherm kort, dan gaat de titel er tijdens het rekenen ook af:
      de som en de score zijn dan belangrijker dan de kop. */
-  @media (max-height:640px){
+  @media (max-height:700px){
     body[data-scherm="ronde"] .kop{display:none}
   }
 
@@ -1208,7 +1210,7 @@
   }
 
   var R = window.REKENVRAGEN;
-  var NODIG = ["STICKERS","KLEUREN","LOF","BEREIKEN","GROEPEN","VAKKEN","UURNAAM","NIVEAUS",
+  var NODIG = ["STICKERS","KLEUREN","LOF","TROOST","BEREIKEN","GROEPEN","VAKKEN","UURNAAM","NIVEAUS",
                "KLOKSOORTEN","MAATEN","MAANDEN","DAGEN","NOEMERWOORD","SPULLEN","NAMEN","GROEPGETALLEN",
                "DINGEN","SJABLONEN","ONDERWERPEN"];
   if(!R || typeof R !== "object"){
@@ -1228,6 +1230,7 @@
   var STICKERS    = R.STICKERS;
   var KLEUREN     = R.KLEUREN;
   var LOF         = R.LOF;
+  var TROOST      = R.TROOST;
 
   /* getalbereik per soort som; grens = hoogst toegestane getal */
   var BEREIKEN    = R.BEREIKEN;
@@ -1253,7 +1256,7 @@
     return {van:van, tot:tot};
   }
 
-  var APPVERSIE = "19";         /* hoog dit samen met VERSIE in sw.js op */
+  var APPVERSIE = "20";         /* hoog dit samen met VERSIE in sw.js op */
   var WACHTWOORD = "0000";      /* standaardcode; in de instellingen aan te passen */
   var PUNTEN_PER_STICKER = 10;  /* standaardwaarden */
   var STICKERS_PER_BELONING = 10;
@@ -2338,6 +2341,9 @@
       .replace(/\{Zij\}/g, nm.v ? "Ze" : "Hij").replace(/\{zij\}/g, nm.v ? "ze" : "hij")
       .replace(/\{haar\}/g, nm.v ? "haar" : "zijn")
       .replace(/\{bakmv\}/g, x.ding.bakmv).replace(/\{bak\}/g, x.ding.bak)
+      /* het lidwoord hoort bij de verpakking en staat dus in de data, niet in de
+         zin: anders wordt het "in het mand" en "in elk doos" */
+      .replace(/\{lw\}/g, x.ding.lw).replace(/\{elk\}/g, x.ding.lw === "de" ? "elke" : "elk")
       .replace(/\{mv\}/g, x.ding.mv)
       .replace(/\{a\}/g, x.a).replace(/\{b\}/g, x.b);
   }
@@ -4047,7 +4053,8 @@
       bewaar();
       if(schudKaart) kaart.classList.add("mis");
       reactie.className = "reactie mis";
-      reactie.textContent = (v.lijf === "klok" ? "Bijna! Het is " : "Bijna! ") + somTekst(v);
+      reactie.textContent = TROOST[rnd(0, TROOST.length - 1)] +
+                            (v.lijf === "klok" ? " Het is " : " ") + somTekst(v);
       klankFout();
       setTimeout(volgende, 2200);
     }

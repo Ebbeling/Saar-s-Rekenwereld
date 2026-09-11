@@ -51,7 +51,7 @@ Daarna start de app vanaf het beginscherm met eigen icoon, zonder adresbalk.
 
 De service worker bewaart de app op het apparaat. Als je `index.html` of `vragen.js` aanpast:
 
-1. Pas in `sw.js` de regel `var VERSIE = "rekenwereld-v19";` aan naar `v20`, `v21`, enzovoort.
+1. Pas in `sw.js` de regel `var VERSIE = "rekenwereld-v20";` aan naar `v21`, `v22`, enzovoort.
 2. Pas in `index.html` de regel `var APPVERSIE = "18";` aan naar hetzelfde nummer.
 3. Upload de gewijzigde bestanden.
 
@@ -222,23 +222,47 @@ elke teksteditor openen en aanpassen zonder `index.html` aan te raken. Erin staa
 | `SJABLONEN`, `NAMEN`, `DINGEN` | de zinnen, namen en voorwerpen van de verhaaltjessommen |
 | `MAATEN`, `MAANDEN`, `DAGEN`, `SPULLEN`, `NOEMERWOORD` | de tabellen voor meten, kalender, verhoudingen en breuken |
 | `GROEPGETALLEN` | welke getallen bij welke groep horen |
-| `STICKERS`, `KLEUREN`, `LOF` | de stickers, hun kleuren en de complimentjes |
+| `STICKERS`, `KLEUREN` | de stickers en hun kleuren |
+| `LOF`, `TROOST` | wat de app zegt bij een goed en bij een fout antwoord |
 | `VAKKEN`, `GROEPEN`, `BEREIKEN`, `NIVEAUS`, `KLOKSOORTEN` | indeling van het beginscherm, het rapport en de klok |
 
 Op de eerste regel na (`window.REKENVRAGEN = {`) is het gewone JSON: objecten, lijsten,
 teksten en getallen. Een nieuwe verhaaltjeszin toevoegen is dus één regel erbij in de
 juiste lijst, met een komma ertussen.
 
-**Drie dingen om op te letten:**
+**Vier dingen om op te letten:**
 
 1. **Bewaar het als UTF-8**, anders verdwijnen de emoji en tekens als ½ en ⌀.
 2. **Het veld `maak`** noemt de naam van een rekenfunctie die in `index.html` staat. Die
    namen kun je niet zelf verzinnen; de app zegt het als er een onbekende naam staat.
 3. **De volgorde van `ONDERWERPEN`** bepaalt de volgorde van de tegels op het beginscherm.
+4. **Zet nieuwe namen, voorwerpen en zinnen achteraan** in hun lijst. Van een vraag die
+   Saar fout had wordt het *nummer* in de lijst bewaard, zodat hij bij een herkansing
+   precies zo terugkomt. Iets ertussen schuiven verandert die oude vragen; iets erbij
+   zetten niet.
 
 Gaat er iets mis — een komma vergeten, het bestand niet geüpload — dan start de app niet
 met een leeg scherm, maar met een uitleg die zegt wat er ontbreekt. `index.html` werkt
 vanaf nu dus niet meer los: de twee bestanden horen bij elkaar.
+
+### Een verhaaltjeszin toevoegen
+
+De zinnen staan in `SJABLONEN`, per bewerking (`plus`, `min`, `keer`, `deel`). Wat tussen
+accolades staat wordt ingevuld; al het andere blijft letterlijk staan:
+
+| | |
+| --- | --- |
+| `{N}` `{N2}` | twee verschillende namen |
+| `{Zij}` `{zij}` | "Ze"/"Hij" en "ze"/"hij" — hoort altijd bij `{N}` |
+| `{haar}` | "haar"/"zijn", dus `{haar} {bak}` |
+| `{mv}` | het voorwerp, meervoud |
+| `{bak}` `{bakmv}` | de verpakking, enkelvoud en meervoud |
+| `{lw}` `{elk}` | "de"/"het" en "elke"/"elk" bij die verpakking |
+| `{a}` `{b}` | de twee getallen |
+
+De getallen komen kant en klaar uit de rekenkern, dus een zin mag ze nooit omdraaien: bij
+`deel` is `{a}` het totaal en `{b}` de deler. Let er ook op dat een zin met grote getallen
+nog klopt — bij plus en min loopt `{a}` in groep 8 tot 1000.
 
 ## De onderwerpen
 

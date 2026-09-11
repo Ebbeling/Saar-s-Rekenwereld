@@ -5,7 +5,7 @@
    Bewaar dit bestand als UTF-8, anders verdwijnen de emoji en tekens als ½ en ⌀. */
 window.REKENVRAGEN = {
 
-  "versie": 1,
+  "versie": 2,
 
   /* ----- STICKERS ----- */
   STICKERS: ["⭐","🌈","🦄","🐙","🍉","🐝","🚀","🌻","🐬","🍩","🎈","🦊","🍄","🐸","⚡","🧁","🐳","🌵","🎸","🦋"],
@@ -14,7 +14,20 @@ window.REKENVRAGEN = {
   KLEUREN: ["#FF4D6D","#1FB877","#2A94E8","#8B5CF6","#FFB61E","#FF7A3D"],
 
   /* ----- LOF ----- */
-  LOF: ["Top!","Goed zo!","Knap!","Yes!","Precies!","Super!","Helemaal goed!"],
+  /* Wordt willekeurig gekozen bij een goed antwoord. Kort houden: er komt nog
+     " +1 punt" achter. Nieuwe regels mogen overal in deze lijst. */
+  LOF: ["Top!","Goed zo!","Knap!","Yes!","Precies!","Super!","Helemaal goed!",
+        "Geweldig!","Wat knap!","Lekker bezig!","Fantastisch!","Slim gedaan!",
+        "Dat klopt!","Klasse!","Perfect!","Goed gerekend!","Keurig!","Bravo!",
+        "Jij kunt dit!","Heel goed!","Super gedaan!","Netjes!","Hebbes!","Prima!"],
+
+  /* ----- TROOST ----- */
+  /* Bij een fout antwoord. Hierachter komt het goede antwoord, dus eindig met
+     een leesteken en blijf altijd vriendelijk. */
+  TROOST: ["Bijna!","Net niet!","Bijna goed!","Goed geprobeerd!","Geeft niks!",
+           "Deze was lastig!","Volgende keer lukt het!","Geen zorgen!","Blijf oefenen!",
+           "Goed bezig, hoor!","Net ernaast!","Foutjes horen erbij!","Bijna had je hem!",
+           "Kijk maar mee:"],
 
   /* ----- BEREIKEN ----- */
   BEREIKEN: [
@@ -90,34 +103,73 @@ window.REKENVRAGEN = {
                      5:"een vijfde van", 8:"een achtste van", 10:"een tiende van"},
 
   /* ----- SPULLEN ----- */
+  /* Alleen voor de verhoudingsvragen: "3 appels kosten € 6, wat kost er 1?".
+     Dus alleen dingen met een prijs. Beide velden worden gebruikt: mv in de
+     vraag, ev in de oplossing. */
   SPULLEN: [
     {ev:"appel", mv:"appels"}, {ev:"broodje", mv:"broodjes"}, {ev:"pen", mv:"pennen"},
-    {ev:"sticker", mv:"stickers"}, {ev:"koekje", mv:"koekjes"}, {ev:"ballon", mv:"ballonnen"}
+    {ev:"sticker", mv:"stickers"}, {ev:"koekje", mv:"koekjes"}, {ev:"ballon", mv:"ballonnen"},
+    {ev:"ijsje", mv:"ijsjes"}, {ev:"cupcake", mv:"cupcakes"}, {ev:"potlood", mv:"potloden"},
+    {ev:"boek", mv:"boeken"}, {ev:"knikker", mv:"knikkers"}, {ev:"snoepje", mv:"snoepjes"},
+    {ev:"bloem", mv:"bloemen"}, {ev:"cadeautje", mv:"cadeautjes"}, {ev:"sapje", mv:"sapjes"},
+    {ev:"kaartje", mv:"kaartjes"}, {ev:"donut", mv:"donuts"},
+    {ev:"notitieboekje", mv:"notitieboekjes"}, {ev:"beker", mv:"bekers"},
+    {ev:"flesje", mv:"flesjes"}
   ],
 
   /* ----- NAMEN ----- */
+  /* v:true is een meisjesnaam; daar hangen {zij}, {Zij} en {haar} aan. Zet nieuwe
+     namen achteraan: de plek in deze lijst wordt als nummer bewaard bij vragen
+     die Saar fout had. */
   NAMEN: [
     {n:"Saar", v:true}, {n:"Tess", v:true}, {n:"Fenna", v:true}, {n:"Noor", v:true},
-    {n:"Mees", v:false}, {n:"Luuk", v:false}, {n:"Daan", v:false}, {n:"Bram", v:false}
+    {n:"Mees", v:false}, {n:"Luuk", v:false}, {n:"Daan", v:false}, {n:"Bram", v:false},
+    {n:"Lina", v:true}, {n:"Mila", v:true}, {n:"Liv", v:true}, {n:"Julia", v:true},
+    {n:"Eva", v:true}, {n:"Sophie", v:true}, {n:"Lotte", v:true},
+    {n:"Finn", v:false}, {n:"Sem", v:false}, {n:"Liam", v:false}, {n:"Sam", v:false},
+    {n:"Mats", v:false}, {n:"Jesse", v:false}, {n:"Lucas", v:false}
   ],
 
   /* ----- DINGEN ----- */
+  /* De voorwerpen van de verhaaltjessommen. Drie eisen aan een nieuwe regel:
+     - lw is "de" of "het" bij bak, want de zinnen schrijven {lw} {bak};
+     - de bak moet iets zijn waar de spullen echt in kunnen ("in de vaas
+       zitten knikkers" is precies wat we niet willen);
+     - zet hem achteraan: de plek in deze lijst wordt als nummer bewaard. */
   DINGEN: [
-    {mv:"knikkers", bak:"zakje",   bakmv:"zakjes"},
-    {mv:"stickers", bak:"vel",     bakmv:"vellen"},
-    {mv:"koekjes",  bak:"trommel", bakmv:"trommels"},
-    {mv:"kaarten",  bak:"doos",    bakmv:"dozen"},
-    {mv:"appels",   bak:"mand",    bakmv:"manden"},
-    {mv:"potloden", bak:"etui",    bakmv:"etuis"},
-    {mv:"snoepjes", bak:"zakje",   bakmv:"zakjes"},
-    {mv:"boeken",   bak:"plank",   bakmv:"planken"},
-    {mv:"schelpen", bak:"emmer",   bakmv:"emmers"},
-    {mv:"kralen",   bak:"potje",   bakmv:"potjes"},
-    {mv:"bloemen",  bak:"vaas",    bakmv:"vazen"},
-    {mv:"ballonnen",bak:"tros",    bakmv:"trossen"}
+    {mv:"knikkers",     bak:"zakje",     bakmv:"zakjes",      lw:"het"},
+    {mv:"stickers",     bak:"vel",       bakmv:"vellen",      lw:"het"},
+    {mv:"koekjes",      bak:"trommel",   bakmv:"trommels",    lw:"de"},
+    {mv:"kaarten",      bak:"doos",      bakmv:"dozen",       lw:"de"},
+    {mv:"appels",       bak:"mand",      bakmv:"manden",      lw:"de"},
+    {mv:"potloden",     bak:"etui",      bakmv:"etui's",      lw:"het"},
+    {mv:"snoepjes",     bak:"zakje",     bakmv:"zakjes",      lw:"het"},
+    {mv:"boeken",       bak:"kast",      bakmv:"kasten",      lw:"de"},
+    {mv:"schelpen",     bak:"emmer",     bakmv:"emmers",      lw:"de"},
+    {mv:"kralen",       bak:"potje",     bakmv:"potjes",      lw:"het"},
+    {mv:"bloemen",      bak:"vaas",      bakmv:"vazen",       lw:"de"},
+    {mv:"ballonnen",    bak:"zak",       bakmv:"zakken",      lw:"de"},
+    {mv:"knuffels",     bak:"mand",      bakmv:"manden",      lw:"de"},
+    {mv:"cupcakes",     bak:"doos",      bakmv:"dozen",       lw:"de"},
+    {mv:"sterren",      bak:"boekje",    bakmv:"boekjes",     lw:"het"},
+    {mv:"vlinders",     bak:"net",       bakmv:"netten",      lw:"het"},
+    {mv:"kastanjes",    bak:"emmer",     bakmv:"emmers",      lw:"de"},
+    {mv:"legoblokjes",  bak:"bak",       bakmv:"bakken",      lw:"de"},
+    {mv:"haarspeldjes", bak:"doosje",    bakmv:"doosjes",     lw:"het"},
+    {mv:"sleutels",     bak:"la",        bakmv:"laden",       lw:"de"},
+    {mv:"pennen",       bak:"beker",     bakmv:"bekers",      lw:"de"},
+    {mv:"eieren",       bak:"doos",      bakmv:"dozen",       lw:"de"},
+    {mv:"sokken",       bak:"la",        bakmv:"laden",       lw:"de"},
+    {mv:"munten",       bak:"spaarpot",  bakmv:"spaarpotten", lw:"de"},
+    {mv:"schriften",    bak:"tas",       bakmv:"tassen",      lw:"de"},
+    {mv:"kaarsjes",     bak:"doosje",    bakmv:"doosjes",     lw:"het"},
+    {mv:"pepernoten",   bak:"zak",       bakmv:"zakken",      lw:"de"},
+    {mv:"postzegels",   bak:"album",     bakmv:"albums",      lw:"het"},
+    {mv:"toverballen",  bak:"pot",       bakmv:"potten",      lw:"de"},
+    {mv:"zaadjes",      bak:"zakje",     bakmv:"zakjes",      lw:"het"}
   ],
 
-  /* ----- SJABLONEN ----- */
+  /* ----- GROEPGETALLEN ----- */
   GROEPGETALLEN: {
     "tot":  [0,0,0, 20, 100, 1000, 10000, 100000, 100000],
     "keer": [0,0,0, 10, 10, 10, 20, 50, 100],
@@ -125,35 +177,90 @@ window.REKENVRAGEN = {
              "per 5 minuten", "per 5 minuten", "per 5 minuten"]
   },
 
-  /* ----- SJABLONEN ----- */
+  /* ----- SJABLONEN -----
+     De zinnen van de verhaaltjessommen, per bewerking. Alleen deze plaatshouders
+     worden ingevuld; al het andere tussen accolades blijft letterlijk staan:
+
+       {N} {N2}    twee verschillende namen
+       {Zij} {zij} "Ze"/"Hij" en "ze"/"hij" — hoort altijd bij {N}, nooit bij {N2}
+       {haar}      bezittelijk: "haar"/"zijn", dus {haar} {bak}
+       {mv}        het voorwerp, meervoud
+       {bak} {bakmv} de verpakking, enkelvoud en meervoud
+       {lw} {elk}  "de"/"het" en "elke"/"elk" bij die verpakking
+       {a} {b}     de twee getallen
+
+     De getallen komen kant en klaar uit de rekenkern; een zin mag ze nooit
+     omdraaien. Bij deel is {a} het totaal en {b} de deler. Let erop dat een zin
+     ook met grote getallen nog klopt: bij plus en min loopt {a} tot 1000, dus
+     geen "eet er {b} op" en geen "in {haar} hand". */
   SJABLONEN: {
     plus: [
       "{N} heeft {a} {mv}. {Zij} krijgt er {b} bij. Hoeveel {mv} heeft {N} nu?",
-      "In het {bak} liggen {a} {mv}. {N2} legt er {b} bij. Hoeveel liggen er nu in het {bak}?",
+      "In {lw} {bak} liggen {a} {mv}. {N2} legt er {b} bij. Hoeveel liggen er nu in {lw} {bak}?",
       "{N} telt {a} {mv} en {N2} telt er {b}. Hoeveel zijn dat er samen?",
       "Op het feest zijn {a} {mv} en {N} neemt er nog {b} mee. Hoeveel {mv} zijn er dan?",
-      "{N} spaarde eerst {a} {mv} en daarna nog {b}. Hoeveel heeft {zij} er nu?"
+      "{N} spaarde eerst {a} {mv} en daarna nog {b}. Hoeveel heeft {zij} er nu?",
+      "{N} vindt {a} {mv} en even later nog {b}. Hoeveel {mv} heeft {zij} dan gevonden?",
+      "{N} heeft {a} {mv} en {N2} heeft er {b}. Hoeveel {mv} hebben ze samen?",
+      "{N} verdient {a} punten in het eerste spel en {b} punten in het tweede. Hoeveel punten zijn dat samen?",
+      "{N} verzamelt {a} {mv} en krijgt er {b} cadeau. Hoeveel {mv} heeft {zij} dan?",
+      "In {lw} {bak} zitten al {a} {mv}. Er komen er nog {b} bij. Hoeveel {mv} zitten er dan in?",
+      "{N} legt {a} {mv} op tafel en {N2} legt er {b} naast. Hoeveel {mv} liggen er samen?",
+      "{N} bewaart {a} {mv} en vindt er nog {b} in {lw} {bak}. Hoeveel {mv} heeft {zij} dan?",
+      "Op school liggen {a} {mv} klaar en er komen er nog {b} bij. Hoeveel {mv} zijn dat?",
+      "{N} telt {a} {mv} in {lw} {bak} en {b} {mv} ernaast. Hoeveel {mv} zijn dat bij elkaar?",
+      "{N} spaart {a} {mv} in {haar} {bak} en legt er {b} bij. Hoeveel {mv} zitten er dan in?"
     ],
     min: [
       "{N} heeft {a} {mv} en geeft er {b} weg. Hoeveel houdt {zij} over?",
-      "Er liggen {a} {mv} in het {bak}. {N2} pakt er {b} uit. Hoeveel blijven er liggen?",
-      "{N} had {a} {mv}, maar {b} zijn er kwijt. Hoeveel {mv} heeft {zij} nog?",
+      "Er liggen {a} {mv} in {lw} {bak}. {N2} pakt er {b} uit. Hoeveel blijven er liggen?",
+      "{N} had {a} {mv}, maar is er {b} kwijtgeraakt. Hoeveel {mv} heeft {zij} nog?",
       "Van de {a} {mv} deelt {N} er {b} uit. Hoeveel blijven er over?",
-      "{N} telt {a} {mv} en verkoopt er {b} op de rommelmarkt. Hoeveel houdt {zij} er over?"
+      "{N} telt {a} {mv} en verkoopt er {b} op de rommelmarkt. Hoeveel houdt {zij} er over?",
+      "{N} heeft {a} {mv} verzameld en geeft er {b} aan {N2}. Hoeveel {mv} houdt {zij} over?",
+      "In {lw} {bak} zaten {a} {mv}. {N} gebruikt er {b}. Hoeveel {mv} zitten er nog in?",
+      "Er lagen {a} {mv} klaar. {N2} haalde er {b} op. Hoeveel {mv} liggen er nog?",
+      "{N} begon met {a} {mv} en raakte er {b} kwijt. Hoeveel {mv} heeft {zij} nog?",
+      "Van de {a} {mv} in {lw} {bak} haalt {N} er {b} weg. Hoeveel {mv} zitten er nog in?",
+      "{N} heeft {a} {mv} en doet er {b} in {haar} {bak}. Hoeveel {mv} heeft {zij} nog los?",
+      "Er waren {a} {mv}. {N} deelde er {b} uit. Hoeveel {mv} zijn er nog over?",
+      "{N} telde {a} {mv} en {N2} nam er {b} mee. Hoeveel {mv} bleven er over?",
+      "Op de markt lagen {a} {mv}. {N} verkocht er {b}. Hoeveel {mv} liggen er nog?",
+      "{N} spaarde {a} {mv}, maar gaf er {b} weg. Hoeveel {mv} heeft {zij} nu nog?"
     ],
     keer: [
       "{N} heeft {a} {bakmv} met elk {b} {mv}. Hoeveel {mv} zijn dat samen?",
-      "Er staan {a} {bakmv} op tafel. In elk {bak} zitten {b} {mv}. Hoeveel {mv} zijn er in totaal?",
-      "{N} koopt {a} {bakmv} {mv}. In elk {bak} zitten er {b}. Hoeveel {mv} heeft {zij} dan?",
-      "Elke dag legt {N} {b} {mv} in het {bak}. Hoeveel liggen er na {a} dagen in?",
-      "{N} maakt {a} rijtjes van {b} {mv}. Hoeveel {mv} zijn dat bij elkaar?"
+      "Er staan {a} {bakmv} op tafel. In {elk} {bak} zitten {b} {mv}. Hoeveel {mv} zijn er in totaal?",
+      "{N} koopt {a} {bakmv} {mv}. In {elk} {bak} zitten er {b}. Hoeveel {mv} heeft {zij} dan?",
+      "Elke dag legt {N} {b} {mv} in {lw} {bak}. Hoeveel liggen er na {a} dagen in?",
+      "{N} maakt {a} rijtjes van {b} {mv}. Hoeveel {mv} zijn dat bij elkaar?",
+      "{N} maakt {a} groepjes van {b} {mv}. Hoeveel {mv} zijn dat samen?",
+      "{N} geeft {b} {mv} aan elk van de {a} kinderen. Hoeveel {mv} geeft {zij} weg?",
+      "{N} vult {a} {bakmv} met elk {b} {mv}. Hoeveel {mv} heeft {zij} nodig?",
+      "{N} spaart {b} {mv} per dag. Hoeveel {mv} heeft {zij} na {a} dagen?",
+      "Op {a} tafels liggen telkens {b} {mv}. Hoeveel {mv} liggen er samen?",
+      "{N} heeft {a} {bakmv} en doet in {elk} {bak} {b} {mv}. Hoeveel {mv} gebruikt {zij}?",
+      "{N} en {N2} maken samen {a} rijtjes van {b} {mv}. Hoeveel {mv} zijn dat?",
+      "Elke week krijgt {N} {b} {mv}. Hoeveel {mv} heeft {zij} na {a} weken?",
+      "{N} pakt {a} keer {b} {mv}. Hoeveel {mv} heeft {zij} dan gepakt?",
+      "Er zijn {a} kinderen en ieder krijgt {b} {mv}. Hoeveel {mv} zijn er nodig?"
     ],
     deel: [
-      "{N} verdeelt {a} {mv} eerlijk over {b} {bakmv}. Hoeveel {mv} komen er in elk {bak}?",
+      "{N} verdeelt {a} {mv} eerlijk over {b} {bakmv}. Hoeveel {mv} komen er in {elk} {bak}?",
       "Er zijn {a} {mv} voor {b} kinderen. Ieder krijgt er evenveel. Hoeveel krijgt elk kind?",
       "{N} legt {a} {mv} in rijtjes van {b}. Hoeveel rijtjes worden dat?",
-      "In {b} {bakmv} zitten samen {a} {mv}, in elk {bak} evenveel. Hoeveel zitten er in een {bak}?",
-      "{N} deelt {a} {mv} uit aan {b} vriendinnen. Hoeveel krijgt ieder?"
+      "In {b} {bakmv} zitten samen {a} {mv}, in {elk} {bak} evenveel. Hoeveel zitten er in één {bak}?",
+      "{N} deelt {a} {mv} uit aan {b} vrienden. Hoeveel krijgt ieder?",
+      "{N} verdeelt {a} {mv} eerlijk over {b} kinderen. Hoeveel krijgt ieder kind?",
+      "{N} heeft {a} {mv} en maakt groepjes van {b}. Hoeveel groepjes kan {zij} maken?",
+      "{N} vult {b} {bakmv} met samen {a} {mv}, in {elk} {bak} evenveel. Hoeveel is dat?",
+      "{N} en {N2} verdelen {a} {mv} over {b} {bakmv}. Hoeveel komt er in {elk} {bak}?",
+      "Er liggen {a} {mv} klaar voor {b} kinderen. Hoeveel {mv} krijgt ieder kind?",
+      "{N} deelt {a} {mv} in {b} gelijke stapeltjes. Hoeveel {mv} liggen er op elk stapeltje?",
+      "Uit {lw} {bak} komen {a} {mv}. Ze gaan in {b} gelijke groepjes. Hoeveel zitten er in een groepje?",
+      "{N} zet {a} {mv} in rijen van {b}. Hoeveel rijen worden dat?",
+      "{a} {mv} worden eerlijk verdeeld over {b} {bakmv}. Hoeveel {mv} zitten er dan in {elk} {bak}?",
+      "{N} heeft {a} {mv} en wil er {b} in {elk} {bak} doen. Hoeveel {bakmv} heeft {zij} nodig?"
     ]
   }
 ,
