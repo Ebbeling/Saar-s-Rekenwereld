@@ -1014,6 +1014,26 @@
   .groepstrook b{font-family:"Lilita One",Impact,sans-serif;font-weight:400;font-size:17px;display:block}
   .groepstrook span span{font-size:12.5px;font-weight:700;color:var(--inkt-zacht);display:block;margin-top:1px}
 
+  /* uitnodiging om de app op het beginscherm te zetten */
+  .tabletstrook{
+    font:inherit;text-align:left;cursor:pointer;width:100%;
+    border:2px solid var(--rand);border-radius:16px;
+    background:var(--kaart);color:var(--inkt);
+    padding:13px 16px;margin-top:12px;
+    display:flex;align-items:center;gap:13px;
+  }
+  .tabletstrook .teken{font-size:24px;line-height:1;flex:none}
+  .tabletstrook b{font-family:"Lilita One",Impact,sans-serif;font-weight:400;font-size:17px;display:block}
+  .tabletstrook span span{font-size:12.5px;font-weight:700;color:var(--inkt-zacht);display:block;margin-top:1px}
+
+  .uitleglijst{display:flex;flex-direction:column;gap:14px}
+  .uitlegblok h3{
+    font-family:"Lilita One",Impact,sans-serif;font-weight:400;
+    font-size:18px;margin:0 0 8px;letter-spacing:.02em;
+  }
+  .stappen{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:8px}
+  .stappen li{font-size:14.5px;font-weight:700;line-height:1.5}
+
   .tiphint{
     background:var(--kaart);
     border:2px dashed var(--rand);
@@ -1038,7 +1058,10 @@
     </div>
   </header>
 
-  <p class="tiphint" id="ipad-tip" hidden>Zet de app op het beginscherm: tik onderin op <b>Deel</b> en daarna op <b>Zet op beginscherm</b>.</p>
+  <button class="tabletstrook" id="zet-op-tablet" type="button" hidden>
+    <span class="teken">📲</span>
+    <span><b>Op je tablet zetten</b><span>Dan opent de app zonder browser, en werkt hij offline</span></span>
+  </button>
 
   <div class="score">
     <div class="p"><b id="sc-punten">0</b><span>Punten</span></div>
@@ -1124,7 +1147,7 @@
     return {van:van, tot:tot};
   }
 
-  var APPVERSIE = "15";         /* hoog dit samen met VERSIE in sw.js op */
+  var APPVERSIE = "16";         /* hoog dit samen met VERSIE in sw.js op */
   var CODE = "1985";            /* code voor de instellingen; hier aan te passen */
   var PUNTEN_PER_STICKER = 10;  /* standaardwaarden */
   var STICKERS_PER_BELONING = 10;
@@ -4054,8 +4077,11 @@
   }
 
   var installKnop = document.getElementById("installeer-knop");
-  var ipadTip = document.getElementById("ipad-tip");
+  var tabletStrook = document.getElementById("zet-op-tablet");
   var wachtendeVraag = null;
+
+  /* alleen op de zelfgehoste versie (die heeft een manifest) installeren we iets */
+  var zelfGehost = !!document.querySelector('link[rel="manifest"]') && location.protocol !== "file:";
 
   window.addEventListener("beforeinstallprompt", function(e){
     e.preventDefault();
@@ -4064,7 +4090,7 @@
   });
 
   installKnop.addEventListener("click", function(){
-    if(!wachtendeVraag) return;
+    if(!wachtendeVraag){ toonInstalleren(); return; }
     wachtendeVraag.prompt();
     wachtendeVraag.userChoice.then(function(){
       wachtendeVraag = null;
@@ -4075,17 +4101,69 @@
   window.addEventListener("appinstalled", function(){
     wachtendeVraag = null;
     installKnop.hidden = true;
-    ipadTip.hidden = true;
+    tabletStrook.hidden = true;
     toast("Gelukt! De app staat nu op je beginscherm.");
   });
 
-  /* alleen op de zelfgehoste versie (die heeft een manifest) installeren we iets */
-  var zelfGehost = !!document.querySelector('link[rel="manifest"]') && location.protocol !== "file:";
+  tabletStrook.addEventListener("click", toonInstalleren);
 
-  /* iPad en iPhone kennen geen installatieknop: daar de route via Deel tonen */
-  var isApple = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-                (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-  if(isApple && zelfGehost && !alsApp()) ipadTip.hidden = false;
+  /* Niet meer raden welk apparaat dit is: die gok gaat op een iPad vaak mis, omdat
+     die zich als een Mac voordoet. Staat de app nog niet op het beginscherm, dan
+     bieden we altijd uitleg aan — met beide routes erin. */
+  if(zelfGehost && !alsApp()) tabletStrook.hidden = false;
+
+  /* Beste gok voor de volgorde van de uitleg, niet om iets te verbergen. */
+  function lijktApple(){
+    var ua = navigator.userAgent || "";
+    if(/iPad|iPhone|iPod/.test(ua)) return true;
+    if(/Macintosh/.test(ua) && navigator.maxTouchPoints > 1) return true;
+    return false;
+  }
+
+  function toonInstalleren(){
+    verlaatRonde();
+    var appleEerst = lijktApple();
+
+    var apple =
+      '<div class="kaart uitlegblok"><h3>Op een iPad of iPhone</h3>' +
+      '<p class="uitlegregel" style="margin:0 0 10px">Dit moet in <b>Safari</b>. In Chrome op een ' +
+      'iPad zit de knop er niet.</p><ol class="stappen">' +
+      '<li>Tik onderin (of rechtsboven) op de <b>Deel</b>-knop — het vierkantje met het pijltje omhoog.</li>' +
+      '<li>Veeg in de lijst omlaag tot <b>Zet op beginscherm</b>.</li>' +
+      '<li>Tik op <b>Voeg toe</b>.</li></ol></div>';
+
+    var android =
+      '<div class="kaart uitlegblok"><h3>Op een Android-tablet</h3>' +
+      '<p class="uitlegregel" style="margin:0 0 10px">Dit werkt het best in <b>Chrome</b>.</p>' +
+      '<ol class="stappen">' +
+      '<li>Tik rechtsboven op de drie puntjes <b>⋮</b>.</li>' +
+      '<li>Kies <b>App installeren</b>, of anders <b>Toevoegen aan startscherm</b>.</li>' +
+      '<li>Bevestig met <b>Installeren</b>.</li></ol></div>';
+
+    var html = '<section class="sectie"><h2>De app op je tablet zetten</h2>';
+    html += '<p class="uitlegregel">Daarna opent hij zonder adresbalk, met een eigen icoon, ' +
+            'en werkt hij ook zonder internet.</p></section>';
+
+    if(wachtendeVraag){
+      html += '<div class="knoppen" style="margin-bottom:18px">' +
+              '<button class="knop" type="button" id="nu-installeren">Nu installeren</button></div>';
+    }
+    html += '<div class="uitleglijst">' + (appleEerst ? apple + android : android + apple) + '</div>';
+    html += '<div class="kaart" style="margin-top:18px"><p class="uitlegregel" style="margin:0">' +
+            'Zie je de knop of het menu-item niet staan? Ververs de pagina één keer. De app moet ' +
+            'eerst helemaal geladen zijn voordat een tablet hem als app aanbiedt.</p></div>';
+    html += '<div class="knoppen" style="margin-top:18px">' +
+            '<button class="knop stil" type="button" id="terug">Terug</button></div>';
+
+    scherm.innerHTML = html;
+    var nu = document.getElementById("nu-installeren");
+    if(nu) nu.addEventListener("click", function(){
+      if(!wachtendeVraag) return;
+      wachtendeVraag.prompt();
+      wachtendeVraag.userChoice.then(function(){ wachtendeVraag = null; toonHome(); });
+    });
+    document.getElementById("terug").addEventListener("click", toonHome);
+  }
 
   /* ----- versie tonen en bijwerken ----- */
   function toonVersie(extra){
