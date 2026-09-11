@@ -1,0 +1,4142 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Saar's Rekenwereld</title>
+<meta name="description" content="Oefenen met plus, min, keer, deel, de tafels en klokkijken. Punten sparen voor stickers en beloningen.">
+
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#F4F8FD" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101C33" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Rekenwereld">
+<link rel="icon" href="./icons/icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+
+<link rel="preload" href="./fonts/nunito-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="./fonts/lilita-one-latin.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+  /* lettertypes staan in de map zelf, zodat de app zonder internet hetzelfde blijft */
+  @font-face{
+    font-family:"Lilita One";
+    src:url("./fonts/lilita-one-latin.woff2") format("woff2");
+    font-weight:400;font-style:normal;font-display:swap;
+  }
+  @font-face{
+    font-family:"Nunito";
+    src:url("./fonts/nunito-latin.woff2") format("woff2");
+    font-weight:400;font-style:normal;font-display:swap;
+  }
+  @font-face{
+    font-family:"Nunito";
+    src:url("./fonts/nunito-latin.woff2") format("woff2");
+    font-weight:700;font-style:normal;font-display:swap;
+  }
+  @font-face{
+    font-family:"Nunito";
+    src:url("./fonts/nunito-latin.woff2") format("woff2");
+    font-weight:900;font-style:normal;font-display:swap;
+  }
+
+  :root{
+    --papier:#F4F8FD;
+    --ruit:#DDE8F7;
+    --inkt:#16244A;
+    --inkt-zacht:#5D6E92;
+    --kaart:#FFFFFF;
+    --rand:rgba(22,36,74,.14);
+    --schaduw:rgba(22,36,74,.22);
+    --framboos:#FF4D6D;
+    --gras:#1FB877;
+    --zee:#2A94E8;
+    --druif:#8B5CF6;
+    --zon:#FFB61E;
+    --klok:#FF7A3D;
+    --alles:#16244A;
+    --alles-diep:#05090F;
+    --fout:#E23D5A;
+    --goed:#1FB877;
+    color-scheme:light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --papier:#101C33;
+      --ruit:#1C2C4B;
+      --inkt:#EAF1FF;
+      --inkt-zacht:#94A6C9;
+      --kaart:#1A2843;
+      --rand:rgba(255,255,255,.12);
+      --schaduw:rgba(0,0,0,.45);
+      --framboos:#FF6B85;
+      --gras:#2FD08C;
+      --zee:#49A8F3;
+      --druif:#A98BFF;
+      --zon:#FFC94D;
+      --klok:#FF9463;
+      --alles:#31497D;
+      --alles-diep:#16244A;
+      --goed:#2FD08C;
+      --fout:#FF6B85;
+      color-scheme:dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --papier:#101C33;
+    --ruit:#1C2C4B;
+    --inkt:#EAF1FF;
+    --inkt-zacht:#94A6C9;
+    --kaart:#1A2843;
+    --rand:rgba(255,255,255,.12);
+    --schaduw:rgba(0,0,0,.45);
+    --framboos:#FF6B85;
+    --gras:#2FD08C;
+    --zee:#49A8F3;
+    --druif:#A98BFF;
+    --zon:#FFC94D;
+    --klok:#FF9463;
+    --alles:#31497D;
+    --alles-diep:#16244A;
+    --goed:#2FD08C;
+    --fout:#FF6B85;
+    color-scheme:dark;
+  }
+
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%;height:100%}
+  body{
+    margin:0;
+    min-height:100%;
+    font-family:"Nunito",system-ui,-apple-system,"Segoe UI",sans-serif;
+    color:var(--inkt);
+    background-color:var(--papier);
+    background-image:
+      linear-gradient(var(--ruit) 1px, transparent 1px),
+      linear-gradient(90deg, var(--ruit) 1px, transparent 1px);
+    background-size:28px 28px;
+    background-position:-1px -1px;
+    -webkit-text-size-adjust:100%;
+    -webkit-tap-highlight-color:transparent;
+    overscroll-behavior-y:contain;
+  }
+  /* als app op het beginscherm: geen tekstselectie of dubbeltik-zoom op knoppen */
+  button{
+    touch-action:manipulation;
+    -webkit-user-select:none;
+    user-select:none;
+  }
+  .som,.digitaal,.klokhouder,.slots,.score,.stippen{
+    -webkit-user-select:none;
+    user-select:none;
+  }
+  .wrap{
+    max-width:620px;
+    margin:0 auto;
+    padding-inline:calc(18px + env(safe-area-inset-left)) calc(18px + env(safe-area-inset-right));
+    padding-block:calc(20px + env(safe-area-inset-top)) calc(48px + env(safe-area-inset-bottom));
+    display:flex;
+    flex-direction:column;
+    gap:22px;
+  }
+
+  /* ---------- kop ---------- */
+  .kop{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .logo{
+    font-family:"Lilita One",Impact,sans-serif;
+    font-size:clamp(28px,7vw,40px);
+    line-height:1;
+    letter-spacing:.01em;
+    margin:0;
+    text-wrap:balance;
+  }
+  .logo .w{color:var(--framboos)}
+  .geluid{
+    font:inherit;font-weight:700;font-size:14px;
+    color:var(--inkt-zacht);
+    background:var(--kaart);
+    border:2px solid var(--rand);
+    border-radius:999px;
+    padding:7px 14px;
+    cursor:pointer;
+  }
+  .geluid:hover{color:var(--inkt)}
+
+  /* ---------- scorestrook ---------- */
+  .score{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .score div{
+    background:var(--kaart);
+    border:2px solid var(--rand);
+    border-radius:14px;
+    padding:10px 12px;
+    text-align:center;
+  }
+  .score b{
+    display:block;
+    font-family:"Lilita One",Impact,sans-serif;
+    font-size:26px;
+    line-height:1.1;
+    font-variant-numeric:tabular-nums;
+  }
+  .score span{font-size:12px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--inkt-zacht)}
+  .score .p b{color:var(--zee)}
+  .score .s b{color:var(--framboos)}
+  .score .b b{color:var(--zon)}
+
+  h2{
+    font-family:"Lilita One",Impact,sans-serif;
+    font-weight:400;
+    font-size:20px;
+    margin:0 0 12px;
+    letter-spacing:.02em;
+  }
+  .sectie{display:block}
+
+  /* ---------- categorieknoppen ---------- */
+  .cats{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .cat{
+    font:inherit;
+    text-align:left;
+    cursor:pointer;
+    border:none;
+    border-radius:18px;
+    padding:16px 16px 14px;
+    color:#fff;
+    background:var(--kleur);
+    box-shadow:0 5px 0 var(--diep), 0 8px 16px var(--schaduw);
+    display:flex;align-items:center;gap:14px;
+    transition:transform .08s ease, box-shadow .08s ease;
+  }
+  .cat:active{transform:translateY(4px);box-shadow:0 1px 0 var(--diep), 0 3px 8px var(--schaduw)}
+  .cat .teken{
+    font-family:"Lilita One",Impact,sans-serif;
+    font-size:34px;line-height:1;
+    width:52px;height:52px;flex:none;
+    display:grid;place-items:center;
+    background:rgba(255,255,255,.22);
+    border-radius:14px;
+  }
+  .cat .naam{font-family:"Lilita One",Impact,sans-serif;font-size:21px;letter-spacing:.02em;display:block}
+  .cat .uitleg{font-size:13px;font-weight:700;opacity:.85;display:block;margin-top:1px}
+  .cat.plus{--kleur:var(--gras);--diep:#12905B}
+  .cat.min{--kleur:var(--zee);--diep:#1A6FB4}
+  .cat.keer{--kleur:var(--druif);--diep:#6A3FD1}
+  .cat.deel{--kleur:var(--framboos);--diep:#D22B4B}
+  .cat.tafels{--kleur:var(--zon);--diep:#D38A00;color:#3A2600}
+  .cat.tafels .teken{background:rgba(58,38,0,.14)}
+  .cat.klok{--kleur:var(--klok);--diep:#C9531C}
+  /* eigen tokens, want --inkt draait in het donker om en maakte de tekst onleesbaar */
+  .cat.alles{--kleur:var(--alles);--diep:var(--alles-diep);color:#fff}
+  .cat.breed{grid-column:1 / -1}
+
+  /* de nieuwe onderwerpen: één bestaande kleur per tegel */
+  .cat.ontbrekend{--kleur:var(--gras);--diep:#12905B}
+  .cat.dubbel{--kleur:var(--zee);--diep:#1A6FB4}
+  .cat.splitsen{--kleur:var(--gras);--diep:#12905B}
+  .cat.vergelijk{--kleur:var(--zee);--diep:#1A6FB4}
+  .cat.afronden{--kleur:var(--zee);--diep:#1A6FB4}
+  .cat.komma{--kleur:var(--klok);--diep:#C9531C}
+  .cat.negatief{--kleur:var(--zee);--diep:#1A6FB4}
+  .cat.gemiddelde{--kleur:var(--gras);--diep:#12905B}
+  .cat.geld{--kleur:var(--zon);--diep:#D38A00;color:#3A2600}
+  .cat.geld .teken{background:rgba(58,38,0,.14)}
+  .cat.meten{--kleur:var(--druif);--diep:#6A3FD1}
+  .cat.duur{--kleur:var(--klok);--diep:#C9531C}
+  .cat.kalender{--kleur:var(--framboos);--diep:#D22B4B}
+  .cat.oppervlakte{--kleur:var(--gras);--diep:#12905B}
+  .cat.breuk{--kleur:var(--druif);--diep:#6A3FD1}
+  .cat.procent{--kleur:var(--framboos);--diep:#D22B4B}
+  .cat.verhouding{--kleur:var(--zon);--diep:#D38A00;color:#3A2600}
+  .cat.verhouding .teken{background:rgba(58,38,0,.14)}
+  .cat.rest{--kleur:var(--framboos);--diep:#D22B4B}
+  .cat.deeltafels{--kleur:var(--zee);--diep:#1A6FB4}
+  .cat.verhaal{--kleur:var(--framboos);--diep:#D22B4B}
+
+  /* compacte tegels voor de vakken buiten Rekenen */
+  .cats.klein{gap:10px}
+  .cat.compact{padding:12px 12px 11px;gap:11px}
+  .cat.compact .teken{width:40px;height:40px;font-size:22px;border-radius:11px}
+  .cat.compact .naam{font-size:16.5px;line-height:1.15}
+  /* een icoon van meer dan één teken (0,5 of −5°) moet in het vakje passen */
+  .cat .teken.lang{font-size:19px;letter-spacing:-.03em}
+  .cat.compact .teken.lang{font-size:14px}
+
+  /* ---------- beloningskaart ---------- */
+  .kaart{
+    background:var(--kaart);
+    border:2px solid var(--rand);
+    border-radius:20px;
+    padding:18px;
+  }
+  .slots{display:grid;gap:10px;justify-items:center}
+  .slot{
+    width:100%;max-width:78px;
+    aspect-ratio:1/1;
+    border-radius:50%;
+    display:grid;place-items:center;
+    font-size:clamp(22px,6.5vw,30px);
+    border:2px dashed var(--rand);
+    color:var(--inkt-zacht);
+  }
+  .slot.vol{
+    border:3px solid #fff;
+    background:var(--sk);
+    box-shadow:0 3px 8px var(--schaduw);
+    transform:rotate(var(--dr));
+  }
+  .balk{margin-top:16px}
+  .balk .rij{display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:var(--inkt-zacht);margin-bottom:6px}
+  .spoor{height:12px;border-radius:999px;background:var(--ruit);overflow:hidden}
+  .vulling{height:100%;border-radius:999px;background:var(--framboos);transition:width .5s cubic-bezier(.2,.9,.3,1)}
+
+  /* ---------- tafelkiezer ---------- */
+  .tafelgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(78px,1fr));gap:10px}
+  .tafelknop{
+    font-family:"Lilita One",Impact,sans-serif;
+    font-size:22px;
+    cursor:pointer;
+    border:2px solid transparent;border-radius:14px;
+    padding:15px 8px;
+    color:#3A2600;background:var(--zon);
+    box-shadow:0 4px 0 #D38A00;
+    transition:transform .08s ease, box-shadow .08s ease, background .12s ease;
+  }
+  .tafelknop:active{transform:translateY(3px);box-shadow:0 1px 0 #D38A00}
+  /* niet gekozen: leeg vakje, zodat in één oogopslag zichtbaar is wat aanstaat */
+  .tafelknop.uit{
+    background:var(--kaart);
+    color:var(--inkt-zacht);
+    border-color:var(--rand);
+    box-shadow:0 4px 0 var(--rand);
+  }
+  .tafelknop.uit:active{box-shadow:0 1px 0 var(--rand)}
+  .knop[disabled]{opacity:.45;cursor:default;transform:none}
+
+  /* ---------- quiz ---------- */
+  .vraagvoortgang{display:flex;flex-direction:column;gap:9px}
+  .stippen{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+  /* bij een challenge van 25 vragen moeten de bolletjes op twee rijen passen */
+  .stippen.veel{gap:5px;max-width:420px;margin:0 auto}
+  .stippen.veel .stip{width:11px;height:11px}
+  .vraagteller{
+    text-align:center;font-size:12.5px;font-weight:700;
+    color:var(--inkt-zacht);font-variant-numeric:tabular-nums;
+  }
+  .challengebalk{
+    display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;
+    background:var(--kaart);
+    border:2px solid var(--rand);
+    border-radius:999px;
+    padding:8px 16px;
+    font-size:13px;font-weight:900;
+  }
+  .challengebalk span:last-child{color:var(--inkt-zacht);font-weight:700;font-variant-numeric:tabular-nums}
+  .stip{width:13px;height:13px;border-radius:50%;background:var(--ruit);border:2px solid transparent}
+  .stip.nu{border-color:var(--inkt);background:transparent}
+  .stip.goed{background:var(--goed)}
+  .stip.fout{background:var(--fout)}
+
+  .somkaart{
+    background:var(--kaart);
+    border:2px solid var(--rand);
+    border-radius:24px;
+    padding:26px 18px;
+    text-align:center;
+    box-shadow:0 8px 20px var(--schaduw);
+  }
+  .som{
+    font-family:"Lilita One",Impact,sans-serif;
+    font-size:clamp(38px,12vw,60px);
+    line-height:1.1;
+    display:flex;align-items:center;justify-content:center;gap:.28em;
+    flex-wrap:wrap;
+    font-variant-numeric:tabular-nums;
+  }
+  .som .op{color:var(--kleur, var(--framboos))}
+  .vak{
+    min-width:2.1em;
+    padding:.04em .18em;
+    border-bottom:6px solid var(--kleur, var(--framboos));
+    color:var(--inkt);
+  }
+  .vak.leeg{color:var(--inkt-zacht)}
+  .caret::after{content:"";display:inline-block;width:3px;height:.8em;background:var(--inkt);margin-left:2px;vertical-align:-.08em;animation:knipper 1s steps(1) infinite}
+  @keyframes knipper{50%{opacity:0}}
+  .somkaart.juist{border-color:var(--goed);animation:pop .35s ease}
+  .somkaart.mis{border-color:var(--fout);animation:schud .4s ease}
+  @keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.04)}100%{transform:scale(1)}}
+  @keyframes schud{0%,100%{transform:translateX(0)}20%{transform:translateX(-9px)}40%{transform:translateX(9px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+  .reactie{
+    margin-top:14px;font-weight:900;font-size:17px;min-height:26px;
+  }
+  .reactie.juist{color:var(--goed)}
+  .reactie.mis{color:var(--fout)}
+
+  /* vrije vraagvorm: zinnetje, eenheid, labelrij onder de vakken */
+  .zin{
+    font-size:16px;font-weight:700;line-height:1.5;
+    max-width:34ch;margin:0 auto 16px;
+    color:var(--inkt);
+  }
+  .eenheid{font-size:.58em;font-weight:900;color:var(--inkt-zacht);align-self:center}
+  .restwoord{font-size:.5em;font-weight:900;color:var(--inkt-zacht);align-self:center}
+  .onder{
+    display:flex;gap:12px;justify-content:center;
+    margin-top:8px;font-size:12px;font-weight:900;
+    letter-spacing:.08em;text-transform:uppercase;color:var(--inkt-zacht);
+  }
+  .klokrij{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:14px}
+  .klokrij svg{width:clamp(64px,20vw,92px);height:auto}
+  .klokrij .pijl{font-size:24px;color:var(--inkt-zacht)}
+  .breuk{
+    display:inline-flex;flex-direction:column;align-items:center;
+    font-size:.62em;line-height:1.06;vertical-align:.06em;
+  }
+  .breuk i{font-style:normal}
+  .breuk i:last-child{border-top:3px solid currentColor;padding-top:1px}
+
+  .pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .toets.breed{grid-column:1 / -1}
+  .toets{
+    font-family:"Nunito",sans-serif;
+    font-weight:900;font-size:27px;
+    padding:16px 0;
+    cursor:pointer;
+    border:none;border-radius:16px;
+    background:var(--kaart);color:var(--inkt);
+    border:2px solid var(--rand);
+    box-shadow:0 4px 0 var(--rand);
+    font-variant-numeric:tabular-nums;
+    transition:transform .06s ease, box-shadow .06s ease;
+  }
+  .toets:active{transform:translateY(3px);box-shadow:0 1px 0 var(--rand)}
+  .toets.wis{font-size:20px;color:var(--inkt-zacht)}
+  .toets.ok{background:var(--gras);color:#fff;border-color:transparent;box-shadow:0 4px 0 #12905B;font-family:"Lilita One",Impact,sans-serif;font-size:23px;letter-spacing:.03em}
+  .toets.ok:active{box-shadow:0 1px 0 #12905B}
+  .toets[disabled]{opacity:.45;cursor:default;transform:none}
+
+  /* ---------- klaar ---------- */
+  .klaar{text-align:center}
+  .klaar .cijfer{
+    font-family:"Lilita One",Impact,sans-serif;
+    font-size:76px;line-height:1;color:var(--framboos);
+    font-variant-numeric:tabular-nums;
+  }
+  .klaar .van{font-size:15px;font-weight:700;color:var(--inkt-zacht);margin-top:-2px}
+  .klaar p.woord{font-family:"Lilita One",Impact,sans-serif;font-size:26px;margin:14px 0 0}
+  .foutenlijst{margin-top:18px;text-align:left}
+  .foutenlijst h3{font-size:13px;letter-spacing:.09em;text-transform:uppercase;color:var(--inkt-zacht);margin:0 0 8px}
+  .foutenlijst ul{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+  .foutenlijst li{
+    font-weight:900;font-variant-numeric:tabular-nums;
+    background:var(--papier);border:2px solid var(--rand);
+    border-radius:10px;padding:6px 10px;font-size:15px;
+  }
+
+  .knoppen{display:flex;gap:10px;flex-wrap:wrap}
+  .knop{
+    flex:1 1 150px;
+    font-family:"Lilita One",Impact,sans-serif;
+    font-size:19px;letter-spacing:.02em;
+    cursor:pointer;border:none;border-radius:16px;
+    padding:15px 18px;
+    background:var(--gras);color:#fff;
+    box-shadow:0 4px 0 #12905B;
+    transition:transform .08s ease, box-shadow .08s ease;
+  }
+  .knop:active{transform:translateY(3px);box-shadow:0 1px 0 #12905B}
+  .knop.stil{background:var(--kaart);color:var(--inkt);border:2px solid var(--rand);box-shadow:0 4px 0 var(--rand)}
+  .knop.stil:active{box-shadow:0 1px 0 var(--rand)}
+
+  /* ---------- toast + beloning ---------- */
+  .toast{
+    position:fixed;left:50%;
+    bottom:calc(22px + env(safe-area-inset-bottom));
+    transform:translateX(-50%) translateY(140%);
+    background:var(--inkt);color:var(--papier);
+    padding:12px 20px;border-radius:999px;
+    font-weight:900;font-size:15px;
+    box-shadow:0 8px 24px var(--schaduw);
+    transition:transform .4s cubic-bezier(.2,.9,.3,1);
+    z-index:20;
+    max-width:min(92vw,420px);text-align:center;
+  }
+  .toast.zie{transform:translateX(-50%) translateY(0)}
+
+  .overlay{
+    position:fixed;inset:0;z-index:30;
+    background:rgba(16,28,51,.72);
+    display:grid;place-items:center;
+    padding:calc(20px + env(safe-area-inset-top)) calc(20px + env(safe-area-inset-right))
+            calc(20px + env(safe-area-inset-bottom)) calc(20px + env(safe-area-inset-left));
+  }
+  .overlay .doos{
+    background:var(--kaart);
+    border-radius:26px;
+    padding:30px 24px;
+    text-align:center;
+    max-width:400px;width:100%;
+    box-shadow:0 18px 50px rgba(0,0,0,.4);
+    animation:opkomst .45s cubic-bezier(.2,.9,.3,1);
+  }
+  @keyframes opkomst{from{transform:scale(.82) translateY(18px);opacity:0}to{transform:none;opacity:1}}
+  .overlay .doos .trofee{font-size:64px;line-height:1}
+  .overlay .doos h2{font-size:27px;margin:10px 0 6px}
+  .overlay .doos p{margin:0 0 20px;font-weight:700;color:var(--inkt-zacht)}
+
+  .voet{font-size:12.5px;font-weight:700;color:var(--inkt-zacht);text-align:center}
+  .versieregel{font-size:11.5px;opacity:.75;margin-top:-14px}
+
+  /* melding dat er een nieuwe versie klaarstaat */
+  .nieuwebalk{
+    position:fixed;left:50%;transform:translateX(-50%);
+    bottom:calc(16px + env(safe-area-inset-bottom));
+    z-index:25;
+    display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;
+    background:var(--inkt);color:var(--papier);
+    border-radius:999px;padding:10px 12px 10px 20px;
+    font-size:13.5px;font-weight:700;
+    box-shadow:0 8px 24px var(--schaduw);
+    max-width:min(92vw,440px);
+  }
+  .nieuwebalk button{
+    font:inherit;font-weight:900;font-size:13px;
+    cursor:pointer;border:none;border-radius:999px;
+    padding:8px 15px;
+    background:var(--gras);color:#fff;
+  }
+  .voet button{font:inherit;color:var(--inkt-zacht);background:none;border:none;text-decoration:underline;cursor:pointer;padding:0}
+
+  /* ---------- klokkijken ---------- */
+  .niveaus{display:flex;flex-direction:column;gap:10px}
+  .niveau{
+    font:inherit;text-align:left;cursor:pointer;
+    border:none;border-radius:16px;padding:15px 18px;
+    background:var(--klok);color:#fff;
+    box-shadow:0 4px 0 #C9531C;
+    transition:transform .08s ease, box-shadow .08s ease;
+  }
+  .niveau:active{transform:translateY(3px);box-shadow:0 1px 0 #C9531C}
+  .niveau.uit{
+    background:var(--kaart);
+    color:var(--inkt);
+    border:2px solid var(--rand);
+    box-shadow:0 4px 0 var(--rand);
+  }
+  .niveau.uit span{color:var(--inkt-zacht);opacity:1}
+  .niveau.uit:active{box-shadow:0 1px 0 var(--rand)}
+  .niveau b{font-family:"Lilita One",Impact,sans-serif;font-weight:400;font-size:20px;letter-spacing:.02em;display:block}
+  .niveau span{font-size:13.5px;font-weight:700;opacity:.9;display:block;margin-top:1px}
+
+  .klokhouder{display:grid;place-items:center;padding:4px 0 2px}
+  .klokhouder svg{width:min(240px,62vw);height:auto;max-width:100%;display:block}
+  .k-wijzer{fill:var(--kaart);stroke:var(--inkt);stroke-width:6}
+  .k-streep{stroke:var(--inkt-zacht);stroke-width:2;stroke-linecap:round}
+  .k-streep-u{stroke:var(--inkt);stroke-width:4.5;stroke-linecap:round}
+  .k-cijfer{fill:var(--inkt);font-family:"Lilita One",Impact,sans-serif}
+  .k-minuut{stroke:var(--framboos);stroke-width:6;stroke-linecap:round}
+  .k-uur{stroke:var(--zee);stroke-width:9.5;stroke-linecap:round}
+  .k-pin{fill:var(--inkt)}
+  .legenda{
+    display:flex;gap:16px;justify-content:center;flex-wrap:wrap;
+    margin-top:14px;font-size:12.5px;font-weight:700;color:var(--inkt-zacht);
+  }
+  .legenda i{display:inline-block;width:22px;height:5px;border-radius:3px;margin-right:6px;vertical-align:.12em}
+  .legenda .u i{background:var(--zee)}
+  .legenda .m i{background:var(--framboos)}
+
+  .digitaal{
+    font-family:"Lilita One",Impact,sans-serif;
+    font-size:clamp(46px,15vw,72px);
+    line-height:1;letter-spacing:.02em;
+    font-variant-numeric:tabular-nums;
+    color:var(--klok);
+  }
+  .inwoorden{font-weight:900;font-size:17px;color:var(--inkt-zacht);margin-top:6px}
+  .vraagje{font-size:13px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--inkt-zacht);margin-bottom:12px}
+
+  .keuzes{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .keuzes.drie{grid-template-columns:repeat(3,1fr)}
+  .keuzes.drie .tijd{font-size:34px}
+  .keuze{
+    font:inherit;cursor:pointer;
+    background:var(--kaart);color:var(--inkt);
+    border:2px solid var(--rand);border-radius:16px;
+    box-shadow:0 4px 0 var(--rand);
+    padding:14px 10px;
+    display:grid;place-items:center;gap:2px;
+    transition:transform .06s ease, box-shadow .06s ease;
+  }
+  .keuze:active{transform:translateY(3px);box-shadow:0 1px 0 var(--rand)}
+  .keuze .tijd{font-family:"Lilita One",Impact,sans-serif;font-size:27px;line-height:1;font-variant-numeric:tabular-nums}
+  .keuze .woorden{font-size:13px;font-weight:700;color:var(--inkt-zacht);text-align:center}
+  .keuze svg{width:100%;max-width:132px;height:auto;display:block}
+  .keuze.klokje{padding:10px}
+  .keuze.juist{background:var(--goed);border-color:transparent;color:#fff;box-shadow:0 4px 0 #12905B}
+  .keuze.juist .woorden{color:rgba(255,255,255,.85)}
+  .keuze.mis{background:var(--fout);border-color:transparent;color:#fff;box-shadow:0 4px 0 #A3172F}
+  .keuze.mis .woorden{color:rgba(255,255,255,.85)}
+  .keuze[disabled]{cursor:default;transform:none}
+
+  /* ---------- welkomkaart en de pagina Voor Saar ---------- */
+  .welkomknop{
+    font:inherit;text-align:left;cursor:pointer;
+    width:100%;
+    border:none;border-radius:18px;
+    padding:15px 18px;
+    display:flex;align-items:center;gap:14px;
+    color:#fff;
+    background:linear-gradient(100deg, var(--framboos), var(--druif));
+    box-shadow:0 5px 0 #7A2F8E, 0 8px 16px var(--schaduw);
+    transition:transform .08s ease, box-shadow .08s ease;
+  }
+  .welkomknop:active{transform:translateY(4px);box-shadow:0 1px 0 #7A2F8E, 0 3px 8px var(--schaduw)}
+  .welkomknop .ster{font-size:30px;line-height:1;flex:none}
+  .welkomknop b{font-family:"Lilita One",Impact,sans-serif;font-weight:400;font-size:20px;letter-spacing:.02em;display:block}
+  .welkomknop span{font-size:13px;font-weight:700;opacity:.9;display:block;margin-top:1px}
+
+  .brief{max-width:46ch;margin:0 auto}
+  .brief h2{
+    font-size:clamp(26px,7vw,34px);
+    text-align:center;
+    margin:0 0 6px;
+  }
+  .brief .hoi{
+    text-align:center;font-family:"Lilita One",Impact,sans-serif;
+    font-size:21px;color:var(--framboos);margin:0 0 18px;
+  }
+  .brief p{font-size:16px;line-height:1.65;font-weight:700;margin:0 0 14px;color:var(--inkt)}
+  .brief p.zacht{color:var(--inkt-zacht)}
+  .brief h3{
+    font-family:"Lilita One",Impact,sans-serif;font-weight:400;
+    font-size:19px;margin:22px 0 12px;letter-spacing:.02em;
+  }
+  .trap{display:flex;flex-direction:column;gap:9px;margin:0 0 18px;padding:0;list-style:none}
+  .trap li{
+    display:flex;align-items:center;gap:12px;
+    background:var(--papier);
+    border:2px solid var(--rand);
+    border-radius:14px;
+    padding:11px 14px;
+    font-weight:900;font-size:15px;
+  }
+  .trap li .teller{font-size:22px;line-height:1;flex:none}
+  .brief .slotzin{
+    text-align:center;
+    font-family:"Lilita One",Impact,sans-serif;
+    font-size:22px;
+    color:var(--druif);
+    margin:22px 0 0;
+  }
+
+  /* ---------- snelknoppen challenges en rapport ---------- */
+  .snelrij{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+  .snel{
+    font:inherit;text-align:left;cursor:pointer;
+    border:none;border-radius:18px;padding:14px 15px;
+    display:flex;align-items:center;gap:12px;
+    color:#fff;
+    transition:transform .08s ease, box-shadow .08s ease;
+  }
+  .snel:active{transform:translateY(4px)}
+  .snel .teken{font-size:26px;line-height:1;flex:none}
+  .snel b{font-family:"Lilita One",Impact,sans-serif;font-weight:400;font-size:18px;letter-spacing:.02em;display:block}
+  .snel > span > span{font-size:12px;font-weight:700;opacity:.9;display:block;margin-top:1px;line-height:1.3}
+  .snel.uitdaging{background:var(--druif);box-shadow:0 5px 0 #6A3FD1, 0 8px 16px var(--schaduw)}
+  .snel.uitdaging:active{box-shadow:0 1px 0 #6A3FD1}
+  .snel.voortgang{background:var(--zee);box-shadow:0 5px 0 #1A6FB4, 0 8px 16px var(--schaduw)}
+  .snel.voortgang:active{box-shadow:0 1px 0 #1A6FB4}
+
+  /* ---------- stapel stickervellen ---------- */
+  .stapel{position:relative}
+  .stapel > .kaart{position:relative;z-index:2}
+  .stapel::before,.stapel::after{
+    content:"";position:absolute;inset:0;
+    background:var(--kaart);
+    border:2px solid var(--rand);
+    border-radius:20px;
+    box-shadow:0 3px 10px var(--schaduw);
+    z-index:1;
+  }
+  .stapel::before{transform:rotate(-1.7deg) translate(-6px,6px)}
+  .stapel::after{transform:rotate(1.5deg) translate(7px,10px)}
+  .stapel.geen::before,.stapel.geen::after{display:none}
+  .stapel.een::after{display:none}
+  /* ---------- supersticker en het feestje ---------- */
+  .slot.super{
+    border-color:#FFD84D;
+    box-shadow:0 0 0 3px rgba(255,216,77,.45), 0 3px 10px var(--schaduw);
+    animation:glans 2.4s ease-in-out infinite;
+  }
+  @keyframes glans{
+    0%,100%{box-shadow:0 0 0 3px rgba(255,216,77,.45), 0 3px 10px var(--schaduw)}
+    50%{box-shadow:0 0 0 7px rgba(255,216,77,.22), 0 3px 14px var(--schaduw)}
+  }
+  .klaar.foutloos{border-color:#FFD84D;box-shadow:0 0 0 3px rgba(255,216,77,.35)}
+  .klaar .prijs.super{color:var(--zon);font-size:17px}
+  .klaar .prijs.super b{color:var(--inkt)}
+  .challengekop.foutloos{color:var(--zon)}
+
+  .feest{
+    position:fixed;inset:0;z-index:40;
+    pointer-events:none;overflow:hidden;
+  }
+  .feest i{
+    position:absolute;top:-8%;
+    font-style:normal;line-height:1;
+    animation-name:dwarrel;
+    animation-timing-function:linear;
+    animation-fill-mode:forwards;
+  }
+  @keyframes dwarrel{
+    0%{transform:translateY(-10vh) rotate(0deg);opacity:0}
+    10%{opacity:1}
+    100%{transform:translateY(110vh) rotate(420deg);opacity:.9}
+  }
+
+  /* bladeren door de vellen; tapdoelen van 44px, ook met een vinger te bedienen */
+  .velnav{
+    display:flex;align-items:center;justify-content:space-between;
+    gap:10px;margin-bottom:12px;
+  }
+  .velpijl{
+    width:44px;height:44px;flex:none;
+    font-size:26px;line-height:1;
+    cursor:pointer;
+    border:2px solid var(--rand);border-radius:14px;
+    background:var(--papier);color:var(--inkt);
+  }
+  .velpijl[disabled]{opacity:.3;cursor:default}
+  .velnaam{
+    font-family:"Lilita One",Impact,sans-serif;font-size:18px;letter-spacing:.02em;
+    text-align:center;flex:1;
+  }
+
+  .beloningregel{
+    display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+    margin-top:16px;padding:12px 14px;
+    border:2px dashed var(--rand);border-radius:14px;
+  }
+  .beloningregel.gegeven{border-style:solid;border-color:var(--goed);background:rgba(31,184,119,.10)}
+  .beloningregel .teken{font-size:24px;line-height:1;flex:none}
+  .beloningregel b{font-size:14.5px;display:block}
+  .beloningregel span span{font-size:12.5px;font-weight:700;color:var(--inkt-zacht);display:block;margin-top:1px}
+  .beloningregel > span:nth-child(2){flex:1 1 130px}
+  .velknop{
+    font:inherit;font-size:13px;font-weight:900;
+    cursor:pointer;flex:none;
+    border:2px solid var(--rand);border-radius:999px;
+    padding:9px 14px;
+    background:var(--kaart);color:var(--inkt-zacht);
+  }
+  .velknop.aan{background:var(--gras);color:#fff;border-color:transparent}
+
+  .notitieveld{
+    width:100%;
+    font-family:"Nunito",sans-serif;font-weight:700;font-size:16px;
+    padding:11px 13px;border-radius:12px;
+    border:2px solid var(--rand);
+    background:var(--papier);color:var(--inkt);
+  }
+  .notitieveld:focus{border-color:var(--zee)}
+
+  .velkop{
+    display:flex;justify-content:space-between;align-items:baseline;
+    gap:10px;margin-bottom:14px;
+  }
+  .velkop span:first-child{
+    font-family:"Lilita One",Impact,sans-serif;font-size:17px;letter-spacing:.02em;
+  }
+  .velkop span:last-child{font-size:12.5px;font-weight:700;color:var(--inkt-zacht)}
+
+  /* ---------- challenges ---------- */
+  .challenges{display:flex;flex-direction:column;gap:12px}
+  .challenge{
+    position:relative;
+    font:inherit;text-align:left;cursor:pointer;
+    border:none;border-radius:18px;padding:16px;
+    display:flex;align-items:center;gap:14px;
+    background:var(--kleur);color:var(--op);
+    box-shadow:0 5px 0 rgba(0,0,0,.22), 0 8px 16px var(--schaduw);
+    transition:transform .08s ease, box-shadow .08s ease;
+  }
+  .challenge:active{transform:translateY(4px);box-shadow:0 1px 0 rgba(0,0,0,.22)}
+  .challenge .teken{font-size:32px;line-height:1;flex:none;width:50px;text-align:center}
+  .challenge b{font-family:"Lilita One",Impact,sans-serif;font-weight:400;font-size:20px;letter-spacing:.02em;display:block}
+  .challenge .woorden > span{font-size:13px;font-weight:700;opacity:.92;display:block;margin-top:2px;line-height:1.35}
+  .challenge .tip{
+    position:absolute;top:-9px;right:12px;
+    background:var(--inkt);color:var(--papier);
+    font-size:11px;font-weight:900;letter-spacing:.07em;text-transform:uppercase;
+    padding:4px 10px;border-radius:999px;
+  }
+  .challengekop{
+    display:flex;align-items:center;justify-content:center;gap:10px;
+    margin-bottom:14px;
+    font-family:"Lilita One",Impact,sans-serif;font-size:21px;
+  }
+  .challengekop .teken{font-size:28px}
+  .challengekop.gehaald{color:var(--goed)}
+  .challengekop.net-niet{color:var(--inkt-zacht)}
+  .klaar .prijs{
+    margin:12px 0 0;font-weight:900;font-size:16px;color:var(--framboos);
+  }
+
+  /* ---------- rapport ---------- */
+  .samenvatting{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center}
+  .samenvatting b{
+    display:block;font-family:"Lilita One",Impact,sans-serif;font-size:27px;line-height:1.1;
+    font-variant-numeric:tabular-nums;color:var(--zee);
+  }
+  .samenvatting span{font-size:12px;font-weight:700;color:var(--inkt-zacht);line-height:1.3;display:block;margin-top:2px}
+
+  .staven{display:flex;flex-direction:column;gap:16px}
+  .staaf .rij{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
+  .staaf .rij b{font-family:"Lilita One",Impact,sans-serif;font-weight:400;font-size:17px;letter-spacing:.02em}
+  .staaf .rij.klein{margin:5px 0 0;font-size:12.5px;font-weight:700;color:var(--inkt-zacht);font-variant-numeric:tabular-nums}
+  .stempel{
+    font-size:11.5px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;
+    padding:4px 10px;border-radius:999px;white-space:nowrap;
+  }
+  .stempel.sterk{background:rgba(31,184,119,.16);color:var(--goed)}
+  .stempel.goed{background:rgba(42,148,232,.16);color:var(--zee)}
+  .stempel.aandacht{background:rgba(255,122,61,.18);color:var(--klok)}
+  .stempel.leeg{background:var(--ruit);color:var(--inkt-zacht)}
+
+  .detail{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+  .deelstip{
+    font-size:11.5px;font-weight:900;
+    padding:4px 9px;border-radius:999px;
+    background:var(--ruit);color:var(--inkt-zacht);
+  }
+  .deelstip.sterk{background:rgba(31,184,119,.16);color:var(--goed)}
+  .deelstip.goed{background:rgba(42,148,232,.16);color:var(--zee)}
+  .deelstip.aandacht{background:rgba(255,122,61,.18);color:var(--klok)}
+
+  .tafelrapport{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+  .tafelhok{
+    border-radius:12px;padding:9px 4px;text-align:center;
+    border:2px solid var(--rand);background:var(--papier);
+  }
+  .tafelhok b{
+    display:block;font-family:"Lilita One",Impact,sans-serif;font-weight:400;font-size:19px;line-height:1.1;
+  }
+  .tafelhok span{font-size:11.5px;font-weight:900;color:var(--inkt-zacht);font-variant-numeric:tabular-nums}
+  .tafelhok.sterk{background:rgba(31,184,119,.15);border-color:rgba(31,184,119,.5)}
+  .tafelhok.sterk span{color:var(--goed)}
+  .tafelhok.goed{background:rgba(42,148,232,.13);border-color:rgba(42,148,232,.45)}
+  .tafelhok.goed span{color:var(--zee)}
+  .tafelhok.aandacht{background:rgba(255,122,61,.16);border-color:rgba(255,122,61,.5)}
+  .tafelhok.aandacht span{color:var(--klok)}
+  .legenda-uitleg{margin:14px 0 0;font-size:12.5px;font-weight:700;color:var(--inkt-zacht);line-height:1.45}
+
+  .aandachtlijst{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+  .aandachtlijst li{
+    display:flex;justify-content:space-between;align-items:center;gap:12px;
+    background:var(--papier);border:2px solid var(--rand);border-radius:12px;
+    padding:9px 13px;font-weight:900;font-variant-numeric:tabular-nums;font-size:15px;
+  }
+  .aandachtlijst .keer{font-size:12px;font-weight:700;color:var(--klok);white-space:nowrap}
+
+  .advies{display:flex;gap:14px;align-items:flex-start}
+  .advies .lamp{font-size:24px;line-height:1.2;flex:none}
+  .advies p{margin:0;font-size:14.5px;font-weight:700;line-height:1.55;color:var(--inkt)}
+
+  /* ---------- instellingen ---------- */
+  .instellingen{display:flex;flex-direction:column;gap:18px}
+  .instelling{display:grid;gap:10px;padding-bottom:18px;border-bottom:2px solid var(--rand)}
+  .instelling:last-child{border-bottom:none;padding-bottom:0}
+  .instelling .titel{display:flex;align-items:center;gap:11px}
+  .merk{
+    width:36px;height:36px;flex:none;border-radius:11px;
+    display:grid;place-items:center;color:#fff;
+    font-family:"Lilita One",Impact,sans-serif;font-size:21px;
+  }
+  .merk.plus{background:var(--gras)}
+  .merk.min{background:var(--zee)}
+  .merk.keer{background:var(--druif)}
+  .merk.deel{background:var(--framboos)}
+  .merk.sticker{background:var(--framboos)}
+  .merk.beloning{background:var(--zon);font-size:17px}
+  .merk.ronde{background:var(--zee);font-size:15px}
+  .merk.uitdaging{background:var(--druif);font-size:17px}
+  .instelling .titel b{font-family:"Lilita One",Impact,sans-serif;font-weight:400;font-size:19px;letter-spacing:.02em}
+  .velden{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .velden label{display:flex;align-items:center;gap:7px;font-size:14px;font-weight:700;color:var(--inkt-zacht)}
+  .velden input{
+    width:82px;
+    font-family:"Nunito",sans-serif;font-weight:900;font-size:17px;
+    font-variant-numeric:tabular-nums;text-align:center;
+    padding:9px 8px;border-radius:11px;
+    border:2px solid var(--rand);
+    background:var(--papier);color:var(--inkt);
+  }
+  .velden input:focus{border-color:var(--zee)}
+  .voorbeeld{
+    margin:0;font-size:13.5px;font-weight:700;
+    color:var(--inkt-zacht);font-variant-numeric:tabular-nums;
+  }
+  .voorbeeld b{color:var(--inkt)}
+  /* ---------- slot op de instellingen ---------- */
+  .slotkaart{text-align:center}
+  .codevakjes{display:flex;gap:12px;justify-content:center;margin:6px 0 4px}
+  .codevak{
+    width:52px;height:62px;
+    border:2px solid var(--rand);
+    border-radius:14px;
+    background:var(--papier);
+    display:grid;place-items:center;
+  }
+  .codevak i{
+    width:14px;height:14px;border-radius:50%;
+    background:var(--inkt);
+    display:block;
+    transform:scale(0);
+    transition:transform .14s cubic-bezier(.2,.9,.3,1);
+  }
+  .codevak.vol i{transform:scale(1)}
+  .codevak.vol{border-color:var(--inkt)}
+  .slotkaart.mis{animation:schud .4s ease}
+  .slotkaart.mis .codevak{border-color:var(--fout)}
+
+  /* ---------- groep en onderwerpschakelaars ---------- */
+  .groepen{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+  .groepknop{
+    font-family:"Lilita One",Impact,sans-serif;font-size:22px;
+    cursor:pointer;border:2px solid transparent;border-radius:14px;
+    padding:14px 4px;color:#fff;background:var(--zee);
+    box-shadow:0 4px 0 #1A6FB4;
+    transition:transform .08s ease, box-shadow .08s ease;
+  }
+  .groepknop:active{transform:translateY(3px);box-shadow:0 1px 0 #1A6FB4}
+  .groepknop.uit{
+    background:var(--kaart);color:var(--inkt-zacht);
+    border-color:var(--rand);box-shadow:0 4px 0 var(--rand);
+  }
+  .groepknop.uit:active{box-shadow:0 1px 0 var(--rand)}
+
+  .schakelaars{display:flex;flex-direction:column;gap:10px}
+  .vakkop{
+    font-family:"Lilita One",Impact,sans-serif;font-weight:400;
+    font-size:15px;letter-spacing:.04em;text-transform:uppercase;
+    color:var(--inkt-zacht);margin:10px 0 2px;
+  }
+  .vakkop:first-child{margin-top:0}
+  .schakelrij{
+    display:flex;align-items:center;justify-content:space-between;
+    gap:12px;flex-wrap:wrap;
+    padding-bottom:10px;border-bottom:2px solid var(--rand);
+  }
+  .schakelrij:last-child{border-bottom:none;padding-bottom:0}
+  .schakelrij .naam{font-weight:900;font-size:14.5px;flex:1 1 140px}
+  .schakelrij .naam i{
+    display:block;font-style:normal;font-size:12px;font-weight:700;color:var(--inkt-zacht);
+  }
+  .standen{display:flex;gap:4px;background:var(--papier);border-radius:999px;padding:3px;flex:none}
+  .stand{
+    font:inherit;font-size:12px;font-weight:900;
+    cursor:pointer;border:none;border-radius:999px;
+    padding:6px 11px;background:transparent;color:var(--inkt-zacht);
+  }
+  .stand.nu{background:var(--zee);color:#fff}
+
+  .uitlegregel{
+    margin:0 0 16px;font-size:14px;font-weight:700;color:var(--inkt-zacht);
+    max-width:56ch;
+  }
+
+  :focus-visible{outline:3px solid var(--zee);outline-offset:3px}
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:.01ms !important;transition-duration:.01ms !important}
+  }
+  /* ---------- telefoon ---------- */
+  @media (max-width:540px){
+    .wrap{gap:18px}
+    .kop{gap:10px}
+    .logo{font-size:clamp(25px,7.4vw,34px)}
+    .kopknoppen{width:100%}
+    .geluid{font-size:13px;padding:6px 13px}
+
+    .score div{padding:9px 6px}
+    .score b{font-size:23px}
+    .score span{font-size:10.5px;letter-spacing:.05em}
+
+    /* de vier smalle kaarten worden staand, anders is er te weinig plek voor de tekst */
+    .cats{gap:10px}
+    .cat.plus,.cat.min,.cat.keer,.cat.deel{
+      flex-direction:column;
+      align-items:flex-start;
+      gap:9px;
+      padding:13px 13px 12px;
+    }
+    .cat.plus .teken,.cat.min .teken,.cat.keer .teken,.cat.deel .teken{
+      width:42px;height:42px;font-size:27px;border-radius:12px;
+    }
+    .cat .naam{font-size:18px}
+    .cat .uitleg{font-size:12px;line-height:1.3}
+
+    .somkaart{padding:22px 14px}
+    .toets{font-size:25px;padding:15px 0}
+    .keuze .tijd{font-size:24px}
+    .keuze .woorden{font-size:12px}
+    .velden label{font-size:13px}
+    .velden input{width:74px}
+  }
+
+  @media (max-width:400px){
+    .snelrij{grid-template-columns:1fr}
+  }
+
+  @media (max-width:340px){
+    .cats{grid-template-columns:1fr}
+    .slots{gap:7px}
+  }
+
+  /* ---------- app installeren ---------- */
+  .kopknoppen{display:flex;gap:8px;flex-wrap:wrap}
+  .geluid.plaatsen{
+    background:var(--gras);color:#fff;border-color:transparent;
+  }
+  .geluid.plaatsen:hover{color:#fff}
+  .groepstrook{
+    font:inherit;text-align:left;cursor:pointer;width:100%;
+    border:2px dashed var(--rand);border-radius:16px;
+    background:var(--kaart);color:var(--inkt);
+    padding:13px 16px;margin-top:12px;
+    display:flex;align-items:center;gap:13px;
+  }
+  .groepstrook .teken{font-size:24px;line-height:1;flex:none}
+  .groepstrook b{font-family:"Lilita One",Impact,sans-serif;font-weight:400;font-size:17px;display:block}
+  .groepstrook span span{font-size:12.5px;font-weight:700;color:var(--inkt-zacht);display:block;margin-top:1px}
+
+  .tiphint{
+    background:var(--kaart);
+    border:2px dashed var(--rand);
+    border-radius:14px;
+    padding:12px 16px;
+    font-size:13.5px;font-weight:700;
+    color:var(--inkt-zacht);
+    text-align:center;
+  }
+  .tiphint b{color:var(--inkt)}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="kop">
+    <h1 class="logo">Saar's Reken<span class="w">wereld</span></h1>
+    <div class="kopknoppen">
+      <button class="geluid plaatsen" id="installeer-knop" type="button" hidden>App installeren</button>
+      <button class="geluid" id="instellingen-knop" type="button">Instellingen</button>
+      <button class="geluid" id="geluid-knop" type="button">Geluid aan</button>
+    </div>
+  </header>
+
+  <p class="tiphint" id="ipad-tip" hidden>Zet de app op het beginscherm: tik onderin op <b>Deel</b> en daarna op <b>Zet op beginscherm</b>.</p>
+
+  <div class="score">
+    <div class="p"><b id="sc-punten">0</b><span>Punten</span></div>
+    <div class="s"><b id="sc-stickers">0</b><span>Stickers</span></div>
+    <div class="b"><b id="sc-beloningen">0</b><span>Beloningen</span></div>
+  </div>
+
+  <main id="scherm"></main>
+
+  <p class="voet" id="regels"></p>
+  <p class="voet versieregel"><span id="versie"></span></p>
+  <div class="nieuwebalk" id="nieuwe-versie" hidden>
+    <span>Er is een nieuwe versie van de app.</span>
+    <button type="button" id="nu-verversen">Nu vernieuwen</button>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="./vragen.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  /* Alle vraaginhoud staat in vragen.js. Ontbreekt dat bestand of zit er een fout in,
+     dan is window.REKENVRAGEN er niet — en dan stoppen we hier met een uitleg in beeld
+     in plaats van met een leeg scherm. */
+  function noodmelding(reden){
+    var s = document.getElementById("scherm");
+    if(!s) return;
+    s.innerHTML =
+      '<section class="sectie"><h2>De app kan niet starten</h2>' +
+      '<div class="kaart"><p class="uitlegregel" style="margin:0">' +
+      'Het bestand <b>vragen.js</b> ontbreekt of is beschadigd. Zet het in dezelfde map ' +
+      'als index.html en open de pagina opnieuw. Heb je de app net bijgewerkt? Sluit hem ' +
+      'dan helemaal af en open hem nog een keer.</p>' +
+      '<p class="voet" style="margin:14px 0 0">' + reden + '</p></div></section>';
+  }
+
+  var R = window.REKENVRAGEN;
+  var NODIG = ["STICKERS","KLEUREN","LOF","BEREIKEN","GROEPEN","VAKKEN","UURNAAM","NIVEAUS",
+               "KLOKSOORTEN","MAATEN","MAANDEN","DAGEN","NOEMERWOORD","SPULLEN","NAMEN","GROEPGETALLEN",
+               "DINGEN","SJABLONEN","ONDERWERPEN"];
+  if(!R || typeof R !== "object"){
+    noodmelding("window.REKENVRAGEN is niet geladen.");
+    return;
+  }
+  var ontbreekt = [];
+  for(var nodigN = 0; nodigN < NODIG.length; nodigN++){
+    if(!R[NODIG[nodigN]]) ontbreekt.push(NODIG[nodigN]);
+  }
+  if(ontbreekt.length){
+    noodmelding("Deze tabellen ontbreken in vragen.js: " + ontbreekt.join(", ") + ".");
+    return;
+  }
+
+  var SLEUTEL = "saar-rekenwereld-v1";
+  var STICKERS    = R.STICKERS;
+  var KLEUREN     = R.KLEUREN;
+  var LOF         = R.LOF;
+
+  /* getalbereik per soort som; grens = hoogst toegestane getal */
+  var BEREIKEN    = R.BEREIKEN;
+
+  function standaardBereik(){
+    var b = {};
+    BEREIKEN.forEach(function(r){ b[r.id] = {van:r.standaard.van, tot:r.standaard.tot}; });
+    return b;
+  }
+
+  function schoonBereik(id, van, tot){
+    var regel = null;
+    BEREIKEN.forEach(function(r){ if(r.id === id) regel = r; });
+    if(!regel) return {van:1, tot:10};
+    van = Math.round(Number(van));
+    tot = Math.round(Number(tot));
+    if(!isFinite(van)) van = regel.standaard.van;
+    if(!isFinite(tot)) tot = regel.standaard.tot;
+    var laagste = (id === "deel") ? 1 : 0;
+    van = Math.max(laagste, Math.min(regel.grens, van));
+    tot = Math.max(laagste, Math.min(regel.grens, tot));
+    if(tot < van){ var h = van; van = tot; tot = h; }
+    return {van:van, tot:tot};
+  }
+
+  var APPVERSIE = "14";         /* hoog dit samen met VERSIE in sw.js op */
+  var CODE = "1985";            /* code voor de instellingen; hier aan te passen */
+  var PUNTEN_PER_STICKER = 10;  /* standaardwaarden */
+  var STICKERS_PER_BELONING = 10;
+  var RONDE_LENGTE = 10;
+  var CHALLENGE_LENGTE = 25;
+
+  /* Bakken in het rapport. Bewust grover dan de onderwerpenlijst: negentien staven
+     leest niemand. Onder elke staaf komen de losse onderwerpen die al geoefend zijn. */
+  var GROEPEN     = R.GROEPEN;
+  var MAX_FOUTEN = 40;   /* zoveel misgegane vragen onthouden we voor de herkansing */
+
+  /* De vakken op het beginscherm, in de vololgorde waarin ze getoond worden. */
+  var VAKKEN      = R.VAKKEN;
+
+  /* ---------- het onderwerpenregister ----------
+     Eén regel per onderwerp. Hieruit volgen de tegels, de dispatch, het rapport,
+     de mix van "alles door elkaar" en de challenges. `vanaf` is de groep waarin het
+     onderwerp op school aan bod komt; `niveau` is een trap die stapelt van groep 3
+     tot de ingestelde groep, dus elke rij noemt alleen wat er verandert. */
+  var ONDERWERPEN = R.ONDERWERPEN;
+
+  /* volgorde binnen het vak Rekenen, zodat de basis vooraan blijft staan */
+  (function(){
+    var orde = {plus:1, min:2, keer:3, deel:4, tafels:5, deeltafels:6, rest:7, verhaal:8, alles:9};
+    for(var id in orde){ if(ONDERWERPEN[id]) ONDERWERPEN[id].orde = orde[id]; }
+    if(ONDERWERPEN.verhaal) ONDERWERPEN.verhaal.breed = true;
+    if(ONDERWERPEN.tafels) ONDERWERPEN.tafels.breed = true;
+  })();
+
+  /* Twee onderwerpen hadden geen eigen generator maar een tussenstapje; die krijgen
+     een naam, zodat het register overal alleen nog een naam hoeft te noemen. */
+  function maakKlok(lj, wens){ return maakKlokvraag(wens); }
+  function maakAlles(lj, wens){ return maakVraag("alles", wens); }
+
+  /* vragen.js noemt alleen de naam van een generator; hier staan ze bij elkaar */
+  var GENERATOREN = {
+    maakPlus:maakPlus, maakMin:maakMin, maakKeer:maakKeer, maakDeel:maakDeel,
+    maakTafel:maakTafel, maakKlok:maakKlok, maakOntbrekend:maakOntbrekend,
+    maakDubbel:maakDubbel, maakSplitsen:maakSplitsen, maakVergelijk:maakVergelijk,
+    maakAfronden:maakAfronden, maakKomma:maakKomma, maakNegatief:maakNegatief,
+    maakGemiddelde:maakGemiddelde, maakGeld:maakGeld, maakMeten:maakMeten,
+    maakDuur:maakDuur, maakKalender:maakKalender, maakOppervlakte:maakOppervlakte,
+    maakBreuk:maakBreuk, maakProcent:maakProcent, maakVerhouding:maakVerhouding,
+    maakRest:maakRest, maakDeeltafel:maakDeeltafel, maakVerhaal:maakVerhaal,
+    maakAlles:maakAlles
+  };
+
+  /* namen omzetten in de echte functies; een tikfout moet meteen opvallen */
+  for(var koppelId in ONDERWERPEN){
+    if(!Object.prototype.hasOwnProperty.call(ONDERWERPEN, koppelId)) continue;
+    var koppelNaam = ONDERWERPEN[koppelId].maak;
+    if(typeof koppelNaam === "string"){
+      if(!GENERATOREN[koppelNaam]){
+        noodmelding('Onbekende generator "' + koppelNaam + '" bij onderwerp "' + koppelId + '".');
+        return;
+      }
+      ONDERWERPEN[koppelId].maak = GENERATOREN[koppelNaam];
+    }
+  }
+
+  /* Een icoon van meer dan één teken (0,5 of −5°) past niet op volle grootte.
+     De variatie-selector van emoji als ✂️ telt daarbij niet mee. */
+  function langTeken(teken){
+    return String(teken).replace(/️/g, "").length > 2;
+  }
+
+  /* de regel onder de naam op een grote tegel */
+  function onderwerpUitleg(o){
+    if(o.id === "plus") return bereikTekst("plus", "Optellen");
+    if(o.id === "min") return bereikTekst("min", "Aftrekken");
+    if(o.id === "keer") return bereikTekst("keer", "Vermenigvuldigen");
+    if(o.id === "deel") return bereikTekst("deel", "Delen zonder rest");
+    if(o.id === "tafels") return tafelsKort();
+    if(o.id === "klok") return klokKort();
+    if(o.id === "alles") return "Alles wat voor jou aanstaat";
+    if(o.id === "rest") return "Delen met iets over";
+    if(o.id === "deeltafels") return "De tafels omgekeerd";
+    if(o.id === "verhaal") return "Sommen in een verhaaltje";
+    return "Groep " + par(o.id).lj;
+  }
+
+  /* id op elk onderwerp zetten, zodat een generator zichzelf kent */
+  (function(){
+    for(var id in ONDERWERPEN){
+      if(Object.prototype.hasOwnProperty.call(ONDERWERPEN, id)) ONDERWERPEN[id].id = id;
+    }
+  })();
+
+  function onderwerpLijst(){
+    var uit = [];
+    for(var id in ONDERWERPEN){
+      if(Object.prototype.hasOwnProperty.call(ONDERWERPEN, id)) uit.push(ONDERWERPEN[id]);
+    }
+    return uit;
+  }
+
+  /* Zichtbaar = past bij de groep, tenzij de ouder het expliciet aan of uit zette. */
+  function zichtbaar(id){
+    var stand = S.aan[id];
+    if(stand === true) return true;
+    if(stand === false) return false;
+    var o = ONDERWERPEN[id];
+    return !!o && o.vanaf <= S.leerjaar;
+  }
+
+  function actieveOnderwerpen(){
+    var uit = [];
+    onderwerpLijst().forEach(function(o){ if(!o.meta && zichtbaar(o.id)) uit.push(o.id); });
+    return uit.length ? uit : ["plus"];
+  }
+
+  /* een challenge is één leerjaar pittiger */
+  function pittigLeerjaar(){ return Math.min(8, S.leerjaar + 1); }
+
+  /* de trap: stapel alle rijen tot en met het gevraagde leerjaar */
+  function trap(tabel, lj){
+    var uit = {}, n, k;
+    if(!tabel) return uit;
+    for(n = 3; n <= lj; n++){
+      if(!tabel[n]) continue;
+      for(k in tabel[n]) if(Object.prototype.hasOwnProperty.call(tabel[n], k)) uit[k] = tabel[n][k];
+    }
+    return uit;
+  }
+
+  /* de parameters van één onderwerp bij het ingestelde leerjaar, met de schuif erbij */
+  function par(id, lj){
+    var o = ONDERWERPEN[id];
+    if(!o) return {};
+    var schuif = S.schuif[id] || 0;
+    var eff = Math.max(3, Math.min(8, (lj || S.leerjaar) + schuif));
+    /* Een onderwerp kan met de schakelaar aangezet worden onder de groep waar het
+       hoort. Zonder deze ondergrens levert de trap dan lege parameters op. */
+    if(o.vanaf && eff < o.vanaf) eff = o.vanaf;
+    var p = trap(o.niveau, eff);
+    p.lj = eff;
+    return p;
+  }
+
+  function legeStats(){
+    var s = {groep:{}, onderwerp:{}, tafel:{}, fouten:[], challenges:{gedaan:0, gehaald:0}};
+    GROEPEN.forEach(function(g){ s.groep[g.id] = {goed:0, totaal:0}; });
+    onderwerpLijst().forEach(function(o){ s.onderwerp[o.id] = {goed:0, totaal:0}; });
+    for(var t = 1; t <= 10; t++) s.tafel[t] = {goed:0, totaal:0};
+    return s;
+  }
+
+  var S = {
+    punten: 0,
+    bonusStickers: 0,        /* stickers uit challenges, los van de punten */
+    stats: legeStats(),
+    geluid: true,
+    bereik: standaardBereik(),
+    puntenPerSticker: PUNTEN_PER_STICKER,
+    stickersPerBeloning: STICKERS_PER_BELONING,
+    rondeLengte: RONDE_LENGTE,
+    challengeLengte: CHALLENGE_LENGTE,
+    tafels: [1,2,3,4,5,6,7,8,9,10],
+    leerjaar: 4,                 /* groep 3 t/m 8; stuurt de moeilijkheid van alles */
+    leerjaarGekozen: false,      /* zolang false vragen we de ouder er één keer om */
+    aan: {},                     /* onderwerp -> true (altijd aan) of false (uit) */
+    beloningGegeven: {},         /* velnummer -> {datum, notitie}; door de ouder afgevinkt */
+    superStickers: [],           /* volgnummers van stickers uit een foutloze challenge */
+    schuif: {},                  /* onderwerp -> -1, 0 of +1 leerjaar */
+    instellingenVrij: false,     /* blijft alleen open zolang de app draait */
+    code: "",
+    cat: null,
+    klokNiveau: 1,
+    klokSoort: "mix",            /* analoog | digitaal | mix */
+    vragen: [],
+    i: 0,
+    invoer: "",
+    invoer2: "",                 /* tweede antwoordvak, alleen bij vorm "duo" */
+    veld: 0,                     /* welk vak de toetsen krijgt: 0 of 1 */
+    bezig: false,
+    fouten: [],
+    goed: 0
+  };
+
+  /* ----- getallen zonder komma-ellende -----
+     Geld en kommagetallen worden overal als geheel getal in de kleinste eenheid
+     bewaard (centen, tienden). Zo kan 0,1 + 0,2 nooit als fout gerekend worden. */
+  function naarKlein(tekst, dec){
+    var d = String(tekst).split(",");
+    var deel = d[1] || "";
+    while(deel.length < dec) deel += "0";
+    return (parseInt(d[0] || "0", 10) * Math.pow(10, dec)) + parseInt(deel.slice(0, dec) || "0", 10);
+  }
+
+  function uitKlein(waarde, dec){
+    if(!dec) return String(waarde);
+    var f = Math.pow(10, dec);
+    var min = waarde < 0 ? "−" : "";
+    waarde = Math.abs(waarde);
+    var deel = String(waarde % f);
+    while(deel.length < dec) deel = "0" + deel;
+    return min + Math.floor(waarde / f) + "," + deel;
+  }
+
+  function toonGetal(v, n){ return v.decimalen ? uitKlein(n, v.decimalen) : String(n); }
+
+  function actieveInvoer(){ return S.veld === 1 ? S.invoer2 : S.invoer; }
+  function zetInvoer(t){ if(S.veld === 1) S.invoer2 = t; else S.invoer = t; }
+
+  /* ----- opslag ----- */
+  function laad(){
+    try{
+      var r = JSON.parse(localStorage.getItem(SLEUTEL) || "{}");
+      if(typeof r.punten === "number") S.punten = r.punten;
+      if(typeof r.geluid === "boolean") S.geluid = r.geluid;
+      if(r.bereik){
+        BEREIKEN.forEach(function(regel){
+          var b = r.bereik[regel.id];
+          if(b) S.bereik[regel.id] = schoonBereik(regel.id, b.van, b.tot);
+        });
+      }
+      S.puntenPerSticker = schoonGetal(r.puntenPerSticker, 1, 100, PUNTEN_PER_STICKER);
+      S.stickersPerBeloning = schoonGetal(r.stickersPerBeloning, 1, 50, STICKERS_PER_BELONING);
+      S.rondeLengte = schoonGetal(r.rondeLengte, 3, 50, RONDE_LENGTE);
+      S.challengeLengte = schoonGetal(r.challengeLengte, 5, 100, CHALLENGE_LENGTE);
+
+      if(typeof r.leerjaar === "number"){
+        S.leerjaar = schoonGetal(r.leerjaar, 3, 8, 4);
+        S.leerjaarGekozen = r.leerjaarGekozen !== false;
+      } else {
+        /* opslag van vóór het niveausysteem: groep raden uit wat er staat, en het
+           één keer aan de ouder voorleggen. De bestaande bereiken blijven gewoon staan. */
+        S.leerjaar = raadLeerjaar(r);
+        S.leerjaarGekozen = false;
+      }
+      if(r.aan) for(var aId in r.aan){
+        if(ONDERWERPEN[aId] && typeof r.aan[aId] === "boolean") S.aan[aId] = r.aan[aId];
+      }
+      if(r.schuif) for(var sId in r.schuif){
+        if(ONDERWERPEN[sId]) S.schuif[sId] = schoonGetal(r.schuif[sId], -1, 1, 0);
+      }
+      if(Object.prototype.toString.call(r.superStickers) === "[object Array]"){
+        var supers = [];
+        r.superStickers.forEach(function(n){
+          n = Math.round(Number(n));
+          if(isFinite(n) && n >= 0 && n < 1e7 && supers.indexOf(n) === -1) supers.push(n);
+        });
+        S.superStickers = supers.slice(0, 5000);
+      }
+      if(r.beloningGegeven) for(var bId in r.beloningGegeven){
+        var bel = r.beloningGegeven[bId];
+        var nr = Math.round(Number(bId));
+        if(!isFinite(nr) || nr < 0 || nr > 100000) continue;
+        if(!bel || typeof bel !== "object") continue;
+        S.beloningGegeven[nr] = {
+          datum: /^\d{4}-\d{1,2}-\d{1,2}$/.test(bel.datum) ? bel.datum : "",
+          notitie: String(bel.notitie || "").slice(0, 60)
+        };
+      }
+      if(Object.prototype.toString.call(r.tafels) === "[object Array]"){
+        var schoon = [];
+        r.tafels.forEach(function(t){
+          t = Math.round(Number(t));
+          if(t >= 1 && t <= 10 && schoon.indexOf(t) === -1) schoon.push(t);
+        });
+        if(schoon.length) S.tafels = schoon.sort(function(a, b){ return a - b; });
+      }
+      if(r.klokNiveau === 1 || r.klokNiveau === 2 || r.klokNiveau === 3) S.klokNiveau = r.klokNiveau;
+      if(r.klokSoort === "analoog" || r.klokSoort === "digitaal" || r.klokSoort === "mix") S.klokSoort = r.klokSoort;
+      S.bonusStickers = schoonGetal(r.bonusStickers, 0, 99999, 0);
+      if(r.stats){
+        GROEPEN.forEach(function(g){
+          var b = r.stats.groep && r.stats.groep[g.id];
+          if(b) S.stats.groep[g.id] = {goed:schoonGetal(b.goed,0,1e7,0), totaal:schoonGetal(b.totaal,0,1e7,0)};
+        });
+        for(var t = 1; t <= 10; t++){
+          var bt = r.stats.tafel && r.stats.tafel[t];
+          if(bt) S.stats.tafel[t] = {goed:schoonGetal(bt.goed,0,1e7,0), totaal:schoonGetal(bt.totaal,0,1e7,0)};
+        }
+        if(Object.prototype.toString.call(r.stats.fouten) === "[object Array]"){
+          S.stats.fouten = r.stats.fouten.slice(0, MAX_FOUTEN).filter(function(f){
+            return f && f.sleutel && f.vraag;
+          });
+        }
+        if(r.stats.challenges){
+          S.stats.challenges.gedaan = schoonGetal(r.stats.challenges.gedaan, 0, 1e6, 0);
+          S.stats.challenges.gehaald = schoonGetal(r.stats.challenges.gehaald, 0, 1e6, 0);
+        }
+      }
+    }catch(e){}
+  }
+  function bewaar(){
+    try{
+      localStorage.setItem(SLEUTEL, JSON.stringify({
+        punten: S.punten,
+        geluid: S.geluid,
+        bereik: S.bereik,
+        puntenPerSticker: S.puntenPerSticker,
+        stickersPerBeloning: S.stickersPerBeloning,
+        rondeLengte: S.rondeLengte,
+        challengeLengte: S.challengeLengte,
+        tafels: S.tafels,
+        klokNiveau: S.klokNiveau,
+        klokSoort: S.klokSoort,
+        bonusStickers: S.bonusStickers,
+        leerjaar: S.leerjaar,
+        leerjaarGekozen: S.leerjaarGekozen,
+        aan: S.aan,
+        beloningGegeven: S.beloningGegeven,
+        superStickers: S.superStickers,
+        schuif: S.schuif,
+        stats: S.stats
+      }));
+    }catch(e){}
+  }
+
+  /* Groep raden uit opslag van vóór het niveausysteem, zodat een bestaande
+     installatie na de update precies zo moeilijk blijft als hij was. */
+  function raadLeerjaar(r){
+    var tot = 20;
+    ["plus","min"].forEach(function(id){
+      if(r.bereik && r.bereik[id] && r.bereik[id].tot > tot) tot = r.bereik[id].tot;
+    });
+    var lj = tot <= 20 ? 3 : tot <= 100 ? 4 : tot <= 1000 ? 5 : tot <= 10000 ? 6 : 7;
+    if(r.klokNiveau === 3 && lj < 5) lj = 5;
+    if(r.bereik && r.bereik.keer && r.bereik.keer.tot > 12 && lj < 6) lj = 6;
+    return lj;
+  }
+
+  function schoonGetal(waarde, laag, hoog, terugval){
+    waarde = Math.round(Number(waarde));
+    if(!isFinite(waarde)) return terugval;
+    return Math.max(laag, Math.min(hoog, waarde));
+  }
+
+  /* ----- geluid ----- */
+  var ac = null;
+  function piep(tonen, duur){
+    if(!S.geluid) return;
+    try{
+      if(!ac) ac = new (window.AudioContext || window.webkitAudioContext)();
+      if(ac.state === "suspended") ac.resume();
+      tonen.forEach(function(f, n){
+        var o = ac.createOscillator(), g = ac.createGain();
+        o.type = "triangle";
+        o.frequency.value = f;
+        var t0 = ac.currentTime + n * duur;
+        g.gain.setValueAtTime(0.0001, t0);
+        g.gain.exponentialRampToValueAtTime(0.18, t0 + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + duur);
+        o.connect(g); g.connect(ac.destination);
+        o.start(t0); o.stop(t0 + duur + 0.02);
+      });
+    }catch(e){}
+  }
+  var klankGoed  = function(){ piep([660, 880], 0.11); };
+  var klankFout  = function(){ piep([200], 0.22); };
+  var klankSticker = function(){ piep([523, 659, 784, 1047], 0.1); };
+  var klankBeloning = function(){ piep([523, 659, 784, 1047, 1319], 0.14); };
+  var klankSuper = function(){ piep([659, 784, 1047, 1319, 1568, 2093], 0.13); };
+
+  /* ----- sommen ----- */
+  function rnd(a, b){ return a + Math.floor(Math.random() * (b - a + 1)); }
+
+  function schud(lijst){
+    for(var i = lijst.length - 1; i > 0; i--){
+      var j = Math.floor(Math.random() * (i + 1));
+      var h = lijst[i]; lijst[i] = lijst[j]; lijst[j] = h;
+    }
+    return lijst;
+  }
+
+  /* ----- klok ----- */
+  var UURNAAM     = R.UURNAAM;
+  var NIVEAUS     = R.NIVEAUS;
+
+  var KLOKSOORTEN = R.KLOKSOORTEN;
+
+  function volgendUur(u){ return u === 12 ? 1 : u + 1; }
+
+  function digitaal(u, m){ return u + ":" + (m < 10 ? "0" + m : m); }
+
+  function inWoorden(u, m){
+    var na = UURNAAM[u % 12 === 0 ? 12 : u % 12];
+    var vo = UURNAAM[volgendUur(u) % 12 === 0 ? 12 : volgendUur(u) % 12];
+    if(m === 0)  return na + " uur";
+    if(m === 15) return "kwart over " + na;
+    if(m === 30) return "half " + vo;
+    if(m === 45) return "kwart voor " + vo;
+    if(m < 15)   return m + " over " + na;
+    if(m < 30)   return (30 - m) + " voor half " + vo;
+    if(m < 45)   return (m - 30) + " over half " + vo;
+    return (60 - m) + " voor " + vo;
+  }
+
+  function klokSVG(u, m, groot){
+    var mid = 100, s = "";
+    function punt(hoek, straal){
+      var a = (hoek - 90) * Math.PI / 180;
+      return [mid + straal * Math.cos(a), mid + straal * Math.sin(a)];
+    }
+    s += '<svg viewBox="0 0 200 200" role="img" aria-label="klok">';
+    s += '<circle class="k-wijzer" cx="100" cy="100" r="91"/>';
+    var i, p1, p2;
+    for(i = 0; i < 60; i++){
+      if(i % 5 === 0) continue;
+      p1 = punt(i * 6, 78); p2 = punt(i * 6, 84);
+      s += '<line class="k-streep" x1="' + p1[0].toFixed(1) + '" y1="' + p1[1].toFixed(1) +
+           '" x2="' + p2[0].toFixed(1) + '" y2="' + p2[1].toFixed(1) + '"/>';
+    }
+    for(i = 0; i < 12; i++){
+      p1 = punt(i * 30, 72); p2 = punt(i * 30, 84);
+      s += '<line class="k-streep-u" x1="' + p1[0].toFixed(1) + '" y1="' + p1[1].toFixed(1) +
+           '" x2="' + p2[0].toFixed(1) + '" y2="' + p2[1].toFixed(1) + '"/>';
+    }
+    for(i = 1; i <= 12; i++){
+      if(!groot && i % 3 !== 0) continue;
+      p1 = punt(i * 30, 57);
+      s += '<text class="k-cijfer" x="' + p1[0].toFixed(1) + '" y="' + p1[1].toFixed(1) + '" text-anchor="middle" ' +
+           'dominant-baseline="central" font-size="' + (groot ? 22 : 26) + '">' + i + '</text>';
+    }
+    var uh = punt(((u % 12) * 30) + (m * 0.5), 44);
+    var mh = punt(m * 6, 70);
+    s += '<line class="k-minuut" x1="100" y1="100" x2="' + mh[0].toFixed(1) + '" y2="' + mh[1].toFixed(1) + '"/>';
+    s += '<line class="k-uur" x1="100" y1="100" x2="' + uh[0].toFixed(1) + '" y2="' + uh[1].toFixed(1) + '"/>';
+    s += '<circle class="k-pin" cx="100" cy="100" r="7"/>';
+    s += '</svg>';
+    return s;
+  }
+
+  /* wens mag {niveau, soort, u, m} bevatten; challenges en herkansingen zetten die vast */
+  function maakKlokvraag(wens){
+    wens = wens || {};
+    var n = NIVEAUS[wens.niveau || S.klokNiveau] || NIVEAUS[1];
+    var u = wens.u || rnd(1, 12);
+    var m = (typeof wens.m === "number") ? wens.m : n.minuten[rnd(0, n.minuten.length - 1)];
+    if(n.minuten.indexOf(m) === -1) n = NIVEAUS[3];   /* bewaarde tijd past niet in dit niveau */
+    var juist = {u:u, m:m};
+
+    /* afleiders: de fouten die kinderen echt maken */
+    var kandidaten = [
+      {u:volgendUur(u), m:m},                                   /* "half vier" verward met 4 uur */
+      {u:u === 1 ? 12 : u - 1, m:m},
+      {u:u, m:(m + 30) % 60},                                   /* wijzers omgewisseld */
+      {u:u, m:n.minuten[(n.minuten.indexOf(m) + 1) % n.minuten.length]},
+      {u:u, m:n.minuten[(n.minuten.indexOf(m) + n.minuten.length - 1) % n.minuten.length]},
+      {u:volgendUur(volgendUur(u)), m:m},
+      {u:u, m:(60 - m) % 60}
+    ];
+    var afleiders = [], gezien = {};
+    gezien[u + "-" + m] = true;
+    schud(kandidaten).forEach(function(k){
+      var sl = k.u + "-" + k.m;
+      if(gezien[sl] || afleiders.length >= 3) return;
+      gezien[sl] = true;
+      afleiders.push(k);
+    });
+    while(afleiders.length < 3){
+      var extra = {u:rnd(1,12), m:n.minuten[rnd(0, n.minuten.length - 1)]};
+      if(gezien[extra.u + "-" + extra.m]) continue;
+      gezien[extra.u + "-" + extra.m] = true;
+      afleiders.push(extra);
+    }
+
+    var opties = schud(afleiders.concat([juist]));
+    var index = 0;
+    opties.forEach(function(o, k){ if(o.u === u && o.m === m) index = k; });
+
+    var vorm, keuze = wens.soort || S.klokSoort;
+    if(keuze === "analoog") vorm = "lezen";
+    else if(keuze === "digitaal") vorm = "zetten";
+    else vorm = Math.random() < 0.5 ? "lezen" : "zetten";
+
+    return {
+      groep: "klok",
+      vorm: "keuze",
+      lijf: "klok",
+      soort: "klok",
+      variant: vorm,
+      u: u, m: m,
+      opties: opties,
+      juist: index,
+      kleur: "var(--klok)",
+      sleutel: "klok-" + u + "-" + m,
+      label: "klok " + digitaal(u, m),
+      oplossing: digitaal(u, m) + " — " + inWoorden(u, m)
+    };
+  }
+
+  /* ---------- de vier basisbewerkingen ----------
+     Deze houden hun handmatige van/tot-bereik uit de instellingen; de rest van de
+     onderwerpen haalt zijn moeilijkheid uit het leerjaar. */
+  function pakBereik(id, wens){
+    if(wens && wens.bereik && wens.bereik[id]) return wens.bereik[id];
+    return S.bereik[id];
+  }
+
+  function maakPlus(lj, wens){
+    var r = pakBereik("plus", wens);
+    var a = kies(wens, "a", function(){ return rnd(r.van, r.tot); });
+    var b = kies(wens, "b", function(){ return rnd(r.van, r.tot); });
+    return {groep:"plus", vorm:"getal", lijf:"som", a:a, b:b, op:"+", ant:a + b, kleur:"var(--gras)",
+            label:a + " + " + b, oplossing:a + " + " + b + " = " + (a + b)};
+  }
+
+  function maakMin(lj, wens){
+    var r = pakBereik("min", wens);
+    var a = kies(wens, "a", function(){ return rnd(r.van, r.tot); });
+    var b = kies(wens, "b", function(){ return rnd(r.van, r.tot); });
+    if(b > a){ var t = a; a = b; b = t; }   /* nooit onder nul */
+    return {groep:"min", vorm:"getal", lijf:"som", a:a, b:b, op:"−", ant:a - b, kleur:"var(--zee)",
+            label:a + " − " + b, oplossing:a + " − " + b + " = " + (a - b)};
+  }
+
+  function maakKeer(lj, wens){
+    var r = pakBereik("keer", wens);
+    var a = kies(wens, "a", function(){ return rnd(r.van, r.tot); });
+    var b = kies(wens, "b", function(){ return rnd(r.van, r.tot); });
+    return {groep:"keer", vorm:"getal", lijf:"som", a:a, b:b, op:"×", ant:a * b, kleur:"var(--druif)",
+            label:a + " × " + b, oplossing:a + " × " + b + " = " + (a * b)};
+  }
+
+  function maakDeel(lj, wens){
+    var r = pakBereik("deel", wens);
+    var b = kies(wens, "b", function(){ return rnd(Math.max(1, r.van), Math.max(1, r.tot)); });
+    var u = kies(wens, "q", function(){ return rnd(r.van, r.tot); });
+    return {groep:"deel", vorm:"getal", lijf:"som", a:b * u, b:b, op:":", ant:u, kleur:"var(--framboos)",
+            label:(b * u) + " : " + b, oplossing:(b * u) + " : " + b + " = " + u};
+  }
+
+  function maakTafel(lj, wens){
+    var lijst = (wens && wens.tafels && wens.tafels.length) ? wens.tafels : S.tafels;
+    var t = kies(wens, "tafel", function(){
+      return lijst.length ? lijst[rnd(0, lijst.length - 1)] : rnd(1, 10);
+    });
+    /* mult is de vermenigvuldiger; welke kant hij staat wisselt, dus hem apart
+       bewaren — anders bouwt de herkansing een andere som terug */
+    var mult = kies(wens, "mult", function(){ return rnd(1, 10); });
+    var om = kies(wens, "om", function(){ return Math.random() < 0.5 ? 1 : 0; });
+    var links = om ? t : mult, rechts = om ? mult : t;
+    return {groep:"tafels", vorm:"getal", lijf:"som", tafel:t, mult:mult, om:om,
+            a:links, b:rechts, op:"×", ant:t * mult, kleur:"var(--zon)",
+            label:links + " × " + rechts,
+            oplossing:links + " × " + rechts + " = " + (t * mult)};
+  }
+
+  /* Elke generator kiest zijn toevalswaarden hierlangs. Staat de waarde al in de wens,
+     dan wordt die gebruikt — zo is elke vraag te herbouwen uit een handvol getallen,
+     en werkt de herkansing-challenge zonder extra code per onderwerp. */
+  function kies(wens, naam, maker){
+    if(wens && wens[naam] !== undefined && wens[naam] !== null) return wens[naam];
+    return maker();
+  }
+
+
+  /* ---------- Slim met getallen ---------- */
+
+  function maakOntbrekend(lj, wens){
+    var p = par("ontbrekend", wens.leerjaar);
+    var op = kies(wens, "op", function(){ return p.ops[rnd(0, p.ops.length - 1)]; });
+    var a, b, ant, q;
+    if(op === "+"){
+      a = kies(wens, "a", function(){ return rnd(1, Math.floor(p.tot / 2)); });
+      b = kies(wens, "b", function(){ return rnd(1, Math.floor(p.tot / 2)); });
+      ant = a + b;
+    } else if(op === "−"){
+      a = kies(wens, "a", function(){ return rnd(3, p.tot); });
+      b = kies(wens, "b", function(){ return rnd(1, a - 1); });
+      ant = a - b;
+    } else if(op === "×"){
+      a = kies(wens, "a", function(){ return rnd(2, p.factor); });
+      b = kies(wens, "b", function(){ return rnd(2, 10); });
+      ant = a * b;
+    } else {
+      b = kies(wens, "b", function(){ return rnd(2, 10); });
+      q = kies(wens, "q", function(){ return rnd(2, 10); });
+      a = b * q; ant = q;
+    }
+    var gat = kies(wens, "gat", function(){ return ["a","b"][rnd(0,1)]; });
+    return {groep:"getallen", vorm:"getal", lijf:"som",
+            a:a, b:b, op:op, ant:ant, gat:gat, doel:(gat === "a" ? a : b),
+            vraagje:"Welk getal hoort er?",
+            sleutel:"ontb " + a + op + b + gat,
+            label:a + " " + op + " " + b + " = " + ant,
+            oplossing:a + " " + op + " " + b + " = " + ant};
+  }
+
+  function maakDubbel(lj, wens){
+    var p = par("dubbel", wens.leerjaar);
+    var half = kies(wens, "half", function(){ return rnd(0, 1); });
+    var n = kies(wens, "n", function(){ return rnd(2, p.tot); });
+    if(half){
+      var geheel = n * 2;
+      return {groep:"getallen", vorm:"getal", lijf:"vrij", ant:n, n:n, half:1,
+              vraagje:"Reken uit",
+              regel:'<span>de helft van ' + geheel + '</span><span class="op">=</span>{1}',
+              sleutel:"half " + geheel,
+              label:"de helft van " + geheel,
+              oplossing:"de helft van " + geheel + " is " + n};
+    }
+    return {groep:"getallen", vorm:"getal", lijf:"vrij", ant:n * 2, n:n, half:0,
+            vraagje:"Reken uit",
+            regel:'<span>het dubbele van ' + n + '</span><span class="op">=</span>{1}',
+            sleutel:"dub " + n,
+            label:"het dubbele van " + n,
+            oplossing:"het dubbele van " + n + " is " + (n * 2)};
+  }
+
+  function maakSplitsen(lj, wens){
+    var p = par("splitsen", wens.leerjaar);
+    var heel = kies(wens, "heel", function(){ return rnd(p.van, p.tot); });
+    var deel = kies(wens, "deel", function(){ return rnd(1, heel - 1); });
+    return {groep:"getallen", vorm:"getal", lijf:"vrij", ant:heel - deel, heel:heel, deel:deel,
+            vraagje:"Hoeveel hoort erbij?",
+            regel:'<span>' + heel + '</span><span class="op">=</span><span>' + deel +
+                  '</span><span class="op">+</span>{1}',
+            sleutel:"spl " + heel + "/" + deel,
+            label:heel + " = " + deel + " + ?",
+            oplossing:heel + " = " + deel + " + " + (heel - deel)};
+  }
+
+  function maakVergelijk(lj, wens){
+    var p = par("vergelijk", wens.leerjaar);
+    var somKant = kies(wens, "somKant", function(){ return (p.sommen && Math.random() < 0.45) ? 1 : 0; });
+    var a = kies(wens, "a", function(){ return rnd(1, p.tot); });
+    var b2 = kies(wens, "b2", function(){ return rnd(1, Math.max(2, Math.floor(p.tot / 3))); });
+    var links, tl;
+    if(somKant){ links = a + b2; tl = a + " + " + b2; }
+    else { links = a; tl = String(a); }
+    /* ongeveer een op de zes precies gelijk, anders leert een kind de =-knop negeren */
+    var rechts = kies(wens, "rechts", function(){
+      if(Math.random() < 0.17) return links;
+      var stap = rnd(1, Math.max(2, Math.round(p.tot / 6)));
+      return Math.max(1, links + (rnd(0,1) ? stap : -stap));
+    });
+    var teken = links < rechts ? "<" : links > rechts ? ">" : "=";
+    return {groep:"getallen", vorm:"keuze", lijf:"vrij",
+            a:a, b2:b2, somKant:somKant, rechts:rechts,
+            opties:[{teken:"<", sub:"kleiner dan"}, {teken:">", sub:"groter dan"}, {teken:"=", sub:"even groot"}],
+            juist:["<",">","="].indexOf(teken),
+            vraagje:"Welk teken hoort ertussen?",
+            zin:"Het bekje wijst altijd naar het grootste getal.",
+            regel:'<span>' + tl + '</span><span class="op">?</span><span>' + rechts + '</span>',
+            sleutel:"verg " + tl + "|" + rechts,
+            label:tl + " ? " + rechts,
+            oplossing:tl + " " + teken + " " + rechts};
+  }
+
+  function maakAfronden(lj, wens){
+    var p = par("afronden", wens.leerjaar);
+    var naar = kies(wens, "naar", function(){ return p.naar[rnd(0, p.naar.length - 1)]; });
+    var getal = kies(wens, "getal", function(){
+      var g = rnd(naar, naar * p.maal);
+      if(!p.halven && g % 10 === 5) g += rnd(0,1) ? 1 : -1;   /* de 5-regel komt pas later */
+      return g;
+    });
+    var ant = Math.round(getal / naar) * naar;
+    var woord = {10:"tientallen", 100:"honderdtallen", 1000:"duizendtallen"}[naar];
+    return {groep:"getallen", vorm:"getal", lijf:"vrij", ant:ant, getal:getal, naar:naar,
+            vraagje:"Rond af op " + woord,
+            zin:p.halven ? "Zit je precies op de helft? Dan rond je naar boven af." : "",
+            regel:'<span>' + getal + '</span><span class="op">→</span>{1}',
+            sleutel:"afr " + getal + "/" + naar,
+            label:getal + " → " + woord,
+            oplossing:getal + " afgerond op " + woord + " is " + ant};
+  }
+
+  function maakKomma(lj, wens){
+    var p = par("komma", wens.leerjaar);
+    var dec = kies(wens, "decimalen", function(){ return p.dec[rnd(0, p.dec.length - 1)]; });
+    var f = Math.pow(10, dec);
+    var op = kies(wens, "op", function(){ return p.ops[rnd(0, p.ops.length - 1)]; });
+    var a = kies(wens, "a", function(){ return rnd(1, p.heel * f); });
+    var b, ant, bHeel = false;
+    if(op === "+"){ b = kies(wens, "b", function(){ return rnd(1, p.heel * f); }); ant = a + b; }
+    else if(op === "−"){ b = kies(wens, "b", function(){ return rnd(1, Math.max(1, a - 1)); }); ant = a - b; }
+    else if(op === "×"){ b = kies(wens, "b", function(){ return rnd(2, 9); }); ant = a * b; bHeel = true; }
+    else { b = kies(wens, "b", function(){ return rnd(2, 9); }); a = Math.ceil(a / b) * b; ant = a / b; bHeel = true; }
+    return {groep:"getallen", vorm:"komma", lijf:"som", decimalen:dec, bHeel:bHeel,
+            a:a, b:b, op:op, ant:ant,
+            vraagje:"Reken uit",
+            sleutel:"kom " + a + op + b + "/" + dec,
+            label:uitKlein(a, dec) + " " + op + " " + (bHeel ? b : uitKlein(b, dec)),
+            oplossing:uitKlein(a, dec) + " " + op + " " + (bHeel ? b : uitKlein(b, dec)) +
+                      " = " + uitKlein(ant, dec)};
+  }
+
+  function graden(n){ return (n < 0 ? "−" + Math.abs(n) : String(n)) + "°"; }
+
+  function maakNegatief(lj, wens){
+    var p = par("negatief", wens.leerjaar);
+    var van = kies(wens, "van", function(){ return rnd(-p.tot, p.tot); });
+    var stap = kies(wens, "stap", function(){ return rnd(1, p.stap); });
+    var omhoog = kies(wens, "omhoog", function(){ return rnd(0, 1); });
+    var naar = omhoog ? van + stap : van - stap;
+    var vraagNaar = kies(wens, "vraagNaar", function(){ return rnd(0, 1); });
+    if(vraagNaar){
+      return {groep:"getallen", vorm:"getal", lijf:"vrij", minToets:true, ant:naar,
+              van:van, stap:stap, omhoog:omhoog, vraagNaar:1,
+              vraagje:"Hoe koud of warm wordt het?",
+              zin:"Het is " + graden(van) + ". Het wordt " + stap + " graden " +
+                  (omhoog ? "warmer" : "kouder") + ".",
+              regel:'{1}<span class="eenheid">graden</span>',
+              sleutel:"neg " + van + (omhoog ? "+" : "-") + stap,
+              label:graden(van) + (omhoog ? " + " : " − ") + stap,
+              oplossing:graden(van) + (omhoog ? " plus " : " min ") + stap + " graden is " + graden(naar)};
+    }
+    var laag = Math.min(van, naar), hoog = Math.max(van, naar);
+    return {groep:"getallen", vorm:"getal", lijf:"vrij", ant:hoog - laag,
+            van:van, stap:stap, omhoog:omhoog, vraagNaar:0,
+            vraagje:"Hoeveel graden verschil?",
+            zin:"In de nacht is het " + graden(laag) + " en overdag " + graden(hoog) + ".",
+            regel:'{1}<span class="eenheid">graden</span>',
+            sleutel:"negv " + van + "/" + naar,
+            label:"van " + graden(laag) + " naar " + graden(hoog),
+            oplossing:"van " + graden(laag) + " naar " + graden(hoog) + " is " + (hoog - laag) + " graden"};
+  }
+
+  function maakGemiddelde(lj, wens){
+    var p = par("gemiddelde", wens.leerjaar);
+    var hoeveel = kies(wens, "hoeveel", function(){ return rnd(3, p.hoeveel); });
+    var gem = kies(wens, "gem", function(){ return rnd(4, p.tot); });
+    /* Begin met alle getallen op het gemiddelde en verschuif daarna steeds evenveel
+       van het ene naar het andere getal. De som blijft dan exact deelbaar, en geen
+       enkel getal kan onder de 1 zakken. */
+    var lijst = kies(wens, "lijst", function(){
+      var uit = [], n, i, j, d;
+      for(n = 0; n < hoeveel; n++) uit.push(gem);
+      var beurten = rnd(2, hoeveel + 2);
+      for(n = 0; n < beurten; n++){
+        i = rnd(0, hoeveel - 1);
+        j = rnd(0, hoeveel - 1);
+        if(i === j) continue;
+        d = Math.min(4, uit[i] - 1);
+        if(d < 1) continue;
+        d = rnd(1, d);
+        uit[i] -= d;
+        uit[j] += d;
+      }
+      return uit;
+    });
+    var som = 0;
+    lijst.forEach(function(n){ som += n; });
+    return {groep:"getallen", vorm:"getal", lijf:"vrij", ant:som / lijst.length,
+            hoeveel:lijst.length, gem:gem, lijst:lijst,
+            vraagje:"Wat is het gemiddelde?",
+            zin:"Saar haalde deze punten: " + lijst.join(", ") + ".",
+            regel:'{1}',
+            sleutel:"gem " + lijst.join("-"),
+            label:"gemiddelde van " + lijst.join(", "),
+            oplossing:"samen " + som + ", gedeeld door " + lijst.length + " is " + (som / lijst.length)};
+  }
+
+  /* ---------- Meten, geld en tijd ---------- */
+
+  var MAATEN      = R.MAATEN;
+
+  function maakMeten(lj, wens){
+    var p = par("meten", wens.leerjaar);
+    var kan = [];
+    MAATEN.forEach(function(m, n){ if(m.vanaf <= p.lj) kan.push(n); });
+    var mi = kies(wens, "m", function(){ return kan[rnd(0, kan.length - 1)]; });
+    var m = MAATEN[mi] || MAATEN[0];
+    var omhoog = kies(wens, "omhoog", function(){ return (p.omhoog && Math.random() < 0.4) ? 1 : 0; });
+    var n = kies(wens, "n", function(){ return rnd(1, p.tot); });
+    var getoond, ant, vanE, naarE;
+    if(omhoog){
+      /* omhoog kan alleen met een veelvoud van de factor, anders komt er een komma uit */
+      getoond = n * m.f; ant = n; vanE = m.naar; naarE = m.van;
+    } else {
+      getoond = n; ant = n * m.f; vanE = m.van; naarE = m.naar;
+    }
+    return {groep:"meten", vorm:"getal", lijf:"vrij", ant:ant, m:mi, n:n, omhoog:omhoog,
+            vraagje:"Hoeveel " + naarE + " is dat?",
+            regel:'<span>' + getoond + " " + vanE + '</span><span class="op">=</span>{1}' +
+                  '<span class="eenheid">' + naarE + '</span>',
+            sleutel:"meet " + getoond + vanE + naarE,
+            label:getoond + " " + vanE + " → " + naarE,
+            oplossing:getoond + " " + vanE + " = " + ant + " " + naarE};
+  }
+
+  function euro(cent){ return "€ " + uitKlein(cent, 2); }
+
+  function zinLijst(lijst){
+    if(lijst.length === 1) return lijst[0];
+    return lijst.slice(0, -1).join(", ") + " en " + lijst[lijst.length - 1];
+  }
+
+  function maakGeld(lj, wens){
+    var p = par("geld", wens.leerjaar);
+    var aantal = kies(wens, "aantal", function(){ return p.drie ? rnd(2, 3) : 2; });
+    var soort = kies(wens, "soort", function(){ return p.terug ? ["samen","terug"][rnd(0,1)] : "samen"; });
+    var centen = kies(wens, "centen", function(){
+      var uit = [];
+      while(uit.length < aantal){
+        uit.push(p.munten ? p.munten[rnd(0, p.munten.length - 1)]
+                          : rnd(1, Math.floor(p.maxCent / (aantal + 1))) * p.stap);
+      }
+      return uit;
+    });
+    var totaal = 0;
+    centen.forEach(function(c){ totaal += c; });
+    var tonen = centen.map(function(c){ return euro(c); });
+    var dec = p.helen ? 0 : 2;
+
+    if(soort === "samen"){
+      return {groep:"geld", vorm:dec ? "komma" : "getal", lijf:"vrij", decimalen:dec,
+              ant:dec ? totaal : totaal / 100, centen:centen, soort:"samen", aantal:aantal,
+              vraagje:"Hoeveel kost dat samen?",
+              zin:"Saar koopt " + zinLijst(tonen) + ".",
+              regel:'<span class="eenheid">€</span>{1}',
+              sleutel:"geld+" + centen.join("+"),
+              label:tonen.join(" + "),
+              oplossing:tonen.join(" + ") + " = " + euro(totaal)};
+    }
+    var biljetten = [500, 1000, 2000, 5000, 10000];
+    var betaald = kies(wens, "betaald", function(){
+      var n, i;
+      for(i = 0; i < biljetten.length; i++){ if(biljetten[i] > totaal) return biljetten[i]; }
+      return Math.ceil(totaal / 1000) * 1000 + 1000;
+    });
+    return {groep:"geld", vorm:"komma", lijf:"vrij", decimalen:2, ant:betaald - totaal,
+            centen:centen, betaald:betaald, soort:"terug", aantal:aantal,
+            vraagje:"Hoeveel krijgt ze terug?",
+            zin:"Saar koopt " + zinLijst(tonen) + " en betaalt met " + euro(betaald) + ".",
+            regel:'<span class="eenheid">€</span>{1}',
+            sleutel:"geldT" + centen.join("+") + "/" + betaald,
+            label:euro(betaald) + " − " + euro(totaal),
+            oplossing:euro(betaald) + " − " + euro(totaal) + " = " + euro(betaald - totaal)};
+  }
+
+  function maakDuur(lj, wens){
+    var p = par("duur", wens.leerjaar);
+    var u1 = kies(wens, "u1", function(){ return rnd(1, 12); });
+    var m1 = kies(wens, "m1", function(){ return rnd(0, Math.floor(59 / p.stap)) * p.stap; });
+    var duur = kies(wens, "duur", function(){ return rnd(1, Math.floor(p.max / p.stap)) * p.stap; });
+    /* de duur wordt getrokken en de eindtijd berekend; over het hele uur heen gaat dan vanzelf goed */
+    var t1 = u1 * 60 + m1, t2 = t1 + duur;
+    var u2 = Math.floor(t2 / 60) % 12; if(u2 === 0) u2 = 12;
+    var m2 = t2 % 60;
+    var zin = "Saar begint om " + digitaal(u1, m1) + " en stopt om " + digitaal(u2, m2) + ".";
+    var duo = p.duo && duur >= 60;
+    if(duo){
+      return {groep:"meten", vorm:"duo", lijf:"vrij", doel:Math.floor(duur / 60),
+              ant:Math.floor(duur / 60), ant2:duur % 60,
+              u1:u1, m1:m1, duur:duur, klokken:[[u1,m1],[u2,m2]],
+              vraagje:"Hoe lang duurt dat?",
+              zin:zin, onder:"uur · min",
+              regel:'{1}<span class="eenheid">uur</span>{2}<span class="eenheid">min</span>',
+              sleutel:"duur " + t1 + "+" + duur,
+              label:"van " + digitaal(u1,m1) + " tot " + digitaal(u2,m2),
+              oplossing:"van " + digitaal(u1,m1) + " tot " + digitaal(u2,m2) + " is " +
+                        Math.floor(duur / 60) + " uur en " + (duur % 60) + " minuten"};
+    }
+    return {groep:"meten", vorm:"getal", lijf:"vrij", ant:duur,
+            u1:u1, m1:m1, duur:duur, klokken:[[u1,m1],[u2,m2]],
+            vraagje:"Hoeveel minuten duurt dat?",
+            zin:zin,
+            regel:'{1}<span class="eenheid">minuten</span>',
+            sleutel:"duur " + t1 + "+" + duur,
+            label:"van " + digitaal(u1,m1) + " tot " + digitaal(u2,m2),
+            oplossing:"van " + digitaal(u1,m1) + " tot " + digitaal(u2,m2) + " is " + duur + " minuten"};
+  }
+
+  var MAANDEN     = R.MAANDEN;
+  var DAGEN       = R.DAGEN;
+
+  function maakKalender(lj, wens){
+    var p = par("kalender", wens.leerjaar);
+    var soort = kies(wens, "soort", function(){ return p.soorten[rnd(0, p.soorten.length - 1)]; });
+
+    if(soort === "maand"){
+      var mi = kies(wens, "mi", function(){ return rnd(0, 11); });
+      var m = MAANDEN[mi];
+      return {groep:"meten", vorm:"getal", lijf:"vrij", ant:m.dagen, mi:mi, soort:"maand",
+              vraagje:"Hoeveel dagen?",
+              regel:'<span>' + m.naam + '</span><span class="op">=</span>{1}' +
+                    '<span class="eenheid">dagen</span>',
+              sleutel:"kal m" + mi,
+              label:"dagen in " + m.naam,
+              oplossing:m.naam + " heeft " + m.dagen + " dagen"};
+    }
+    if(soort === "weken"){
+      var weken = kies(wens, "weken", function(){ return rnd(2, p.weken); });
+      return {groep:"meten", vorm:"getal", lijf:"vrij", ant:weken * 7, weken:weken, soort:"weken",
+              vraagje:"Hoeveel dagen is dat?",
+              regel:'<span>' + weken + ' weken</span><span class="op">=</span>{1}' +
+                    '<span class="eenheid">dagen</span>',
+              sleutel:"kal w" + weken,
+              label:weken + " weken in dagen",
+              oplossing:weken + " weken is " + (weken * 7) + " dagen"};
+    }
+    /* welke dag is het over n dagen: vier dagen om uit te kiezen, waarvan één klopt */
+    var di = kies(wens, "di", function(){ return rnd(0, 6); });
+    var stap = kies(wens, "stap", function(){ return rnd(2, p.vooruit); });
+    var uit = (di + stap) % 7;
+    var keus = kies(wens, "keus", function(){
+      var lijst = [uit], extra;
+      while(lijst.length < 4){
+        extra = rnd(0, 6);
+        if(lijst.indexOf(extra) === -1) lijst.push(extra);
+      }
+      return schud(lijst);
+    });
+    return {groep:"meten", vorm:"keuze", lijf:"vrij", soort:"dag", di:di, stap:stap, keus:keus,
+            opties:keus.map(function(d){ return {teken:DAGEN[d].slice(0, 2), sub:DAGEN[d]}; }),
+            juist:keus.indexOf(uit),
+            vraagje:"Welke dag is dat?",
+            zin:"Vandaag is het " + DAGEN[di] + ".",
+            regel:'<span>over ' + stap + ' dagen</span>',
+            sleutel:"kal d" + di + "+" + stap,
+            label:DAGEN[di] + " + " + stap + " dagen",
+            oplossing:"over " + stap + " dagen is het " + DAGEN[uit]};
+  }
+
+  function maakOppervlakte(lj, wens){
+    var p = par("oppervlakte", wens.leerjaar);
+    var vierkant = kies(wens, "vierkant", function(){ return rnd(0, 1); });
+    var a = kies(wens, "a", function(){ return rnd(2, p.tot); });
+    var b = kies(wens, "b", function(){ return vierkant ? a : rnd(2, p.tot); });
+    if(vierkant) b = a;
+    var omtrek = kies(wens, "omtrek", function(){ return rnd(0, 1); });
+    var vorm = vierkant ? "vierkant" : "rechthoek";
+    var maten = vierkant ? ("zijde " + a + " cm") : (a + " cm bij " + b + " cm");
+    if(omtrek){
+      return {groep:"meten", vorm:"getal", lijf:"vrij", ant:2 * (a + b),
+              a:a, b:b, vierkant:vierkant, omtrek:1,
+              vraagje:"Hoe lang is de omtrek?",
+              zin:"Een " + vorm + " van " + maten + ".",
+              regel:'{1}<span class="eenheid">cm</span>',
+              sleutel:"omt " + a + "x" + b,
+              label:"omtrek " + a + " bij " + b,
+              oplossing:"de omtrek is " + a + " + " + b + " + " + a + " + " + b + " = " + (2 * (a + b)) + " cm"};
+    }
+    return {groep:"meten", vorm:"getal", lijf:"vrij", ant:a * b,
+            a:a, b:b, vierkant:vierkant, omtrek:0,
+            vraagje:"Hoe groot is de oppervlakte?",
+            zin:"Een " + vorm + " van " + maten + ".",
+            regel:'{1}<span class="eenheid">cm²</span>',
+            sleutel:"opp " + a + "x" + b,
+            label:"oppervlakte " + a + " bij " + b,
+            oplossing:"de oppervlakte is " + a + " × " + b + " = " + (a * b) + " cm²"};
+  }
+
+  /* ---------- Deel van een geheel ---------- */
+
+  var NOEMERWOORD = R.NOEMERWOORD;
+
+  function breukHtml(t, n){
+    return '<span class="breuk"><i>' + t + '</i><i>' + n + '</i></span>';
+  }
+
+  function maakBreuk(lj, wens){
+    var p = par("breuk", wens.leerjaar);
+    var soort = kies(wens, "soort", function(){ return p.teller ? ["deel","breuk"][rnd(0,1)] : "deel"; });
+    var noemer = kies(wens, "noemer", function(){ return p.noemers[rnd(0, p.noemers.length - 1)]; });
+    var k = kies(wens, "k", function(){ return rnd(2, Math.max(2, Math.floor(p.tot / noemer))); });
+    var geheel = noemer * k;
+    if(soort === "deel" && NOEMERWOORD[noemer]){
+      return {groep:"deel", vorm:"getal", lijf:"vrij", ant:k,
+              soort:"deel", noemer:noemer, k:k,
+              vraagje:"Reken uit",
+              regel:'<span>' + NOEMERWOORD[noemer] + " " + geheel + '</span><span class="op">=</span>{1}',
+              sleutel:"br1 " + noemer + "/" + geheel,
+              label:NOEMERWOORD[noemer] + " " + geheel,
+              oplossing:NOEMERWOORD[noemer] + " " + geheel + " is " + k};
+    }
+    var teller = kies(wens, "teller", function(){ return rnd(1, noemer - 1); });
+    return {groep:"deel", vorm:"getal", lijf:"vrij", ant:teller * k,
+            soort:"breuk", teller:teller, noemer:noemer, k:k,
+            vraagje:"Hoeveel is dat?",
+            regel:breukHtml(teller, noemer) + '<span> van ' + geheel + '</span><span class="op">=</span>{1}',
+            sleutel:"br2 " + teller + "/" + noemer + "/" + geheel,
+            label:teller + "/" + noemer + " van " + geheel,
+            oplossing:teller + "/" + noemer + " van " + geheel + " is " + (teller * k)};
+  }
+
+  function ggd(a, b){ while(b){ var h = b; b = a % b; a = h; } return a; }
+
+  function maakProcent(lj, wens){
+    var p = par("procent", wens.leerjaar);
+    var perc = kies(wens, "p", function(){ return p.percs[rnd(0, p.percs.length - 1)]; });
+    var stap = 100 / ggd(perc, 100);      /* zo komt perc% van het grondtal altijd heel uit */
+    var basis = kies(wens, "basis", function(){
+      return stap * rnd(1, Math.max(2, Math.floor(p.tot / stap)));
+    });
+    var deel = basis * perc / 100;
+    var soort = kies(wens, "soort", function(){ return p.korting ? ["van","korting"][rnd(0,1)] : "van"; });
+    if(soort === "korting"){
+      return {groep:"deel", vorm:"getal", lijf:"vrij", ant:basis - deel,
+              p:perc, basis:basis, soort:"korting",
+              vraagje:"Hoeveel betaal je dan?",
+              zin:"Een spel kost € " + basis + " en er is " + perc + "% korting.",
+              regel:'<span class="eenheid">€</span>{1}',
+              sleutel:"proc- " + perc + "/" + basis,
+              label:perc + "% korting op " + basis,
+              oplossing:perc + "% van " + basis + " is " + deel + ", dus je betaalt € " + (basis - deel)};
+    }
+    return {groep:"deel", vorm:"getal", lijf:"vrij", ant:deel,
+            p:perc, basis:basis, soort:"van",
+            vraagje:"Reken uit",
+            regel:'<span>' + perc + "% van " + basis + '</span><span class="op">=</span>{1}',
+            sleutel:"proc " + perc + "/" + basis,
+            label:perc + "% van " + basis,
+            oplossing:perc + "% van " + basis + " is " + deel};
+  }
+
+  var SPULLEN     = R.SPULLEN;
+
+  function maakVerhouding(lj, wens){
+    var p = par("verhouding", wens.leerjaar);
+    var si = kies(wens, "si", function(){ return rnd(0, SPULLEN.length - 1); });
+    var aantal = kies(wens, "aantal", function(){ return rnd(2, 5); });
+    var perStuk = kies(wens, "perStuk", function(){ return rnd(1, p.perStuk) * p.stap; });
+    var gevraagd = kies(wens, "gevraagd", function(){
+      var g = rnd(2, 10);
+      return g === aantal ? g + 1 : g;
+    });
+    var spul = SPULLEN[si];
+    var prijs = aantal * perStuk;
+    return {groep:"verhaal", vorm:"komma", lijf:"vrij", decimalen:2, ant:gevraagd * perStuk,
+            si:si, aantal:aantal, perStuk:perStuk, gevraagd:gevraagd,
+            vraagje:"Wat kosten er " + gevraagd + "?",
+            zin:aantal + " " + spul.mv + " kosten " + euro(prijs) + ".",
+            regel:'<span class="eenheid">€</span>{1}',
+            sleutel:"verh " + aantal + "/" + perStuk + "/" + gevraagd + "/" + si,
+            label:aantal + " voor " + euro(prijs) + ", dus " + gevraagd,
+            oplossing:"één " + spul.ev + " kost " + euro(perStuk) + ", dus " + gevraagd +
+                      " kosten " + euro(gevraagd * perStuk)};
+  }
+
+  /* ---------- Rekenen: rest, deeltafels en verhaaltjes ---------- */
+
+  function maakRest(lj, wens){
+    var p = par("rest", wens.leerjaar);
+    var b = kies(wens, "b", function(){ return rnd(2, p.deler); });
+    var q = kies(wens, "q", function(){ return rnd(2, p.uitkomst); });
+    var r = kies(wens, "r", function(){ return rnd(1, b - 1); });   /* rest 0 is flauw */
+    if(r >= b) r = b - 1;
+    if(r < 1) r = 1;
+    var a = b * q + r;
+    return {groep:"deel", vorm:"duo", lijf:"som", rest:true,
+            a:a, b:b, op:":", ant:q, doel:q, ant2:r,
+            vraagje:"Hoe vaak past het, en wat blijft er over?",
+            onder:"keer · rest",
+            sleutel:"rest " + a + ":" + b,
+            label:a + " : " + b,
+            oplossing:a + " : " + b + " = " + q + " rest " + r};
+  }
+
+  function maakDeeltafel(lj, wens){
+    var lijst = (wens && wens.tafels && wens.tafels.length) ? wens.tafels : S.tafels;
+    var t = kies(wens, "tafel", function(){
+      return lijst.length ? lijst[rnd(0, lijst.length - 1)] : rnd(1, 10);
+    });
+    var q = kies(wens, "q", function(){ return rnd(1, 10); });
+    return {groep:"deel", vorm:"getal", lijf:"som", tafel:t,
+            a:t * q, b:t, op:":", ant:q,
+            vraagje:"De tafel omgekeerd",
+            sleutel:"dtaf " + (t * q) + ":" + t,
+            label:(t * q) + " : " + t,
+            oplossing:(t * q) + " : " + t + " = " + q};
+  }
+
+  var NAMEN       = R.NAMEN;
+
+  var DINGEN      = R.DINGEN;
+
+  /* De sjablonen kiezen geen getallen; die komen kant en klaar uit de rekenkern.
+     Daardoor kan er nooit iets uitkomen als "geeft 40 van haar 12 knikkers weg". */
+  var SJABLONEN   = R.SJABLONEN;
+  var GROEPGETALLEN = R.GROEPGETALLEN;
+
+  function vulSjabloon(tekst, x){
+    var nm = x.naam, nm2 = x.naam2;
+    return tekst
+      .replace(/\{N2\}/g, nm2.n).replace(/\{N\}/g, nm.n)
+      .replace(/\{Zij\}/g, nm.v ? "Ze" : "Hij").replace(/\{zij\}/g, nm.v ? "ze" : "hij")
+      .replace(/\{haar\}/g, nm.v ? "haar" : "zijn")
+      .replace(/\{bakmv\}/g, x.ding.bakmv).replace(/\{bak\}/g, x.ding.bak)
+      .replace(/\{mv\}/g, x.ding.mv)
+      .replace(/\{a\}/g, x.a).replace(/\{b\}/g, x.b);
+  }
+
+  function maakVerhaal(lj, wens){
+    var p = par("verhaal", wens.leerjaar);
+    var op = kies(wens, "op", function(){ return p.ops[rnd(0, p.ops.length - 1)]; });
+
+    /* 1. de rekenkern: de getallen ontstaan onder de regels van de bewerking */
+    var a, b, ant;
+    if(op === "plus"){
+      a = kies(wens, "a", function(){ return rnd(2, Math.floor(p.tot / 2)); });
+      b = kies(wens, "b", function(){ return rnd(2, Math.floor(p.tot / 2)); });
+      ant = a + b;
+    } else if(op === "min"){
+      a = kies(wens, "a", function(){ return rnd(3, p.tot); });
+      b = kies(wens, "b", function(){ return rnd(1, a - 1); });   /* nooit meer weggeven dan je hebt */
+      ant = a - b;
+    } else if(op === "keer"){
+      a = kies(wens, "a", function(){ return rnd(2, p.factor); });
+      b = kies(wens, "b", function(){ return rnd(2, 10); });
+      ant = a * b;
+    } else {
+      b = kies(wens, "b", function(){ return rnd(2, p.factor); });
+      ant = kies(wens, "q", function(){ return rnd(2, 10); });
+      a = b * ant;
+    }
+
+    /* 2. de inkleding: mag de getallen alleen nog een naam geven */
+    var lijst = SJABLONEN[op];
+    var si = kies(wens, "si", function(){ return rnd(0, lijst.length - 1); });
+    var ni = kies(wens, "ni", function(){ return rnd(0, NAMEN.length - 1); });
+    var ni2 = kies(wens, "ni2", function(){ return (ni + 1 + rnd(0, NAMEN.length - 2)) % NAMEN.length; });
+    var di = kies(wens, "di", function(){ return rnd(0, DINGEN.length - 1); });
+    var teken = {plus:"+", min:"−", keer:"×", deel:":"}[op];
+    var zin = vulSjabloon(lijst[si], {naam:NAMEN[ni], naam2:NAMEN[ni2], ding:DINGEN[di], a:a, b:b});
+
+    return {groep:"verhaal", vorm:"getal", lijf:"vrij", ant:ant,
+            verhaalOp:op, a:a, b:b, si:si, ni:ni, ni2:ni2, di:di,
+            zin:zin, regel:'{1}',
+            sleutel:"vh " + op + a + "/" + b + "/" + si + "/" + di,
+            label:a + " " + teken + " " + b,
+            oplossing:a + " " + teken + " " + b + " = " + ant};
+  }
+  /* oude naam, voor het geval er nog ergens naar verwezen wordt */
+  function maakSom(cat, eigenBereik, eigenTafels){
+    return maakVraag(cat, {bereik:eigenBereik, tafels:eigenTafels});
+  }
+
+  /* ---------- de enige voordeur ---------- */
+  function maakVraag(id, wens){
+    wens = wens || {};
+    if(id === "alles") id = kiesUitMix(wens);
+    var o = ONDERWERPEN[id];
+    if(!o) o = ONDERWERPEN.plus;
+    var lj = wens.leerjaar || S.leerjaar;
+    var v = o.maak(lj, wens);
+    v.onderwerp = o.id;
+    v.groep = v.groep || o.groep;
+    v.kleur = v.kleur || o.kleur;
+    v.vorm = v.vorm || "getal";
+    v.lijf = v.lijf || "som";
+    if(!v.sleutel) v.sleutel = o.id + " " + v.a + v.op + v.b;
+    return v;
+  }
+
+  function kiesUitMix(wens){
+    var mix = (wens && wens.mix) || actieveOnderwerpen();
+    return mix.length ? mix[rnd(0, mix.length - 1)] : "plus";
+  }
+
+  /* technische identiteit, alleen voor dedupe binnen één ronde */
+  function dedupeSleutel(v){
+    return v.sleutel || ((v.onderwerp || v.groep) + " " + v.a + v.op + v.b);
+  }
+
+  function maakRonde(cat){
+    var lengte = S.rondeLengte;
+    var lijst = [], gezien = {}, pogingen = 0;
+    while(lijst.length < lengte && pogingen < lengte * 30){
+      pogingen++;
+      var s = maakVraag(cat);
+      var sl = dedupeSleutel(s);
+      if(gezien[sl]) continue;
+      gezien[sl] = true;
+      lijst.push(s);
+    }
+    while(lijst.length < lengte) lijst.push(maakVraag(cat));
+    return lijst;
+  }
+
+  /* ----- afgeleide score ----- */
+  /* ----- voortgang bijhouden ----- */
+  /* leesbaar: dit staat in het rapport en in de foutenlijst */
+  function vraagSleutel(v){
+    if(v.label) return v.label;
+    if(v.groep === "klok") return "klok " + v.u + ":" + (v.m < 10 ? "0" + v.m : v.m);
+    return v.a + " " + v.op + " " + v.b;
+  }
+
+  /* vragen.js beschrijft een zaad als doelveld -> bronveld; hier wordt dat een object */
+  function zaadVan(kaart, v){
+    var z = {}, doel;
+    for(doel in kaart){
+      if(Object.prototype.hasOwnProperty.call(kaart, doel)) z[doel] = v[kaart[doel]];
+    }
+    return z;
+  }
+
+  /* alleen de velden die nodig zijn om de vraag exact te herbouwen */
+  function bewaarbaar(v){
+    var o = ONDERWERPEN[v.onderwerp];
+    if(o && o.zaad){
+      var z = zaadVan(o.zaad, v) || {};
+      z.onderwerp = v.onderwerp;
+      z.leerjaar = S.leerjaar;     /* zodat een oude misser niet ineens zwaarder terugkomt */
+      return z;
+    }
+    if(v.groep === "klok") return {groep:"klok", u:v.u, m:v.m};
+    return {groep:v.groep, tafel:v.tafel, a:v.a, b:v.b, op:v.op, ant:v.ant, kleur:v.kleur};
+  }
+
+  function herbouwVraag(bewaard){
+    try{
+      if(bewaard.onderwerp && ONDERWERPEN[bewaard.onderwerp]){
+        return maakVraag(bewaard.onderwerp, bewaard);
+      }
+      if(bewaard.groep === "klok") return maakKlokvraag({u:bewaard.u, m:bewaard.m});
+      var v = {};
+      for(var k in bewaard) if(Object.prototype.hasOwnProperty.call(bewaard, k)) v[k] = bewaard[k];
+      v.vorm = v.vorm || "getal";
+      v.lijf = v.lijf || "som";
+      return v;
+    }catch(e){
+      return null;        /* rommel uit een oudere versie mag niets slopen */
+    }
+  }
+
+  function noteer(v, juist){
+    var g = S.stats.groep[v.groep];
+    if(g){ g.totaal++; if(juist) g.goed++; }
+    if(v.onderwerp){
+      if(!S.stats.onderwerp[v.onderwerp]) S.stats.onderwerp[v.onderwerp] = {goed:0, totaal:0};
+      var o = S.stats.onderwerp[v.onderwerp];
+      o.totaal++; if(juist) o.goed++;
+    }
+    if(v.groep === "tafels" && S.stats.tafel[v.tafel]){
+      S.stats.tafel[v.tafel].totaal++;
+      if(juist) S.stats.tafel[v.tafel].goed++;
+    }
+
+    var sleutel = vraagSleutel(v);
+    var plek = -1;
+    S.stats.fouten.forEach(function(f, n){ if(f.sleutel === sleutel) plek = n; });
+    if(juist){
+      /* goed gemaakt: uit de herkansingslijst halen */
+      if(plek !== -1){
+        S.stats.fouten[plek].aantal--;
+        if(S.stats.fouten[plek].aantal <= 0) S.stats.fouten.splice(plek, 1);
+      }
+      return;
+    }
+    if(plek !== -1){
+      S.stats.fouten[plek].aantal++;
+      S.stats.fouten.unshift(S.stats.fouten.splice(plek, 1)[0]);
+    } else {
+      S.stats.fouten.unshift({sleutel:sleutel, aantal:1, vraag:bewaarbaar(v)});
+    }
+    if(S.stats.fouten.length > MAX_FOUTEN) S.stats.fouten.length = MAX_FOUTEN;
+  }
+
+  function scoreVan(hok){
+    if(!hok || !hok.totaal) return null;
+    return Math.round(hok.goed / hok.totaal * 100);
+  }
+
+  function oordeel(hok){
+    if(!hok || hok.totaal < 5) return {tekst:"Nog weinig geoefend", klasse:"leeg"};
+    var p = scoreVan(hok);
+    if(p >= 85) return {tekst:"Sterk", klasse:"sterk"};
+    if(p >= 65) return {tekst:"Gaat goed", klasse:"goed"};
+    return {tekst:"Meer oefenen", klasse:"aandacht"};
+  }
+
+  function zwaksteGroep(){
+    var slechtste = null;
+    GROEPEN.forEach(function(g){
+      var hok = S.stats.groep[g.id];
+      if(!hok || hok.totaal < 10) return;
+      /* niet naar iets wijzen wat Saar niet eens op haar scherm heeft staan */
+      if(ONDERWERPEN[g.id] && !zichtbaar(g.id)) return;
+      var p = scoreVan(hok);
+      if(slechtste === null || p < slechtste.p) slechtste = {id:g.id, p:p};
+    });
+    return slechtste;
+  }
+
+  function zwaksteTafels(hoeveel){
+    var rij = [];
+    for(var t = 1; t <= 10; t++){
+      var hok = S.stats.tafel[t];
+      rij.push({tafel:t, p:hok.totaal >= 4 ? scoreVan(hok) : 101 - t, totaal:hok.totaal});
+    }
+    rij.sort(function(a, b){ return a.p - b.p; });
+    return rij.slice(0, hoeveel).map(function(r){ return r.tafel; }).sort(function(a, b){ return a - b; });
+  }
+
+  function stickers(){ return Math.floor(S.punten / S.puntenPerSticker) + S.bonusStickers; }
+  function beloningen(){ return Math.floor(stickers() / S.stickersPerBeloning); }
+  function puntenPerBeloning(){ return S.puntenPerSticker * S.stickersPerBeloning; }
+
+  function tekenScore(){
+    document.getElementById("sc-punten").textContent = S.punten;
+    document.getElementById("sc-stickers").textContent = stickers();
+    document.getElementById("sc-beloningen").textContent = beloningen();
+    document.getElementById("regels").textContent =
+      S.puntenPerSticker + (S.puntenPerSticker === 1 ? " punt" : " punten") + " = 1 sticker  ·  " +
+      S.stickersPerBeloning + (S.stickersPerBeloning === 1 ? " sticker" : " stickers") + " = 1 beloning";
+  }
+
+  /* ----- schermen ----- */
+  var scherm = document.getElementById("scherm");
+
+  function bereikTekst(id, woord){
+    var r = S.bereik[id];
+    return woord + " met " + r.van + " t/m " + r.tot;
+  }
+
+  function klokKort(){
+    var soort = S.klokSoort === "analoog" ? "Analoog aflezen"
+              : S.klokSoort === "digitaal" ? "Digitale tijd zetten"
+              : "Analoog en digitaal";
+    return soort + " · " + NIVEAUS[S.klokNiveau].naam.toLowerCase();
+  }
+
+  function tafelsKort(){
+    var l = S.tafels.slice().sort(function(a, b){ return a - b; });
+    if(!l.length) return "Kies je tafels";
+    if(l.length === 10) return "Alle tafels van 1 t/m 10";
+    if(l.length === 1) return "De tafel van " + l[0];
+    if(l.length <= 4) return "De tafels van " + l.slice(0, -1).join(", ") + " en " + l[l.length - 1];
+    return l.length + " tafels gekozen";
+  }
+
+
+  function toonHome(){
+    verlaatRonde();
+    var st = stickers();
+    var plekken = S.stickersPerBeloning;
+    var opKaart = st % plekken;
+    var restPunten = S.punten % S.puntenPerSticker;
+    var html = '';
+
+    html += '<button class="welkomknop" type="button" id="voor-saar">' +
+            '<span class="ster">🌟</span>' +
+            '<span><b>Voor Saar</b><span>Lees hoe het werkt en hoe je stickers verdient</span></span>' +
+            '</button>';
+
+    /* na de update één keer vragen of de geraden groep klopt */
+    if(!S.leerjaarGekozen){
+      html += '<button class="groepstrook" type="button" id="groep-vragen">' +
+              '<span class="teken">🎓</span>' +
+              '<span><b>Klopt groep ' + S.leerjaar + '?</b>' +
+              '<span>De groep bepaalt hoe moeilijk het is. Even nakijken?</span></span></button>';
+    }
+
+    html += '<div class="snelrij">' +
+            '<button class="snel uitdaging" type="button" id="naar-challenges">' +
+              '<span class="teken">🏅</span>' +
+              '<span><b>Challenges</b><span>' +
+              (S.stats.challenges.gehaald ? S.stats.challenges.gehaald + " gehaald · 2 stickers per stuk"
+                                          : S.challengeLengte + " vragen · 2 stickers als je slaagt") +
+              '</span></span></button>' +
+            '<button class="snel voortgang" type="button" id="naar-rapport">' +
+              '<span class="teken">📈</span>' +
+              '<span><b>Rapport</b><span>Wat gaat al goed?</span></span></button>' +
+            '</div>';
+
+    /* Per vak een eigen kopje. Een vak waarvan niets zichtbaar is, valt inclusief
+       kop weg — zo ziet groep 3 acht tegels in plaats van vijfentwintig. */
+    VAKKEN.forEach(function(vak){
+      var lijst = [];
+      onderwerpLijst().forEach(function(o){
+        if(o.vak === vak.id && zichtbaar(o.id)) lijst.push(o);
+      });
+      if(!lijst.length) return;
+      lijst.sort(function(a, b){ return (a.orde || 0) - (b.orde || 0); });
+      html += '<section class="sectie" style="margin:22px 0">';
+      html += '<h2>' + vak.naam + '</h2>';
+      html += '<div class="cats' + (vak.groot ? "" : " klein") + '">';
+      lijst.forEach(function(o){
+        var uitleg = vak.groot ? onderwerpUitleg(o) : "";
+        html += '<button class="cat ' + o.klasse + (vak.groot ? "" : " compact") +
+                (o.breed ? " breed" : "") + '" type="button" data-cat="' + o.id + '">' +
+                '<span class="teken' + (langTeken(o.teken) ? " lang" : "") + '">' + o.teken + '</span>' +
+                '<span><span class="naam">' + o.naam + '</span>' +
+                (uitleg ? '<span class="uitleg">' + uitleg + '</span>' : '') +
+                '</span></button>';
+      });
+      html += '</div></section>';
+    });
+
+    html += tekenVelBlok(velInBeeld(), true);
+
+    scherm.innerHTML = html;
+    document.getElementById("voor-saar").addEventListener("click", toonVoorSaar);
+    document.getElementById("naar-challenges").addEventListener("click", toonChallenges);
+    document.getElementById("naar-rapport").addEventListener("click", toonRapport);
+    koppelVelKnoppen(toonHome);
+    if(!S.leerjaarGekozen){
+      document.getElementById("groep-vragen").addEventListener("click", opnaarInstellingen);
+    }
+    [].forEach.call(scherm.querySelectorAll("[data-cat]"), function(k){
+      k.addEventListener("click", function(){
+        var c = k.getAttribute("data-cat");
+        var o = ONDERWERPEN[c];
+        if(o && o.kiezer === "tafels") toonTafelkiezer();
+        else if(o && o.kiezer === "klok") toonKlokkiezer();
+        else start(c);
+      });
+    });
+  }
+
+  function toonTafelkiezer(){
+    verlaatRonde();
+    var gekozen = S.tafels.slice();
+
+    function tafelZin(){
+      var lijst = gekozen.slice().sort(function(a, b){ return a - b; });
+      if(!lijst.length) return "Kies eerst een tafel";
+      if(lijst.length === 10) return "Start met alle tafels";
+      if(lijst.length === 1) return "Start met de tafel van " + lijst[0];
+      if(lijst.length <= 4){
+        return "Start met de tafels van " + lijst.slice(0, -1).join(", ") + " en " + lijst[lijst.length - 1];
+      }
+      return "Start met " + lijst.length + " tafels";
+    }
+
+    var html = '<section class="sectie"><h2>Welke tafels?</h2>';
+    html += '<p class="uitlegregel">Tik de tafels aan die je wilt oefenen. Je mag er zoveel kiezen als je wilt — ' +
+            'de sommen komen er dan door elkaar uit.</p>';
+    html += '<div class="tafelgrid">';
+    for(var t = 1; t <= 10; t++){
+      html += '<button class="tafelknop' + (gekozen.indexOf(t) === -1 ? " uit" : "") + '" type="button" ' +
+              'data-tafel="' + t + '" aria-pressed="' + (gekozen.indexOf(t) !== -1) + '">' + t + '</button>';
+    }
+    html += '</div></section>';
+    html += '<div class="knoppen" style="margin-top:16px">' +
+            '<button class="knop stil" type="button" id="allemaal">Alles aan of uit</button></div>';
+    html += '<div class="knoppen" style="margin-top:10px">' +
+            '<button class="knop" type="button" id="start-tafels">' + tafelZin() + '</button>' +
+            '<button class="knop stil" type="button" id="terug">Terug</button></div>';
+    scherm.innerHTML = html;
+
+    var startKnop = document.getElementById("start-tafels");
+    function ververStart(){
+      startKnop.textContent = tafelZin();
+      startKnop.disabled = gekozen.length === 0;
+    }
+
+    [].forEach.call(scherm.querySelectorAll("[data-tafel]"), function(k){
+      k.addEventListener("click", function(){
+        var t = parseInt(k.getAttribute("data-tafel"), 10);
+        var plek = gekozen.indexOf(t);
+        if(plek === -1) gekozen.push(t); else gekozen.splice(plek, 1);
+        k.classList.toggle("uit", plek !== -1);
+        k.setAttribute("aria-pressed", plek === -1);
+        ververStart();
+      });
+    });
+
+    document.getElementById("allemaal").addEventListener("click", function(){
+      var allesAan = gekozen.length === 10;
+      gekozen = allesAan ? [] : [1,2,3,4,5,6,7,8,9,10];
+      [].forEach.call(scherm.querySelectorAll("[data-tafel]"), function(k){
+        k.classList.toggle("uit", allesAan);
+        k.setAttribute("aria-pressed", !allesAan);
+      });
+      ververStart();
+    });
+
+    startKnop.addEventListener("click", function(){
+      if(!gekozen.length) return;
+      S.tafels = gekozen.slice().sort(function(a, b){ return a - b; });
+      bewaar();
+      start("tafels");
+    });
+
+    document.getElementById("terug").addEventListener("click", toonHome);
+    ververStart();
+  }
+
+  function voorbeeldSom(id, van, tot){
+    var b = schoonBereik(id, van, tot);
+    var oud = S.bereik[id];
+    S.bereik[id] = b;
+    var v = maakVraag(id);
+    S.bereik[id] = oud;
+    return v.a + " " + v.op + " " + v.b + " = <b>" + v.ant + "</b>";
+  }
+
+
+  /* Een regen van confetti over het scherm, voor een foutloze challenge.
+     Wie beweging heeft uitgezet, krijgt alleen de melding. */
+  function vierFeest(){
+    try{
+      if(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    }catch(e){}
+    var doos = document.createElement("div");
+    doos.className = "feest";
+    var stukjes = ["🌟","⭐","🎉","✨","🏆","🎊"];
+    for(var n = 0; n < 34; n++){
+      var i = document.createElement("i");
+      i.textContent = stukjes[n % stukjes.length];
+      i.style.left = rnd(0, 100) + "%";
+      i.style.animationDelay = (rnd(0, 14) / 10) + "s";
+      i.style.animationDuration = (1.9 + rnd(0, 12) / 10) + "s";
+      i.style.fontSize = rnd(16, 34) + "px";
+      doos.appendChild(i);
+    }
+    document.body.appendChild(doos);
+    setTimeout(function(){ if(doos.parentNode) doos.parentNode.removeChild(doos); }, 4200);
+  }
+
+  /* ----- stickervellen -----
+     Een sticker ligt volledig vast door zijn volgnummer: emoji, kleur en scheefstand
+     komen uit vaste tabellen, zonder toeval en zonder opslag. Elk ouder vel is daardoor
+     exact terug te tekenen. */
+  var bladerVel = null;          /* welk vel je bekijkt; niet bewaard tussen sessies */
+
+  function velInBeeld(){
+    var nu = beloningen();
+    if(bladerVel === null || bladerVel > nu || bladerVel < 0) return nu;
+    return bladerVel;
+  }
+
+  function velDatum(tekst){
+    var MAAND = ["januari","februari","maart","april","mei","juni",
+                 "juli","augustus","september","oktober","november","december"];
+    var d = String(tekst || "").split("-");
+    if(d.length !== 3) return "";
+    var m = parseInt(d[1], 10);
+    if(!(m >= 1 && m <= 12)) return "";
+    return parseInt(d[2], 10) + " " + MAAND[m - 1];
+  }
+
+  /* Eén vel, met of zonder de voortgangsbalk en de bladerknoppen. */
+  function tekenVelBlok(velNr, metNavigatie){
+    var plekken = S.stickersPerBeloning;
+    var laatste = beloningen();
+    var vol = velNr < laatste;
+    var gevuld = vol ? plekken : (stickers() % plekken);
+    var html = '';
+
+    var stapelKlasse = velNr >= 2 ? "stapel twee" : velNr === 1 ? "stapel een" : "stapel geen";
+    html += '<section class="sectie"><h2>' + (metNavigatie ? "Je stickervel" : "Vel " + (velNr + 1)) + '</h2>';
+    html += '<div class="' + stapelKlasse + '"><div class="kaart">';
+
+    if(metNavigatie){
+      html += '<div class="velnav">' +
+              '<button class="velpijl" type="button" data-blader="terug"' +
+                (velNr <= 0 ? ' disabled' : '') + ' aria-label="Vorig vel">‹</button>' +
+              '<span class="velnaam">Vel ' + (velNr + 1) + ' van ' + (laatste + 1) + '</span>' +
+              '<button class="velpijl" type="button" data-blader="verder"' +
+                (velNr >= laatste ? ' disabled' : '') + ' aria-label="Volgend vel">›</button>' +
+              '</div>';
+    }
+    html += '<div class="velkop"><span>' + (vol ? "Vol!" : "Vel " + (velNr + 1)) + '</span>' +
+            '<span>' + gevuld + ' van de ' + plekken + ' stickers</span></div>';
+
+    html += '<div class="slots" style="grid-template-columns:repeat(' + Math.min(5, plekken) + ',1fr)">';
+    for(var n = 0; n < plekken; n++){
+      if(n < gevuld){
+        var idx = (velNr * plekken + n);
+        var isSuper = S.superStickers.indexOf(idx) !== -1;
+        html += '<div class="slot vol' + (isSuper ? " super" : "") +
+                '" style="--sk:' + (isSuper ? "#FFD84D" : KLEUREN[idx % KLEUREN.length]) +
+                ';--dr:' + (((idx * 37) % 17) - 8) + 'deg"' +
+                (isSuper ? ' title="Supersticker: een challenge foutloos gehaald"' : '') + '>' +
+                (isSuper ? "🌟" : STICKERS[idx % STICKERS.length]) + '</div>';
+      } else {
+        html += '<div class="slot"></div>';
+      }
+    }
+    html += '</div>';
+
+    if(vol){
+      html += beloningRegel(velNr);
+    } else {
+      var restPunten = S.punten % S.puntenPerSticker;
+      var tekort = S.puntenPerSticker - restPunten;
+      html += '<div class="balk"><div class="rij"><span>Nog ' + tekort + (tekort === 1 ? ' punt' : ' punten') +
+              ' tot je volgende sticker</span>' +
+              '<span>' + restPunten + '/' + S.puntenPerSticker + '</span></div>' +
+              '<div class="spoor"><div class="vulling" style="width:' +
+              (restPunten / S.puntenPerSticker * 100) + '%"></div></div></div>';
+      if(velNr > 0){
+        html += '<p style="margin:14px 0 0;font-weight:700;color:var(--inkt-zacht)">Al ' + velNr +
+                ' vol vel' + (velNr === 1 ? '' : 'len') + ' onder dit vel 🏆</p>';
+      }
+    }
+    html += '</div></div>';
+
+    if(metNavigatie && laatste > 0){
+      html += '<div class="knoppen" style="margin-top:14px">' +
+              '<button class="knop stil" type="button" id="naar-stickerboek">Alle vellen bekijken</button></div>';
+    }
+    html += '</section>';
+    return html;
+  }
+
+  /* De regel onder een vol vel: is de beloning al gegeven? */
+  function beloningRegel(velNr){
+    var b = S.beloningGegeven[velNr];
+    if(b){
+      var wanneer = velDatum(b.datum);
+      return '<div class="beloningregel gegeven">' +
+             '<span class="teken">🎁</span>' +
+             '<span><b>Beloning gegeven</b>' +
+             '<span>' + (wanneer ? "op " + wanneer : "") +
+             (b.notitie ? (wanneer ? " · " : "") + b.notitie : "") + '</span></span>' +
+             '<button class="velknop" type="button" data-beloning="' + velNr + '">Wijzigen</button>' +
+             '</div>';
+    }
+    return '<div class="beloningregel">' +
+           '<span class="teken">🎁</span>' +
+           '<span><b>Dit vel is vol</b><span>De beloning is nog niet afgevinkt</span></span>' +
+           '<button class="velknop aan" type="button" data-beloning="' + velNr + '">Beloning gegeven</button>' +
+           '</div>';
+  }
+
+  /* Knoppen op een stickervel aansluiten; wordt door beide schermen gebruikt. */
+  function koppelVelKnoppen(naAfvinken){
+    [].forEach.call(scherm.querySelectorAll("[data-blader]"), function(k){
+      k.addEventListener("click", function(){
+        if(k.hasAttribute("disabled")) return;
+        bladerVel = velInBeeld() + (k.getAttribute("data-blader") === "verder" ? 1 : -1);
+        toonHome();
+      });
+    });
+    [].forEach.call(scherm.querySelectorAll("[data-beloning]"), function(k){
+      k.addEventListener("click", function(){
+        var nr = parseInt(k.getAttribute("data-beloning"), 10);
+        vraagCode(function(){ toonBeloningAfvinken(nr, naAfvinken); }, naAfvinken,
+                  "de beloning af te vinken");
+      });
+    });
+    var boek = document.getElementById("naar-stickerboek");
+    if(boek) boek.addEventListener("click", toonStickerboek);
+  }
+
+  /* Overlay waarin de ouder de beloning afvinkt en er een notitie bij kan zetten. */
+  function toonBeloningAfvinken(velNr, terug){
+    var b = S.beloningGegeven[velNr] || {};
+    var ov = document.createElement("div");
+    ov.className = "overlay";
+    ov.innerHTML =
+      '<div class="doos">' +
+      '<div class="trofee">🎁</div>' +
+      '<h2>Beloning voor vel ' + (velNr + 1) + '</h2>' +
+      '<p>Heeft Saar de beloning gekregen? Je mag er kort bij zetten wat het was.</p>' +
+      '<input class="notitieveld" id="notitie" type="text" maxlength="60" ' +
+        'placeholder="bijvoorbeeld: naar het zwembad" value="' + (b.notitie || "").replace(/"/g, "&quot;") + '">' +
+      '<div class="knoppen" style="margin-top:16px">' +
+      '<button class="knop" type="button" id="bel-ok">Ja, gegeven</button>' +
+      (S.beloningGegeven[velNr]
+        ? '<button class="knop stil" type="button" id="bel-weg">Toch niet</button>'
+        : '') +
+      '<button class="knop stil" type="button" id="bel-nee">Annuleren</button>' +
+      '</div></div>';
+    document.body.appendChild(ov);
+
+    var veld = document.getElementById("notitie");
+    if(veld) veld.focus();
+
+    document.getElementById("bel-ok").addEventListener("click", function(){
+      var nu = new Date();
+      S.beloningGegeven[velNr] = {
+        datum: nu.getFullYear() + "-" + (nu.getMonth() + 1) + "-" + nu.getDate(),
+        notitie: (veld && veld.value ? veld.value : "").slice(0, 60)
+      };
+      bewaar();
+      ov.remove();
+      terug();
+      toast("Beloning voor vel " + (velNr + 1) + " afgevinkt.");
+    });
+    var weg = document.getElementById("bel-weg");
+    if(weg) weg.addEventListener("click", function(){
+      delete S.beloningGegeven[velNr];
+      bewaar();
+      ov.remove();
+      terug();
+      toast("Het vinkje is weggehaald.");
+    });
+    document.getElementById("bel-nee").addEventListener("click", function(){ ov.remove(); });
+  }
+
+  function toonStickerboek(){
+    verlaatRonde();
+    var laatste = beloningen();
+    var html = '<section class="sectie"><h2>Het stickerboek</h2>';
+    html += '<p class="uitlegregel">Alle vellen die Saar tot nu toe verzameld heeft, ' +
+            'het nieuwste bovenaan.</p></section>';
+    for(var n = laatste; n >= 0; n--){
+      html += tekenVelBlok(n, false);
+    }
+    html += '<div class="knoppen" style="margin-top:18px">' +
+            '<button class="knop" type="button" id="terug">Terug</button></div>';
+    scherm.innerHTML = html;
+    koppelVelKnoppen(toonStickerboek);
+    document.getElementById("terug").addEventListener("click", toonHome);
+  }
+  function toonVoorSaar(){
+    verlaatRonde();
+    var html = '<section class="kaart brief">';
+    html += '<h2>🌟 Welkom Saar! 🌟</h2>';
+    html += '<p class="hoi">Hoi Saar! 👋😊</p>';
+    html += '<p>Wat leuk dat je hier bent! Op deze plek kun je op een leuke manier oefenen met rekenen. 🧮✨</p>';
+    html += '<p>Maak de sommen, denk goed na en probeer je best te doen. Elk goed antwoord is één punt waard! ⭐</p>';
+    html += '<h3>🏆 Zo werkt het:</h3>';
+    html += '<ul class="trap">' +
+              '<li><span class="teller">⭐</span><span>1 goed antwoord = 1 punt</span></li>' +
+              '<li><span class="teller">🎉</span><span>' + S.puntenPerSticker + ' punten = 1 leuke sticker!</span></li>' +
+              '<li><span class="teller">🎁</span><span>' + S.stickersPerBeloning + ' stickers = een verrassing!</span></li>' +
+            '</ul>';
+    html += '<p>Dus... oefenen, punten verdienen en stickers verzamelen! 😄</p>';
+    html += '<p class="zacht">Het allerbelangrijkste is dat je plezier hebt en steeds een beetje beter wordt. ' +
+            'Een foutje maken is helemaal niet erg, want van oefenen en fouten maken kun je juist heel veel leren! 💪🧠</p>';
+    html += '<p class="slotzin">Zet hem op Saar! Jij kunt dit! 🌈🚀</p>';
+    html += '</section>';
+    html += '<div class="knoppen" style="margin-top:18px">' +
+            '<button class="knop" type="button" id="beginnen">Beginnen!</button></div>';
+    scherm.innerHTML = html;
+    document.getElementById("beginnen").addEventListener("click", toonHome);
+  }
+
+  /* de instellingen zitten achter een code, zodat Saar ze niet zelf verzet */
+  /* Waar het codescherm na een goede code naartoe gaat, en waar Terug naartoe gaat.
+     Bewust naast S: die wordt geserialiseerd en een functie hoort daar niet in. */
+  var naCode = null, naTerug = null, codeReden = "";
+
+  function vraagCode(vervolg, terug, reden){
+    if(S.instellingenVrij){ vervolg(); return; }   /* deze sessie al ingetypt */
+    naCode = vervolg;
+    naTerug = terug || toonHome;
+    codeReden = reden || "de instellingen te openen";
+    toonSlot();
+  }
+
+  function opnaarInstellingen(){
+    vraagCode(toonInstellingen, toonHome, "de instellingen te openen");
+  }
+
+  function toonSlot(){
+    verlaatRonde();
+    S.code = "";
+    var html = '<section class="sectie"><h2>Even voor papa en mama</h2>';
+    html += '<div class="kaart slotkaart" id="slotkaart">';
+    html += '<p class="uitlegregel" style="margin:0 auto 14px">Typ de code om ' +
+            (codeReden || "de instellingen te openen") + '.</p>';
+    html += '<div class="codevakjes" id="code-vakjes">';
+    for(var n = 0; n < CODE.length; n++) html += '<div class="codevak"><i></i></div>';
+    html += '</div>';
+    html += '<div class="reactie" id="code-reactie"></div>';
+    html += '</div></section>';
+
+    html += '<div class="pad" style="margin-top:18px">';
+    ["1","2","3","4","5","6","7","8","9"].forEach(function(c){
+      html += '<button class="toets" type="button" data-code="' + c + '">' + c + '</button>';
+    });
+    html += '<button class="toets wis" type="button" data-code="wis" aria-label="Wissen">⌫</button>';
+    html += '<button class="toets" type="button" data-code="0">0</button>';
+    html += '<button class="toets ok" type="button" data-code="ok">OK</button>';
+    html += '</div>';
+    html += '<div class="knoppen" style="margin-top:18px"><button class="knop stil" type="button" id="terug">Terug</button></div>';
+
+    scherm.innerHTML = html;
+    [].forEach.call(scherm.querySelectorAll("[data-code]"), function(k){
+      k.addEventListener("click", function(){ codeToets(k.getAttribute("data-code")); });
+    });
+    document.getElementById("terug").addEventListener("click", naTerug || toonHome);
+  }
+
+  function ververCode(){
+    var vakjes = scherm.querySelectorAll("#code-vakjes .codevak");
+    [].forEach.call(vakjes, function(v, n){
+      v.classList.toggle("vol", n < S.code.length);
+    });
+  }
+
+  function codeToets(t){
+    if(!document.getElementById("code-vakjes")) return;
+    if(t === "wis"){
+      S.code = S.code.slice(0, -1);
+      ververCode();
+      return;
+    }
+    if(t === "ok"){ codeNakijken(); return; }
+    if(S.code.length >= CODE.length) return;
+    S.code += t;
+    ververCode();
+    if(S.code.length === CODE.length) setTimeout(codeNakijken, 180);
+  }
+
+  function codeNakijken(){
+    if(S.code === CODE){
+      S.instellingenVrij = true;
+      klankGoed();
+      var vervolg = naCode || toonInstellingen;
+      naCode = null;
+      vervolg();
+      return;
+    }
+    var kaart = document.getElementById("slotkaart");
+    var reactie = document.getElementById("code-reactie");
+    if(!kaart) return;
+    kaart.classList.add("mis");
+    reactie.className = "reactie mis";
+    reactie.textContent = "Dat is niet de goede code";
+    klankFout();
+    S.code = "";
+    ververCode();
+    setTimeout(function(){
+      if(kaart.parentNode) kaart.classList.remove("mis");
+    }, 600);
+  }
+
+  /* Wat de gekozen groep concreet betekent, uit de trap gehaald zodat deze zin
+     niet kan verouderen. */
+  function groepSamenvatting(lj){
+    var was = S.leerjaar;
+    S.leerjaar = lj;
+    var delen = [];
+    var b = groepBereik(lj);
+    delen.push("plus en min t/m " + b.plus.tot);
+    if(lj >= 4) delen.push("keer en deel t/m " + b.keer.tot);
+    if(lj >= 4) delen.push("tafels " + (lj >= 5 ? "1 t/m 10" : "1 t/m 5 en 10"));
+    delen.push("klok " + GROEPGETALLEN.klok[lj]);
+    var nieuw = [];
+    onderwerpLijst().forEach(function(o){ if(!o.meta && o.vanaf === lj) nieuw.push(o.naam.toLowerCase()); });
+    S.leerjaar = was;
+    var zin = "Groep " + lj + ": " + delen.join(", ") + ".";
+    if(nieuw.length) zin += " Nieuw in deze groep: " + nieuw.join(", ") + ".";
+    return zin;
+  }
+
+  /* de getalbereiken die bij een groep horen */
+  function groepBereik(lj){
+    var tot = GROEPGETALLEN.tot[lj];
+    var keer = GROEPGETALLEN.keer[lj];
+    return {
+      plus: {van:1, tot:tot},
+      min:  {van:1, tot:tot},
+      keer: {van:1, tot:keer},
+      deel: {van:1, tot:Math.min(100, keer)}
+    };
+  }
+
+  /* De groep zet alles opnieuw: bereiken, tafels en klokniveau. Dat is de afspraak —
+     één handeling, en daarna mag er handmatig bijgesteld worden. */
+  function zetGroep(lj){
+    S.leerjaar = lj;
+    S.leerjaarGekozen = true;
+    var b = groepBereik(lj);
+    BEREIKEN.forEach(function(r){ S.bereik[r.id] = schoonBereik(r.id, b[r.id].van, b[r.id].tot); });
+    S.tafels = lj >= 5 ? [1,2,3,4,5,6,7,8,9,10] : [1,2,3,4,5,10];
+    S.klokNiveau = lj <= 3 ? 1 : lj === 4 ? 2 : 3;
+    bewaar();
+  }
+
+  function toonInstellingen(){
+    verlaatRonde();
+    var html = '';
+
+    html += '<section class="sectie"><h2>In welke groep zit Saar?</h2>';
+    html += '<p class="uitlegregel">De groep bepaalt hoe moeilijk alles is en welke onderwerpen ' +
+            'Saar op het beginscherm ziet. <b>Let op:</b> een andere groep kiezen zet de getallen, ' +
+            'de tafels en het klokniveau opnieuw.</p>';
+    html += '<div class="kaart"><div class="groepen">';
+    for(var g = 3; g <= 8; g++){
+      html += '<button class="groepknop' + (S.leerjaar === g ? "" : " uit") + '" type="button" ' +
+              'data-groep="' + g + '" aria-pressed="' + (S.leerjaar === g) + '">' + g + '</button>';
+    }
+    html += '</div><p class="voorbeeld" id="groep-vb">' + groepSamenvatting(S.leerjaar) + '</p></div>';
+    html += '</section>';
+
+    html += '<section class="sectie" style="margin-top:22px"><h2>Welke onderwerpen ziet Saar?</h2>';
+    html += '<p class="uitlegregel">Standaard volgt elk onderwerp de groep. Je kunt er hier ' +
+            'eentje alvast aanzetten of juist weglaten.</p>';
+    html += '<div class="kaart"><div class="schakelaars">';
+    VAKKEN.forEach(function(vak){
+      var lijst = [];
+      onderwerpLijst().forEach(function(o){ if(o.vak === vak.id && !o.meta) lijst.push(o); });
+      if(!lijst.length) return;
+      lijst.sort(function(a, b){ return (a.orde || 50) - (b.orde || 50); });
+      html += '<h3 class="vakkop">' + vak.naam + '</h3>';
+      lijst.forEach(function(o){
+        var stand = S.aan[o.id] === true ? "aan" : S.aan[o.id] === false ? "uit" : "volgt";
+        html += '<div class="schakelrij">' +
+                  '<span class="naam">' + o.naam + '<i>vanaf groep ' + o.vanaf + '</i></span>' +
+                  '<span class="standen">' +
+                    '<button type="button" class="stand' + (stand === "uit" ? " nu" : "") +
+                      '" data-schakel="' + o.id + '" data-stand="uit">uit</button>' +
+                    '<button type="button" class="stand' + (stand === "volgt" ? " nu" : "") +
+                      '" data-schakel="' + o.id + '" data-stand="volgt">volgt groep</button>' +
+                    '<button type="button" class="stand' + (stand === "aan" ? " nu" : "") +
+                      '" data-schakel="' + o.id + '" data-stand="aan">aan</button>' +
+                  '</span></div>';
+      });
+    });
+    html += '</div></div></section>';
+
+    html += '<section class="sectie" style="margin-top:22px"><h2>Welke getallen mag Saar krijgen?</h2>';
+    html += '<p class="uitlegregel">Je stelt in met welke getallen de sommen gemaakt worden. ' +
+            'Bij min komt het grootste getal altijd vooraan, dus de uitkomst wordt nooit negatief. ' +
+            'Bij deel gaat het altijd zonder rest. De tafels en het klokkijken hebben hun eigen keuzescherm.</p>';
+    html += '<div class="kaart"><div class="instellingen">';
+    BEREIKEN.forEach(function(r){
+      var b = S.bereik[r.id];
+      html += '<div class="instelling">' +
+                '<div class="titel"><span class="merk ' + r.id + '">' + r.teken + '</span><b>' + r.naam + '</b></div>' +
+                '<div class="velden">' +
+                  '<label for="' + r.id + '-van">van <input type="number" inputmode="numeric" id="' + r.id + '-van" ' +
+                    'data-bereik="' + r.id + '" min="0" max="' + r.grens + '" value="' + b.van + '"></label>' +
+                  '<label for="' + r.id + '-tot">tot en met <input type="number" inputmode="numeric" id="' + r.id + '-tot" ' +
+                    'data-bereik="' + r.id + '" min="0" max="' + r.grens + '" value="' + b.tot + '"></label>' +
+                '</div>' +
+                '<p class="voorbeeld" id="' + r.id + '-vb">Bijvoorbeeld: ' + voorbeeldSom(r.id, b.van, b.tot) + '</p>' +
+              '</div>';
+    });
+    html += '</div></div></section>';
+
+    html += '<section class="sectie" style="margin-top:22px"><h2>Hoe lang is een reeks?</h2>';
+    html += '<div class="kaart"><div class="instellingen">';
+    html += '<div class="instelling">' +
+              '<div class="titel"><span class="merk ronde">●</span><b>Gewoon oefenen</b></div>' +
+              '<div class="velden"><label for="ronde-lengte">' +
+                '<input type="number" inputmode="numeric" id="ronde-lengte" data-lengte="1" min="3" max="50" value="' +
+                S.rondeLengte + '"> sommen per ronde</label></div>' +
+              '<p class="voorbeeld">Van 3 tot 50.</p>' +
+            '</div>';
+    html += '<div class="instelling">' +
+              '<div class="titel"><span class="merk uitdaging">🏅</span><b>Challenge</b></div>' +
+              '<div class="velden"><label for="challenge-lengte">' +
+                '<input type="number" inputmode="numeric" id="challenge-lengte" data-lengte="1" min="5" max="100" value="' +
+                S.challengeLengte + '"> vragen per challenge</label></div>' +
+              '<p class="voorbeeld" id="lengte-vb"></p>' +
+            '</div>';
+    html += '</div></div></section>';
+
+    html += '<section class="sectie" style="margin-top:22px"><h2>Sparen voor een beloning</h2>';
+    html += '<div class="kaart"><div class="instellingen">';
+    html += '<div class="instelling">' +
+              '<div class="titel"><span class="merk sticker">★</span><b>Punten voor 1 sticker</b></div>' +
+              '<div class="velden"><label for="per-sticker">elke ' +
+                '<input type="number" inputmode="numeric" id="per-sticker" data-spaar="1" min="1" max="100" value="' +
+                S.puntenPerSticker + '"> goede antwoorden</label></div>' +
+            '</div>';
+    html += '<div class="instelling">' +
+              '<div class="titel"><span class="merk beloning">🏆</span><b>Stickers voor 1 beloning</b></div>' +
+              '<div class="velden"><label for="per-beloning">elke ' +
+                '<input type="number" inputmode="numeric" id="per-beloning" data-spaar="1" min="1" max="50" value="' +
+                S.stickersPerBeloning + '"> stickers</label></div>' +
+              '<p class="voorbeeld" id="spaar-vb"></p>' +
+              '<p class="voorbeeld">Let op: verander je dit later, dan worden de ' +
+              'stickervellen opnieuw ingedeeld. Een ouder vel bevat dan andere stickers ' +
+              'dan destijds, en de afgevinkte beloningen schuiven mee.</p>' +
+            '</div>';
+    html += '</div></div></section>';
+
+    html += '<section class="sectie" style="margin-top:22px"><h2>Opnieuw beginnen</h2>' +
+            '<div class="kaart" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">' +
+            '<p style="margin:0;flex:1 1 200px;font-size:14px;font-weight:700;color:var(--inkt-zacht)">' +
+            'Dit wist alle punten, stickers, beloningen en het voortgangsrapport. ' +
+            'De ingestelde getallen blijven staan.</p>' +
+            '<button class="knop stil" type="button" id="wis-alles" style="flex:0 1 auto">Punten wissen</button>' +
+            '</div></section>';
+
+    html += '<div class="knoppen" style="margin-top:18px">' +
+            '<button class="knop" type="button" id="bewaar-knop">Opslaan</button>' +
+            '<button class="knop stil" type="button" id="standaard-knop">Standaard terugzetten</button>' +
+            '<button class="knop stil" type="button" id="terug">Terug</button></div>';
+    scherm.innerHTML = html;
+
+    function ververVoorbeeld(id){
+      var van = document.getElementById(id + "-van").value;
+      var tot = document.getElementById(id + "-tot").value;
+      document.getElementById(id + "-vb").innerHTML = "Bijvoorbeeld: " + voorbeeldSom(id, van, tot);
+    }
+    [].forEach.call(scherm.querySelectorAll("[data-bereik]"), function(veld){
+      veld.addEventListener("input", function(){ ververVoorbeeld(veld.getAttribute("data-bereik")); });
+    });
+
+    /* groep kiezen: pas toe en teken opnieuw, zodat de zichtbare onderwerpen meteen kloppen */
+    [].forEach.call(scherm.querySelectorAll("[data-groep]"), function(k){
+      k.addEventListener("click", function(){
+        var g = parseInt(k.getAttribute("data-groep"), 10);
+        if(g === S.leerjaar && S.leerjaarGekozen) return;
+        zetGroep(g);
+        toonInstellingen();
+        toast("Groep " + g + " ingesteld. De getallen en de tafels staan nu daarop.");
+      });
+    });
+
+    [].forEach.call(scherm.querySelectorAll("[data-schakel]"), function(k){
+      k.addEventListener("click", function(){
+        var id = k.getAttribute("data-schakel");
+        var stand = k.getAttribute("data-stand");
+        if(stand === "aan") S.aan[id] = true;
+        else if(stand === "uit") S.aan[id] = false;
+        else delete S.aan[id];
+        bewaar();
+        /* alleen de knoppen van deze rij verversen, niet het hele scherm */
+        [].forEach.call(scherm.querySelectorAll('[data-schakel="' + id + '"]'), function(b){
+          b.classList.toggle("nu", b.getAttribute("data-stand") === stand);
+        });
+      });
+    });
+
+    function ververLengte(){
+      var lang = schoonGetal(document.getElementById("challenge-lengte").value, 5, 100, S.challengeLengte);
+      document.getElementById("lengte-vb").innerHTML =
+        "Een challenge is dan gehaald met <b>" + challengeNodig(lang) + " van de " + lang + "</b> goed.";
+    }
+    [].forEach.call(scherm.querySelectorAll("[data-lengte]"), function(veld){
+      veld.addEventListener("input", ververLengte);
+    });
+    ververLengte();
+
+    function ververSpaar(){
+      var perSticker = schoonGetal(document.getElementById("per-sticker").value, 1, 100, S.puntenPerSticker);
+      var perBeloning = schoonGetal(document.getElementById("per-beloning").value, 1, 50, S.stickersPerBeloning);
+      document.getElementById("spaar-vb").innerHTML =
+        "Een beloning kost dan <b>" + (perSticker * perBeloning) + "</b> goede antwoorden.";
+    }
+    [].forEach.call(scherm.querySelectorAll("[data-spaar]"), function(veld){
+      veld.addEventListener("input", ververSpaar);
+    });
+    ververSpaar();
+
+    document.getElementById("bewaar-knop").addEventListener("click", function(){
+      BEREIKEN.forEach(function(r){
+        S.bereik[r.id] = schoonBereik(r.id,
+          document.getElementById(r.id + "-van").value,
+          document.getElementById(r.id + "-tot").value);
+      });
+      S.puntenPerSticker = schoonGetal(document.getElementById("per-sticker").value, 1, 100, PUNTEN_PER_STICKER);
+      S.stickersPerBeloning = schoonGetal(document.getElementById("per-beloning").value, 1, 50, STICKERS_PER_BELONING);
+      S.rondeLengte = schoonGetal(document.getElementById("ronde-lengte").value, 3, 50, RONDE_LENGTE);
+      S.challengeLengte = schoonGetal(document.getElementById("challenge-lengte").value, 5, 100, CHALLENGE_LENGTE);
+      bewaar();
+      tekenScore();
+      toonHome();
+      toast("Opgeslagen!");
+    });
+
+    document.getElementById("standaard-knop").addEventListener("click", function(){
+      S.aan = {};
+      S.schuif = {};
+      S.puntenPerSticker = PUNTEN_PER_STICKER;
+      S.stickersPerBeloning = STICKERS_PER_BELONING;
+      S.rondeLengte = RONDE_LENGTE;
+      S.challengeLengte = CHALLENGE_LENGTE;
+      zetGroep(S.leerjaar);        /* zet meteen de bereiken, tafels en klok terug */
+      bewaar();
+      tekenScore();
+      toonInstellingen();
+      toast("Alles staat weer op de standaardwaarden.");
+    });
+
+    /* wissen vraagt om een tweede tik, zodat het niet per ongeluk gebeurt */
+    var wisKnop = document.getElementById("wis-alles"), wisTimer = null;
+    wisKnop.addEventListener("click", function(){
+      if(wisKnop.getAttribute("data-zeker") !== "ja"){
+        wisKnop.setAttribute("data-zeker", "ja");
+        wisKnop.textContent = "Zeker weten? Tik nog een keer";
+        clearTimeout(wisTimer);
+        wisTimer = setTimeout(function(){
+          wisKnop.setAttribute("data-zeker", "nee");
+          wisKnop.textContent = "Punten wissen";
+        }, 4000);
+        return;
+      }
+      clearTimeout(wisTimer);
+      S.punten = 0;
+      S.bonusStickers = 0;
+      S.stats = legeStats();
+      S.beloningGegeven = {};
+      S.superStickers = [];
+      bewaar();
+      tekenScore();
+      toonHome();
+      toast("Alles is gewist. Veel plezier met opnieuw sparen!");
+    });
+
+    document.getElementById("terug").addEventListener("click", toonHome);
+  }
+
+  function toonKlokkiezer(){
+    verlaatRonde();
+    var niveau = S.klokNiveau;
+    var soort = S.klokSoort;
+
+    var html = '<section class="sectie"><h2>Wat wil je oefenen?</h2><div class="niveaus">';
+    KLOKSOORTEN.forEach(function(v){
+      html += '<button class="niveau soort' + (soort === v.id ? "" : " uit") + '" type="button" ' +
+              'data-soort="' + v.id + '" aria-pressed="' + (soort === v.id) + '">' +
+              '<b>' + v.naam + '</b><span>' + v.hint + '</span></button>';
+    });
+    html += '</div></section>';
+
+    html += '<section class="sectie" style="margin-top:22px"><h2>Hoe moeilijk mag de klok?</h2><div class="niveaus">';
+    [1,2,3].forEach(function(n){
+      html += '<button class="niveau' + (niveau === n ? "" : " uit") + '" type="button" ' +
+              'data-niveau="' + n + '" aria-pressed="' + (niveau === n) + '">' +
+              '<b>' + NIVEAUS[n].naam + '</b><span>Bijvoorbeeld: ' + NIVEAUS[n].hint + '</span></button>';
+    });
+    html += '</div></section>';
+
+    html += '<div class="kaart" style="margin-top:18px;display:flex;align-items:center;gap:16px">' +
+            '<div class="klokhouder" style="flex:none;width:88px">' + klokSVG(7, 20, true) + '</div>' +
+            '<p style="margin:0;font-weight:700;font-size:14px;color:var(--inkt-zacht)" id="klok-uitleg"></p></div>';
+    html += '<div class="knoppen" style="margin-top:18px">' +
+            '<button class="knop" type="button" id="start-klok">Start met 10 klokken</button>' +
+            '<button class="knop stil" type="button" id="terug">Terug</button></div>';
+    scherm.innerHTML = html;
+
+    function ververUitleg(){
+      var tekst;
+      if(soort === "analoog") tekst = "Je ziet steeds een klok en kiest hoe laat het is.";
+      else if(soort === "digitaal") tekst = "Je ziet steeds een digitale tijd en zoekt de klok die zo staat.";
+      else tekst = "Je krijgt beide soorten vragen door elkaar: een klok aflezen, en bij een digitale tijd de goede klok zoeken.";
+      document.getElementById("klok-uitleg").textContent = tekst + " De tijden gaan met " +
+        (niveau === 1 ? "hele en halve uren." : niveau === 2 ? "hele uren, halve uren en kwartieren." : "stappen van vijf minuten.");
+    }
+
+    function kiesUit(kiezer, actief){
+      [].forEach.call(scherm.querySelectorAll(kiezer), function(k){
+        var aan = k === actief;
+        k.classList.toggle("uit", !aan);
+        k.setAttribute("aria-pressed", aan);
+      });
+    }
+
+    [].forEach.call(scherm.querySelectorAll("[data-soort]"), function(k){
+      k.addEventListener("click", function(){
+        soort = k.getAttribute("data-soort");
+        kiesUit("[data-soort]", k);
+        ververUitleg();
+      });
+    });
+    [].forEach.call(scherm.querySelectorAll("[data-niveau]"), function(k){
+      k.addEventListener("click", function(){
+        niveau = parseInt(k.getAttribute("data-niveau"), 10);
+        kiesUit("[data-niveau]", k);
+        ververUitleg();
+      });
+    });
+
+    document.getElementById("start-klok").addEventListener("click", function(){
+      S.klokNiveau = niveau;
+      S.klokSoort = soort;
+      bewaar();
+      start("klok");
+    });
+    document.getElementById("terug").addEventListener("click", toonHome);
+    ververUitleg();
+  }
+
+  function toonRapport(){
+    verlaatRonde();
+    var totaal = 0, goed = 0;
+    GROEPEN.forEach(function(g){
+      totaal += S.stats.groep[g.id].totaal;
+      goed += S.stats.groep[g.id].goed;
+    });
+
+    var html = '<section class="sectie"><h2>Hoe gaat het met Saar?</h2>';
+
+    if(!totaal){
+      html += '<div class="kaart" style="text-align:center">' +
+              '<p style="margin:0;font-weight:700;color:var(--inkt-zacht)">' +
+              'Er is nog niets geoefend. Na de eerste ronde sommen verschijnt hier het rapport.</p></div>';
+      html += '<div class="knoppen" style="margin-top:18px">' +
+              '<button class="knop" type="button" id="terug">Terug</button></div>';
+      scherm.innerHTML = html;
+      document.getElementById("terug").addEventListener("click", toonHome);
+      return;
+    }
+
+    var percentage = Math.round(goed / totaal * 100);
+    html += '<div class="kaart samenvatting">' +
+            '<div><b>' + totaal + '</b><span>vragen gemaakt</span></div>' +
+            '<div><b>' + percentage + '%</b><span>goed</span></div>' +
+            '<div><b>' + S.stats.challenges.gehaald + '</b><span>challenges gehaald</span></div>' +
+            '</div>';
+    html += '</section>';
+
+    /* per onderdeel */
+    html += '<section class="sectie" style="margin-top:22px"><h2>Per onderdeel</h2><div class="kaart">';
+    html += '<div class="staven">';
+    var ongeoefend = [];
+    GROEPEN.forEach(function(g){
+      var hok = S.stats.groep[g.id];
+      if(!hok || !hok.totaal){ ongeoefend.push(g.naam.toLowerCase()); return; }
+      var o = oordeel(hok);
+      var p = scoreVan(hok);
+      html += '<div class="staaf">' +
+                '<div class="rij"><b>' + g.naam + '</b>' +
+                  '<span class="stempel ' + o.klasse + '">' + o.tekst + '</span></div>' +
+                '<div class="spoor"><div class="vulling" style="width:' + (p === null ? 0 : p) +
+                  '%;background:' + g.kleur + '"></div></div>' +
+                '<div class="rij klein"><span>' + hok.goed + " van de " + hok.totaal + ' goed</span>' +
+                  '<span>' + (p === null ? "" : p + "%") + '</span></div>';
+      /* de losse onderwerpen binnen deze bak, zodat "afronden gaat slecht" zichtbaar blijft */
+      var detail = [];
+      onderwerpLijst().forEach(function(ow){
+        if(ow.meta || ow.groep !== g.id || ow.id === g.id) return;
+        var h = S.stats.onderwerp[ow.id];
+        if(h && h.totaal) detail.push({naam:ow.naam, hok:h});
+      });
+      if(detail.length){
+        html += '<div class="detail">';
+        detail.forEach(function(d){
+          var dp = scoreVan(d.hok);
+          var doo = oordeel(d.hok);
+          html += '<span class="deelstip ' + doo.klasse + '">' + d.naam + ' ' + dp + '%</span>';
+        });
+        html += '</div>';
+      }
+      html += '</div>';
+    });
+    html += '</div>';
+    if(ongeoefend.length){
+      html += '<p class="legenda-uitleg">Nog niet geoefend: ' + ongeoefend.join(", ") + '.</p>';
+    }
+    html += '</div></section>';
+
+    /* tafels apart, want daar zit het verschil per tafel */
+    var tafelTotaal = 0;
+    for(var t = 1; t <= 10; t++) tafelTotaal += S.stats.tafel[t].totaal;
+    if(tafelTotaal){
+      html += '<section class="sectie" style="margin-top:22px"><h2>De tafels apart</h2><div class="kaart">';
+      html += '<div class="tafelrapport">';
+      for(t = 1; t <= 10; t++){
+        var hok = S.stats.tafel[t];
+        var o = oordeel(hok);
+        var p = scoreVan(hok);
+        html += '<div class="tafelhok ' + o.klasse + '">' +
+                  '<b>' + t + '</b><span>' + (p === null ? "—" : p + "%") + '</span>' +
+                '</div>';
+      }
+      html += '</div>';
+      html += '<p class="legenda-uitleg">Groen is sterk, oranje mag nog geoefend worden, ' +
+              'grijs is nog te weinig gedaan om iets over te zeggen.</p>';
+      html += '</div></section>';
+    }
+
+    /* vragen die het vaakst misgaan */
+    if(S.stats.fouten.length){
+      html += '<section class="sectie" style="margin-top:22px"><h2>Deze vragen de meeste aandacht</h2><div class="kaart">';
+      html += '<ul class="aandachtlijst">';
+      S.stats.fouten.slice().sort(function(a, b){ return b.aantal - a.aantal; }).slice(0, 8).forEach(function(f){
+        html += '<li><span>' + f.sleutel + '</span><span class="keer">' + f.aantal +
+                (f.aantal === 1 ? ' keer fout' : ' keer fout') + '</span></li>';
+      });
+      html += '</ul></div></section>';
+    }
+
+    /* advies */
+    var zwak = zwaksteGroep();
+    var advies;
+    if(!zwak) advies = "Oefen nog wat vaker, dan kan ik beter zien waar Saar hulp bij kan gebruiken.";
+    else {
+      var naam = "";
+      GROEPEN.forEach(function(g){ if(g.id === zwak.id) naam = g.naam.toLowerCase(); });
+      advies = zwak.p >= 85
+        ? "Alles gaat goed! Het laagste is " + naam + " met " + zwak.p + "% — dat is nog steeds sterk. Tijd voor een pittigere challenge."
+        : "Het meeste rendement zit nu bij " + naam + " (" + zwak.p + "% goed). De aanbevolen challenge oefent precies dat.";
+    }
+    html += '<div class="kaart advies" style="margin-top:22px"><span class="lamp">💡</span>' +
+            '<p>' + advies + '</p></div>';
+
+    html += '<div class="knoppen" style="margin-top:18px">' +
+            '<button class="knop" type="button" id="naar-challenge">Naar de challenges</button>' +
+            '<button class="knop stil" type="button" id="terug">Terug</button></div>';
+
+    scherm.innerHTML = html;
+    document.getElementById("naar-challenge").addEventListener("click", toonChallenges);
+    document.getElementById("terug").addEventListener("click", toonHome);
+  }
+
+  /* ----- challenges ----- */
+  /* hoeveel er goed moeten zijn: vier op de vijf, altijd minstens één fout toegestaan */
+  function challengeNodig(lengte){
+    return Math.max(1, Math.min(lengte - 1, Math.ceil(lengte * 0.8)));
+  }
+
+  /* een pittiger bereik dan de instelling: bovengrens anderhalf keer zo hoog */
+  function pittigBereik(){
+    var zwaarder = {};
+    BEREIKEN.forEach(function(r){
+      var b = S.bereik[r.id];
+      var tot = Math.min(r.grens, Math.max(b.tot + 2, Math.round(b.tot * 1.5)));
+      zwaarder[r.id] = schoonBereik(r.id, b.van, tot);
+    });
+    return zwaarder;
+  }
+
+  function challengeLijst(){
+    var lengte = S.challengeLengte;
+    var zwak = zwaksteGroep();
+    var tafels = zwaksteTafels(3);
+    var zwaarder = pittigBereik();
+    var klokNiveau = Math.min(3, S.klokNiveau + 1);
+
+    var lijst = [
+      {
+        id:"tafelbaas", teken:"🎯", naam:"Tafelbaas",
+        uitleg:lengte + " tafelsommen uit de tafels van " + tafels.join(", ") + " — juist die vraagt je nu het meest.",
+        kleur:"var(--zon)", inkt:"#3A2600"
+      },
+      {
+        id:"klokmeester", teken:"🕐", naam:"Klokmeester",
+        uitleg:lengte + " klokvragen, analoog en digitaal door elkaar, op " +
+               NIVEAUS[klokNiveau].naam.toLowerCase() + ".",
+        kleur:"var(--klok)", inkt:"#fff"
+      },
+      {
+        id:"rekenracer", teken:"⚡", naam:"Rekenracer",
+        uitleg:lengte + " sommen door elkaar, met grotere getallen dan je gewend bent " +
+               "(tot " + zwaarder.plus.tot + " bij plus en min).",
+        kleur:"var(--druif)", inkt:"#fff"
+      }
+    ];
+
+    var slim = ["geld","meten","duur","verhaal","kalender"].filter(function(s){ return zichtbaar(s); });
+    if(slim.length >= 2){
+      lijst.push({
+        id:"slimrekenen", teken:"🛒", naam:"Slim rekenen",
+        uitleg:lengte + " vragen over geld, meten, tijd en verhaaltjes — rekenen zoals in het echt.",
+        kleur:"var(--zee)", inkt:"#fff"
+      });
+    }
+
+    if(S.stats.fouten.length >= 8){
+      lijst.push({
+        id:"herkansing", teken:"🔁", naam:"Herkansing",
+        uitleg:lengte + " vragen die eerder misgingen. Laat zien dat je ze nu wél kent!",
+        kleur:"var(--gras)", inkt:"#fff"
+      });
+    }
+
+    var aanbevolen = "rekenracer";
+    if(zwak){
+      if(zwak.id === "tafels") aanbevolen = "tafelbaas";
+      else if(zwak.id === "klok") aanbevolen = "klokmeester";
+      else if((zwak.id === "geld" || zwak.id === "meten" || zwak.id === "verhaal") && slim.length >= 2){
+        aanbevolen = "slimrekenen";
+      }
+    }
+    if(S.stats.fouten.length >= 15) aanbevolen = "herkansing";
+
+    lijst.forEach(function(c){ c.aanbevolen = (c.id === aanbevolen); });
+    return lijst;
+  }
+
+  function maakChallenge(id){
+    var lengte = S.challengeLengte;
+    var vragen = [], gezien = {}, pogingen = 0;
+    var tafels = zwaksteTafels(3);
+    var klokNiveau = Math.min(3, S.klokNiveau + 1);
+    /* een challenge is overal één leerjaar pittiger, en bij de vier basisbewerkingen
+       ook nog een ruimer getalbereik */
+    var zwaar = {leerjaar: pittigLeerjaar(), bereik: pittigBereik(), tafels: tafels,
+                 niveau: klokNiveau, soort: "mix"};
+
+    function voegToe(vraag){
+      var sl = dedupeSleutel(vraag);
+      if(gezien[sl]) return false;
+      gezien[sl] = true;
+      vragen.push(vraag);
+      return true;
+    }
+
+    if(id === "herkansing"){
+      /* eerst de echte missers, oplopend van vaakst fout naar minst */
+      var bewaard = S.stats.fouten.slice().sort(function(a, b){ return b.aantal - a.aantal; });
+      bewaard.forEach(function(f){
+        if(vragen.length >= lengte) return;
+        var h = herbouwVraag(f.vraag);
+        if(h) voegToe(h);
+      });
+      /* aanvullen met verse vragen uit dezelfde onderwerpen */
+      var soorten = {};
+      S.stats.fouten.forEach(function(f){
+        var s = f.vraag.onderwerp || f.vraag.groep;
+        if(ONDERWERPEN[s]) soorten[s] = true;
+      });
+      var keuzes = Object.keys(soorten);
+      if(!keuzes.length) keuzes = ["alles"];
+      while(vragen.length < lengte && pogingen < lengte * 30){
+        pogingen++;
+        voegToe(maakVraag(keuzes[rnd(0, keuzes.length - 1)], zwaar));
+      }
+    } else if(id === "tafelbaas"){
+      while(vragen.length < lengte && pogingen < lengte * 30){
+        pogingen++;
+        voegToe(maakVraag("tafels", {tafels:tafels}));
+      }
+    } else if(id === "klokmeester"){
+      while(vragen.length < lengte && pogingen < lengte * 30){
+        pogingen++;
+        voegToe(maakVraag("klok", {niveau:klokNiveau, soort:"mix"}));
+      }
+    } else if(id === "slimrekenen"){
+      var slim = ["geld","meten","duur","verhaal","kalender"].filter(function(s){
+        return ONDERWERPEN[s] && zichtbaar(s);
+      });
+      if(!slim.length) slim = ["plus","min"];
+      while(vragen.length < lengte && pogingen < lengte * 40){
+        pogingen++;
+        voegToe(maakVraag(slim[rnd(0, slim.length - 1)], zwaar));
+      }
+    } else if(id === "rekenracer"){
+      var mix = actieveOnderwerpen();
+      while(vragen.length < lengte && pogingen < lengte * 40){
+        pogingen++;
+        voegToe(maakVraag(mix[rnd(0, mix.length - 1)], zwaar));
+      }
+    } else {
+      return null;
+    }
+
+    /* bij een heel klein bereik kunnen er te weinig unieke vragen zijn */
+    while(vragen.length < lengte){
+      vragen.push(id === "klokmeester" ? maakVraag("klok", {niveau:klokNiveau, soort:"mix"})
+                : id === "tafelbaas"   ? maakVraag("tafels", {tafels:tafels})
+                : maakVraag("alles", zwaar));
+    }
+
+    var omschrijving = null;
+    challengeLijst().forEach(function(c){ if(c.id === id) omschrijving = c; });
+    return {
+      id: id,
+      naam: omschrijving ? omschrijving.naam : "Challenge",
+      teken: omschrijving ? omschrijving.teken : "🏅",
+      nodig: challengeNodig(lengte),
+      vragen: schud(vragen).slice(0, lengte)
+    };
+  }
+
+  function toonChallenges(){
+    verlaatRonde();
+    var lijst = challengeLijst();
+    var html = '<section class="sectie"><h2>Challenges</h2>';
+    html += '<p class="uitlegregel">Een challenge is ' + S.challengeLengte + ' vragen lang en wat pittiger ' +
+            'dan gewoon oefenen. Heb je er ' + challengeNodig(S.challengeLengte) +
+            ' goed? Dan krijg je <b>2 stickers</b> erbij.</p>';
+    html += '<div class="challenges">';
+    lijst.forEach(function(c){
+      html += '<button class="challenge" type="button" data-challenge="' + c.id + '" ' +
+              'style="--kleur:' + c.kleur + ';--op:' + c.inkt + '">' +
+              (c.aanbevolen ? '<span class="tip">Aanbevolen</span>' : '') +
+              '<span class="teken">' + c.teken + '</span>' +
+              '<span class="woorden"><b>' + c.naam + '</b><span>' + c.uitleg + '</span></span>' +
+              '</button>';
+    });
+    html += '</div></section>';
+
+    var ch = S.stats.challenges;
+    html += '<div class="kaart" style="margin-top:18px;text-align:center">' +
+            '<p style="margin:0;font-weight:700;font-size:14px;color:var(--inkt-zacht)">' +
+            (ch.gedaan === 0
+              ? "Je hebt nog geen challenge gedaan. Spannend!"
+              : ch.gehaald + " van de " + ch.gedaan + " challenges gehaald · dat leverde " +
+                (ch.gehaald * 2) + " extra stickers op") +
+            '</p></div>';
+    html += '<div class="knoppen" style="margin-top:18px">' +
+            '<button class="knop stil" type="button" id="terug">Terug</button></div>';
+
+    scherm.innerHTML = html;
+    [].forEach.call(scherm.querySelectorAll("[data-challenge]"), function(k){
+      k.addEventListener("click", function(){ startChallenge(k.getAttribute("data-challenge")); });
+    });
+    document.getElementById("terug").addEventListener("click", toonHome);
+  }
+
+  function start(cat){
+    S.cat = cat;
+    S.challenge = null;
+    S.vragen = maakRonde(cat);
+    beginRonde();
+  }
+
+  function startChallenge(id){
+    var c = maakChallenge(id);
+    if(!c) return;
+    S.cat = null;
+    S.challenge = c;
+    S.vragen = c.vragen;
+    beginRonde();
+  }
+
+  function beginRonde(){
+    S.i = 0;
+    S.invoer = "";
+    S.invoer2 = "";
+    S.veld = 0;
+    S.bezig = false;
+    S.fouten = [];
+    S.goed = 0;
+    S.uitslag = [];
+    S.beloningenVoor = beloningen();
+    tekenQuiz();
+  }
+
+  function tekenQuiz(){
+    var v = S.vragen[S.i];
+    var html = '<div style="display:flex;flex-direction:column;gap:18px">';
+
+    var aantalVragen = S.vragen.length;
+    html += '<div class="vraagvoortgang">';
+    if(S.challenge){
+      html += '<div class="challengebalk"><span>' + S.challenge.teken + ' ' + S.challenge.naam + '</span>' +
+              '<span>' + S.goed + ' goed · ' + S.challenge.nodig + ' nodig</span></div>';
+    }
+    html += '<div class="stippen' + (aantalVragen > 12 ? " veel" : "") +
+            '" aria-label="Vraag ' + (S.i + 1) + ' van ' + aantalVragen + '">';
+    for(var n = 0; n < aantalVragen; n++){
+      var kl = "stip";
+      if(S.uitslag[n] === true) kl += " goed";
+      else if(S.uitslag[n] === false) kl += " fout";
+      else if(n === S.i) kl += " nu";
+      html += '<span class="' + kl + '"></span>';
+    }
+    html += '</div>';
+    if(aantalVragen > 12){
+      html += '<div class="vraagteller">Vraag ' + (S.i + 1) + ' van ' + aantalVragen + '</div>';
+    }
+    html += '</div>';
+
+    html += '<div class="somkaart" id="somkaart" style="--kleur:' + v.kleur + '">';
+    if(v.lijf === "klok"){
+      if(v.variant === "lezen"){
+        html += '<div class="vraagje">Hoe laat is het?</div>';
+        html += '<div class="klokhouder">' + klokSVG(v.u, v.m, true) + '</div>';
+        html += '<div class="legenda"><span class="u"><i></i>korte wijzer = uren</span>' +
+                '<span class="m"><i></i>lange wijzer = minuten</span></div>';
+      } else {
+        html += '<div class="vraagje">Welke klok staat zo?</div>';
+        html += '<div class="digitaal">' + digitaal(v.u, v.m) + '</div>';
+        html += '<div class="inwoorden">' + inWoorden(v.u, v.m) + '</div>';
+      }
+    } else {
+      if(v.vraagje) html += '<div class="vraagje">' + v.vraagje + '</div>';
+      if(v.zin) html += '<div class="zin">' + v.zin + '</div>';
+      if(v.klokken){
+        html += '<div class="klokrij">' + klokSVG(v.klokken[0][0], v.klokken[0][1], false) +
+                '<span class="pijl">→</span>' + klokSVG(v.klokken[1][0], v.klokken[1][1], false) + '</div>';
+      }
+      html += v.regel
+        ? '<div class="som">' + v.regel.replace("{1}", vakHtml(1)).replace("{2}", vakHtml(2)) + '</div>'
+        : somRegel(v);
+      if(v.onder) html += '<div class="onder">' + v.onder + '</div>';
+    }
+    html += '<div class="reactie" id="reactie"></div>';
+    html += '</div>';
+
+    if(v.vorm === "keuze"){
+      html += '<div class="keuzes' + (v.opties.length === 3 ? " drie" : "") + '">';
+      v.opties.forEach(function(o, n){
+        if(v.lijf === "klok"){
+          if(v.variant === "lezen"){
+            html += '<button class="keuze" type="button" data-optie="' + n + '">' +
+                    '<span class="tijd">' + digitaal(o.u, o.m) + '</span>' +
+                    '<span class="woorden">' + inWoorden(o.u, o.m) + '</span></button>';
+          } else {
+            html += '<button class="keuze klokje" type="button" data-optie="' + n + '" aria-label="' +
+                    digitaal(o.u, o.m) + '">' + klokSVG(o.u, o.m, false) + '</button>';
+          }
+        } else {
+          html += '<button class="keuze" type="button" data-optie="' + n + '">' +
+                  '<span class="tijd">' + (o.teken || o.label || o) + '</span>' +
+                  (o.sub ? '<span class="woorden">' + o.sub + '</span>' : '') + '</button>';
+        }
+      });
+      html += '</div>';
+    } else {
+      html += '<div class="pad">';
+      ["1","2","3","4","5","6","7","8","9"].forEach(function(c){
+        html += '<button class="toets" type="button" data-toets="' + c + '">' + c + '</button>';
+      });
+      html += '<button class="toets wis" type="button" data-toets="wis" aria-label="Wissen">⌫</button>';
+      html += '<button class="toets" type="button" data-toets="0">0</button>';
+      if(v.vorm === "komma"){
+        html += '<button class="toets" type="button" data-toets=",">,</button>';
+        html += '<button class="toets ok breed" type="button" data-toets="ok">OK</button>';
+      } else if(v.minToets){
+        html += '<button class="toets" type="button" data-toets="min" aria-label="Min">−</button>';
+        html += '<button class="toets ok breed" type="button" data-toets="ok">OK</button>';
+      } else {
+        html += '<button class="toets ok" type="button" data-toets="ok">OK</button>';
+      }
+      html += '</div>';
+    }
+
+    html += '<div class="knoppen"><button class="knop stil" type="button" id="stop">Stoppen</button></div>';
+    html += '</div>';
+
+    scherm.innerHTML = html;
+    [].forEach.call(scherm.querySelectorAll("[data-toets]"), function(k){
+      k.addEventListener("click", function(){ druk(k.getAttribute("data-toets")); });
+    });
+    [].forEach.call(scherm.querySelectorAll("[data-optie]"), function(k){
+      k.addEventListener("click", function(){ kiesOptie(parseInt(k.getAttribute("data-optie"), 10)); });
+    });
+    /* een vak aantikken springt erheen; op een tablet is dat de enige manier */
+    [].forEach.call(scherm.querySelectorAll("[data-veld]"), function(k){
+      k.addEventListener("click", function(){
+        if(S.bezig) return;
+        S.veld = parseInt(k.getAttribute("data-veld"), 10);
+        ververVak();
+      });
+    });
+    document.getElementById("stop").addEventListener("click", toonHome);
+  }
+
+  /* één antwoordvak; nr is 1 of 2 */
+  function vakHtml(nr){
+    var tekst = nr === 2 ? S.invoer2 : S.invoer;
+    var actief = S.veld === (nr === 2 ? 1 : 0);
+    return '<span class="vak' + (tekst === "" ? " leeg" : "") + (actief ? " caret" : "") +
+           '" id="vak' + (nr === 2 ? "2" : "") + '" data-veld="' + (nr - 1) + '">' +
+           (tekst === "" ? "?" : tekst) + '</span>';
+  }
+
+  /* de klassieke regel a op b = ?, met het gat op een instelbare plek */
+  function somRegel(v){
+    var gat = v.gat || "ant", d = [];
+    function deel(naam){
+      if(gat === naam) return vakHtml(1);
+      var ruw = (naam === "b" && v.bHeel) ? String(v.b) : toonGetal(v, v[naam]);
+      return '<span>' + ruw + '</span>';
+    }
+    d.push(deel("a"), '<span class="op">' + v.op + '</span>', deel("b"),
+           '<span class="op">=</span>', deel("ant"));
+    if(v.rest) d.push('<span class="restwoord">rest</span>', vakHtml(2));
+    return '<div class="som">' + d.join("") + '</div>';
+  }
+
+  function ververVak(){
+    [[document.getElementById("vak"), S.invoer, 0],
+     [document.getElementById("vak2"), S.invoer2, 1]].forEach(function(r){
+      if(!r[0]) return;
+      r[0].textContent = r[1] === "" ? "?" : r[1];
+      r[0].className = "vak" + (r[1] === "" ? " leeg" : "") + (S.veld === r[2] ? " caret" : "");
+    });
+  }
+
+  function druk(t){
+    if(S.bezig) return;
+    var v = S.vragen[S.i], h = actieveInvoer();
+    if(!v) return;
+
+    if(t === "wis"){
+      if(h === "" && S.veld === 1){ S.veld = 0; ververVak(); return; }   /* terug naar het eerste vak */
+      zetInvoer(h.slice(0, -1));
+      ververVak();
+      return;
+    }
+    if(t === "ok"){ nakijken(); return; }
+    if(t === ","){
+      if(v.vorm !== "komma" || h.indexOf(",") !== -1) return;
+      zetInvoer(h === "" || h === "−" ? h + "0," : h + ",");
+      ververVak();
+      return;
+    }
+    if(t === "min"){
+      if(!v.minToets) return;
+      zetInvoer(h.charAt(0) === "−" ? h.slice(1) : "−" + h);
+      ververVak();
+      return;
+    }
+    if(h.length >= 8) return;
+    var k = h.indexOf(",");
+    if(k !== -1 && h.length - k - 1 >= (v.decimalen || 2)) return;       /* niet meer decimalen dan nodig */
+    if(h === "0") h = "";
+    else if(h === "−0") h = "−";
+    zetInvoer(h + t);
+    ververVak();
+  }
+
+  function somTekst(v){
+    if(v.oplossing) return v.oplossing;
+    if(v.lijf === "klok") return digitaal(v.u, v.m) + " — " + inWoorden(v.u, v.m);
+    return v.a + " " + v.op + " " + v.b + " = " + v.ant;
+  }
+
+  function verwerk(juist, schudKaart){
+    var v = S.vragen[S.i];
+    var kaart = document.getElementById("somkaart");
+    var reactie = document.getElementById("reactie");
+    S.uitslag[S.i] = juist;
+    noteer(v, juist);
+
+    if(juist){
+      var vorigeStickers = stickers();
+      S.goed++;
+      /* In een challenge leveren losse antwoorden niets op: de hele beloning komt
+         aan het eind, en alleen als de challenge gehaald is. */
+      if(!S.challenge) S.punten++;
+      bewaar();
+      kaart.classList.add("juist");
+      reactie.className = "reactie juist";
+      reactie.textContent = LOF[rnd(0, LOF.length - 1)] +
+                            (S.challenge ? "" : " +1 punt");
+      klankGoed();
+      tekenScore();
+      if(!S.challenge && stickers() > vorigeStickers){
+        var nr = stickers();
+        setTimeout(function(){
+          klankSticker();
+          toast("Nieuwe sticker verdiend! " + STICKERS[(nr - 1) % STICKERS.length] + "  (" + nr + " in totaal)");
+        }, 350);
+      }
+      setTimeout(volgende, 900);
+    } else {
+      S.fouten.push(v);
+      bewaar();
+      if(schudKaart) kaart.classList.add("mis");
+      reactie.className = "reactie mis";
+      reactie.textContent = (v.lijf === "klok" ? "Bijna! Het is " : "Bijna! ") + somTekst(v);
+      klankFout();
+      setTimeout(volgende, 2200);
+    }
+  }
+
+  function nakijken(){
+    if(S.bezig || S.invoer === "" || S.invoer === "−") return;
+    var v = S.vragen[S.i];
+    if(v.vorm === "duo"){
+      if(S.veld === 0){ S.veld = 1; ververVak(); return; }   /* eerst het tweede vak vullen */
+      if(S.invoer2 === "") return;
+    }
+    S.bezig = true;
+    verwerk(klopt(v), true);
+  }
+
+  function klopt(v){
+    var doel = (typeof v.doel === "number") ? v.doel : v.ant;
+    if(v.vorm === "komma") return naarKlein(S.invoer, v.decimalen || 0) === doel;
+    if(v.vorm === "duo") return leesGetal(S.invoer) === doel && leesGetal(S.invoer2) === v.ant2;
+    return leesGetal(S.invoer) === doel;
+  }
+
+  function leesGetal(tekst){
+    var min = tekst.charAt(0) === "−";
+    var n = parseInt(min ? tekst.slice(1) : tekst, 10);
+    if(!isFinite(n)) return NaN;
+    return min ? -n : n;
+  }
+
+  function kiesOptie(n){
+    if(S.bezig) return;
+    var v = S.vragen[S.i];
+    if(!v.opties || !v.opties[n]) return;
+    S.bezig = true;
+    [].forEach.call(scherm.querySelectorAll("[data-optie]"), function(k, idx){
+      k.setAttribute("disabled", "disabled");
+      if(idx === v.juist) k.classList.add("juist");
+      else if(idx === n) k.classList.add("mis");
+    });
+    verwerk(n === v.juist, false);
+  }
+
+  /* ronde verlaten: een lopende vertraging mag het nieuwe scherm niet overschrijven */
+  function verlaatRonde(){
+    S.vragen = [];
+    S.bezig = false;
+  }
+
+  function volgende(){
+    if(!S.vragen.length) return;
+    S.i++;
+    S.invoer = "";
+    S.invoer2 = "";
+    S.veld = 0;
+    S.bezig = false;
+    if(S.i >= S.vragen.length) toonKlaar();
+    else tekenQuiz();
+  }
+
+  function toonKlaar(){
+    var aantal = S.vragen.length;
+    var challenge = S.challenge;
+    var gehaald = challenge ? (S.goed >= challenge.nodig) : false;
+
+    var foutloos = challenge && gehaald && S.goed === aantal;
+    if(challenge){
+      S.stats.challenges.gedaan++;
+      if(gehaald){
+        S.stats.challenges.gehaald++;
+        /* Alles goed geeft een derde sticker: de supersticker. Die onthouden we
+           op zijn volgnummer, zodat hij op het stickervel bijzonder blijft. */
+        if(foutloos){
+          S.superStickers.push(stickers() + 2);
+          S.stats.challenges.foutloos = (S.stats.challenges.foutloos || 0) + 1;
+          S.bonusStickers += 3;
+        } else {
+          S.bonusStickers += 2;
+        }
+      }
+      bewaar();
+      tekenScore();
+    }
+
+    var deel = S.goed / aantal;
+    var woord = challenge
+      ? (foutloos ? "Foutloos! Alles goed!"
+        : gehaald ? "Challenge gehaald!"
+        : "Nog niet gehaald — probeer het nog eens!")
+      : (S.goed === aantal ? "Alles goed! Wat een held!"
+        : deel >= 0.8 ? "Heel knap gedaan!"
+        : deel >= 0.5 ? "Goed bezig!"
+        : "Oefenen helpt — ga zo door!");
+
+    var html = '';
+    if(challenge){
+      html += '<div class="challengekop ' + (foutloos ? "foutloos" : gehaald ? "gehaald" : "net-niet") + '">' +
+              '<span class="teken">' + (gehaald ? "🏅" : challenge.teken) + '</span>' +
+              '<b>' + challenge.naam + '</b></div>';
+    }
+    html += '<section class="kaart klaar' + (foutloos ? " foutloos" : "") + '">';
+    html += '<div class="cijfer">' + S.goed + '</div>';
+    html += '<div class="van">van de ' + aantal + ' goed' +
+            (challenge ? ' · ' + challenge.nodig + ' nodig' : '') + '</div>';
+    html += '<p class="woord">' + woord + '</p>';
+    if(challenge && gehaald){
+      html += foutloos
+        ? '<p class="prijs super">🌟 Alles goed! Je verdient 2 stickers ' +
+          '<b>plus de supersticker</b>!</p>'
+        : '<p class="prijs">🎉 Je verdient 2 extra stickers!</p>';
+    }
+    if(S.fouten.length){
+      html += '<div class="foutenlijst"><h3>Deze mag je nog een keer oefenen</h3><ul>';
+      S.fouten.slice(0, 12).forEach(function(v){
+        html += '<li>' + somTekst(v) + '</li>';
+      });
+      if(S.fouten.length > 12){
+        html += '<li style="border-style:dashed">en nog ' + (S.fouten.length - 12) + '</li>';
+      }
+      html += '</ul></div>';
+    }
+    html += '</section>';
+    html += '<div class="knoppen" style="margin-top:18px">' +
+            '<button class="knop" type="button" id="nog">' +
+            (challenge ? "Nog een keer" : "Nog " + aantal + " sommen") + '</button>' +
+            '<button class="knop stil" type="button" id="menu">' +
+            (challenge ? "Terug naar de challenges" : "Ander soort sommen") + '</button></div>';
+    scherm.innerHTML = html;
+    document.getElementById("nog").addEventListener("click", function(){
+      if(challenge) startChallenge(challenge.id); else start(S.cat);
+    });
+    document.getElementById("menu").addEventListener("click", function(){
+      if(challenge) toonChallenges(); else toonHome();
+    });
+
+    if(gehaald){
+      klankBeloning();
+      if(foutloos){
+        vierFeest();
+        klankSuper();
+        toast("Foutloos! 2 stickers én de supersticker 🌟");
+      } else {
+        toast("Challenge gehaald! 2 stickers erbij 🏅");
+      }
+    }
+
+    var kaarten = beloningen();
+    if(kaarten > S.beloningenVoor){
+      setTimeout(function(){ toonBeloning(kaarten); }, gehaald ? 1400 : 500);
+    }
+  }
+
+  function toonBeloning(nr){
+    klankBeloning();
+    var ov = document.createElement("div");
+    ov.className = "overlay";
+    ov.innerHTML = '<div class="doos"><div class="trofee">🏆</div>' +
+      '<h2>Je kaart is vol!</h2>' +
+      '<p>' + S.stickersPerBeloning + ' stickers verzameld — dat is beloning nummer ' + nr +
+      '.<br>Laat het aan papa of mama zien! Zij kunnen het afvinken op het stickervel.</p>' +
+      '<button class="knop" type="button">Hoera!</button></div>';
+    document.body.appendChild(ov);
+    var k = ov.querySelector("button");
+    k.addEventListener("click", function(){ ov.remove(); });
+    k.focus();
+  }
+
+  /* ----- toast ----- */
+  var toastEl = document.getElementById("toast"), toastTimer = null;
+  function toast(tekst){
+    toastEl.textContent = tekst;
+    toastEl.classList.add("zie");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ toastEl.classList.remove("zie"); }, 2600);
+  }
+
+  /* ----- toetsenbord ----- */
+  document.addEventListener("keydown", function(e){
+    if(document.getElementById("code-vakjes")){
+      if(e.key >= "0" && e.key <= "9"){ codeToets(e.key); e.preventDefault(); }
+      else if(e.key === "Backspace"){ codeToets("wis"); e.preventDefault(); }
+      else if(e.key === "Enter"){ codeToets("ok"); e.preventDefault(); }
+      return;
+    }
+    var opties = scherm.querySelectorAll("[data-optie]");
+    if(opties.length){
+      var nr = parseInt(e.key, 10);
+      if(nr >= 1 && nr <= opties.length){ kiesOptie(nr - 1); e.preventDefault(); }
+      return;
+    }
+    if(!document.getElementById("vak")) return;
+    if(e.key >= "0" && e.key <= "9"){ druk(e.key); e.preventDefault(); }
+    else if(e.key === "," || e.key === "."){ druk(","); e.preventDefault(); }
+    else if(e.key === "-"){ druk("min"); e.preventDefault(); }
+    else if(e.key === "Backspace"){ druk("wis"); e.preventDefault(); }
+    else if(e.key === "Enter"){ druk("ok"); e.preventDefault(); }
+    else if(e.key === "Tab" && document.getElementById("vak2")){
+      S.veld = 1 - S.veld; ververVak(); e.preventDefault();
+    }
+  });
+
+  /* ----- knoppen buiten de schermen ----- */
+  document.getElementById("instellingen-knop").addEventListener("click", opnaarInstellingen);
+
+  var gk = document.getElementById("geluid-knop");
+  function ververGeluid(){ gk.textContent = S.geluid ? "Geluid aan" : "Geluid uit"; }
+  gk.addEventListener("click", function(){
+    S.geluid = !S.geluid;
+    bewaar();
+    ververGeluid();
+    if(S.geluid) klankGoed();
+  });
+
+  /* ----- als app op het beginscherm ----- */
+  function alsApp(){
+    return window.matchMedia("(display-mode: standalone)").matches ||
+           window.matchMedia("(display-mode: fullscreen)").matches ||
+           window.navigator.standalone === true;
+  }
+
+  var installKnop = document.getElementById("installeer-knop");
+  var ipadTip = document.getElementById("ipad-tip");
+  var wachtendeVraag = null;
+
+  window.addEventListener("beforeinstallprompt", function(e){
+    e.preventDefault();
+    wachtendeVraag = e;
+    if(!alsApp()) installKnop.hidden = false;
+  });
+
+  installKnop.addEventListener("click", function(){
+    if(!wachtendeVraag) return;
+    wachtendeVraag.prompt();
+    wachtendeVraag.userChoice.then(function(){
+      wachtendeVraag = null;
+      installKnop.hidden = true;
+    });
+  });
+
+  window.addEventListener("appinstalled", function(){
+    wachtendeVraag = null;
+    installKnop.hidden = true;
+    ipadTip.hidden = true;
+    toast("Gelukt! De app staat nu op je beginscherm.");
+  });
+
+  /* alleen op de zelfgehoste versie (die heeft een manifest) installeren we iets */
+  var zelfGehost = !!document.querySelector('link[rel="manifest"]') && location.protocol !== "file:";
+
+  /* iPad en iPhone kennen geen installatieknop: daar de route via Deel tonen */
+  var isApple = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  if(isApple && zelfGehost && !alsApp()) ipadTip.hidden = false;
+
+  /* ----- versie tonen en bijwerken ----- */
+  function toonVersie(extra){
+    var el = document.getElementById("versie");
+    if(el) el.textContent = "Saar's Rekenwereld · versie " + APPVERSIE + (extra ? " · " + extra : "");
+  }
+
+  /* Of er bij het laden al een service worker de baas was. Dat moet één keer
+     vastgelegd worden: sw.js neemt met skipWaiting meteen over, dus even later is
+     de controller ook bij een eerste installatie al gezet — en dan zou de app bij
+     de allereerste start melden dat er een nieuwe versie is. */
+  var alGeinstalleerd = !!(navigator.serviceWorker && navigator.serviceWorker.controller);
+
+  function meldNieuweVersie(reg){
+    if(!alGeinstalleerd) return;          /* eerste installatie is geen update */
+    var balk = document.getElementById("nieuwe-versie");
+    if(!balk || !balk.hidden) return;
+    balk.hidden = false;
+    document.getElementById("nu-verversen").addEventListener("click", function(){
+      /* de wachtende versie mag het meteen overnemen; anders pas bij de volgende start */
+      if(reg && reg.waiting) reg.waiting.postMessage("neem-over");
+      setTimeout(function(){ location.reload(); }, 120);
+    });
+  }
+
+  /* offline bruikbaar maken */
+  if("serviceWorker" in navigator && zelfGehost){
+    window.addEventListener("load", function(){
+      navigator.serviceWorker.register("./sw.js").then(function(reg){
+        if(!reg) return;
+        /* staat er al een nieuwe versie klaar? */
+        if(reg.waiting && navigator.serviceWorker.controller) meldNieuweVersie(reg);
+        reg.addEventListener("updatefound", function(){
+          var verse = reg.installing;
+          if(!verse) return;
+          verse.addEventListener("statechange", function(){
+            /* geïnstalleerd naast een bestaande versie = er is echt iets nieuws */
+            if(verse.state === "installed" && navigator.serviceWorker.controller) meldNieuweVersie(reg);
+          });
+        });
+        /* elke start één keer kijken of er iets nieuws op de server staat */
+        try{ reg.update(); }catch(e){}
+      }).catch(function(){});
+    });
+  }
+
+  /* ----- starten ----- */
+  laad();
+  ververGeluid();
+  tekenScore();
+  toonHome();
+  toonVersie();
+})();
+</script>
+
+</body>
+</html>

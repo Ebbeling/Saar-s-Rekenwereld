@@ -1,0 +1,13 @@
+# zip-momentopnames van de map, niet nodig in de repo
+Archive/
+*.zip
+
+# rommel van het besturingssysteem
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# editors
+.vscode/
+.idea/
+*~
