@@ -453,19 +453,29 @@
   .knop.stil:active{box-shadow:0 1px 0 var(--rand)}
 
   /* ---------- toast + beloning ---------- */
+  /* Verbergen met visibility, niet door hem omlaag te schuiven: een verschuiving
+     van een percentage van de eigen hoogte valt op een telefoon weg tegen de
+     veilige zone onderaan, en dan blijft de melding op de rand staan. */
   .toast{
     position:fixed;left:50%;
     bottom:calc(22px + env(safe-area-inset-bottom));
-    transform:translateX(-50%) translateY(140%);
+    transform:translateX(-50%) translateY(16px);
+    opacity:0;
+    visibility:hidden;
     background:var(--inkt);color:var(--papier);
     padding:12px 20px;border-radius:999px;
     font-weight:900;font-size:15px;
     box-shadow:0 8px 24px var(--schaduw);
-    transition:transform .4s cubic-bezier(.2,.9,.3,1);
+    transition:transform .3s cubic-bezier(.2,.9,.3,1), opacity .3s ease, visibility 0s linear .3s;
     z-index:20;
     max-width:min(92vw,420px);text-align:center;
   }
-  .toast.zie{transform:translateX(-50%) translateY(0)}
+  .toast.zie{
+    transform:translateX(-50%) translateY(0);
+    opacity:1;
+    visibility:visible;
+    transition:transform .3s cubic-bezier(.2,.9,.3,1), opacity .3s ease, visibility 0s;
+  }
 
   .overlay{
     position:fixed;inset:0;z-index:30;
@@ -1147,7 +1157,7 @@
     return {van:van, tot:tot};
   }
 
-  var APPVERSIE = "16";         /* hoog dit samen met VERSIE in sw.js op */
+  var APPVERSIE = "17";         /* hoog dit samen met VERSIE in sw.js op */
   var CODE = "1985";            /* code voor de instellingen; hier aan te passen */
   var PUNTEN_PER_STICKER = 10;  /* standaardwaarden */
   var STICKERS_PER_BELONING = 10;
@@ -4089,14 +4099,49 @@
     if(!alsApp()) installKnop.hidden = false;
   });
 
-  installKnop.addEventListener("click", function(){
+  /* Het installatievenster van de browser openen, en eerlijk vertellen wat eruit
+     komt. Gebeurt er niets of wijst de gebruiker het af, dan tonen we de route
+     via het menu — anders lijkt het alsof installeren niet kan. */
+  function vraagInstallatie(naAfloop){
     if(!wachtendeVraag){ toonInstalleren(); return; }
-    wachtendeVraag.prompt();
-    wachtendeVraag.userChoice.then(function(){
-      wachtendeVraag = null;
+    var vraag = wachtendeVraag;
+    wachtendeVraag = null;              /* een prompt mag maar één keer gebruikt worden */
+    var beantwoord = false;
+
+    try{
+      vraag.prompt();
+    }catch(e){
+      toonInstalleren();
+      toast("Het installatievenster ging niet open. Hieronder staat hoe het met de hand kan.");
+      return;
+    }
+
+    /* geen antwoord binnen tien tellen? dan is er iets blijven hangen */
+    var wachter = setTimeout(function(){
+      if(beantwoord) return;
+      toonInstalleren();
+      toast("Er gebeurde niets. Probeer het via het menu van je browser.");
+    }, 10000);
+
+    vraag.userChoice.then(function(keuze){
+      beantwoord = true;
+      clearTimeout(wachter);
       installKnop.hidden = true;
+      if(keuze && keuze.outcome === "accepted"){
+        if(naAfloop) naAfloop();
+        return;
+      }
+      /* afgewezen of weggeklikt */
+      toonInstalleren();
+      toast("Niet geïnstalleerd. Hieronder staat hoe het via het menu kan.");
+    }).catch(function(){
+      beantwoord = true;
+      clearTimeout(wachter);
+      toonInstalleren();
     });
-  });
+  }
+
+  installKnop.addEventListener("click", function(){ vraagInstallatie(); });
 
   window.addEventListener("appinstalled", function(){
     wachtendeVraag = null;
@@ -4149,19 +4194,23 @@
               '<button class="knop" type="button" id="nu-installeren">Nu installeren</button></div>';
     }
     html += '<div class="uitleglijst">' + (appleEerst ? apple + android : android + apple) + '</div>';
-    html += '<div class="kaart" style="margin-top:18px"><p class="uitlegregel" style="margin:0">' +
-            'Zie je de knop of het menu-item niet staan? Ververs de pagina één keer. De app moet ' +
-            'eerst helemaal geladen zijn voordat een tablet hem als app aanbiedt.</p></div>';
+    html += '<div class="kaart uitlegblok" style="margin-top:18px"><h3>Lukt het niet?</h3>' +
+            '<ul class="stappen" style="list-style:disc">' +
+            '<li><b>Staat hij er misschien al?</b> Kijk op je beginscherm en in de app-lijst naar ' +
+            'het icoon met <b>Saar</b>. Een tweede keer installeren doet dan niets.</li>' +
+            '<li><b>Op een Samsung:</b> gebruik <b>Chrome</b>, niet Samsung Internet. Die laatste ' +
+            'zet er vaak alleen een snelkoppeling neer in plaats van de app.</li>' +
+            '<li><b>Niets zichtbaars gebeurd?</b> Ververs de pagina één keer en probeer het opnieuw. ' +
+            'De app moet eerst helemaal geladen zijn.</li>' +
+            '<li><b>Blijft het misgaan?</b> Het menu-item <b>Toevoegen aan startscherm</b> werkt ' +
+            'altijd, ook als <b>App installeren</b> het laat afweten.</li>' +
+            '</ul></div>';
     html += '<div class="knoppen" style="margin-top:18px">' +
             '<button class="knop stil" type="button" id="terug">Terug</button></div>';
 
     scherm.innerHTML = html;
     var nu = document.getElementById("nu-installeren");
-    if(nu) nu.addEventListener("click", function(){
-      if(!wachtendeVraag) return;
-      wachtendeVraag.prompt();
-      wachtendeVraag.userChoice.then(function(){ wachtendeVraag = null; toonHome(); });
-    });
+    if(nu) nu.addEventListener("click", function(){ vraagInstallatie(toonHome); });
     document.getElementById("terug").addEventListener("click", toonHome);
   }
 

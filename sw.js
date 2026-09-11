@@ -1,6 +1,6 @@
 /* Service worker voor Saar's Rekenwereld.
    Verhoog VERSIE na elke wijziging aan index.html of vragen.js, dan halen tablets de nieuwe versie op. */
-var VERSIE = "rekenwereld-v16";
+var VERSIE = "rekenwereld-v17";
 
 var SCHIL = [
   "./",
