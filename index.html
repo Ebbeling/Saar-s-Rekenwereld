@@ -108,7 +108,15 @@
   /* Een eigen display-regel wint van de standaard van de browser, waardoor een
      element met hidden tóch zichtbaar blijft. Deze regel sluit dat uit. */
   [hidden]{display:none !important}
-  html{-webkit-text-size-adjust:100%;height:100%}
+  /* Naar beneden trekken herlaadde op een tablet de hele app. Dat hoort hier
+     niet: er is een eigen knop voor een nieuwe versie, en midden in een som is
+     het alleen maar vervelend. De regel moet op html staan — dat is het element
+     dat scrolt; op body alleen werkt het niet overal. */
+  html{
+    -webkit-text-size-adjust:100%;
+    height:100%;
+    overscroll-behavior:none;
+  }
   body{
     margin:0;
     min-height:100%;
@@ -122,7 +130,7 @@
     background-position:-1px -1px;
     -webkit-text-size-adjust:100%;
     -webkit-tap-highlight-color:transparent;
-    overscroll-behavior-y:contain;
+    overscroll-behavior:none;
   }
   /* als app op het beginscherm: geen tekstselectie of dubbeltik-zoom op knoppen */
   button{
@@ -1256,7 +1264,7 @@
     return {van:van, tot:tot};
   }
 
-  var APPVERSIE = "20";         /* hoog dit samen met VERSIE in sw.js op */
+  var APPVERSIE = "21";         /* hoog dit samen met VERSIE in sw.js op */
   var WACHTWOORD = "0000";      /* standaardcode; in de instellingen aan te passen */
   var PUNTEN_PER_STICKER = 10;  /* standaardwaarden */
   var STICKERS_PER_BELONING = 10;
@@ -1424,7 +1432,6 @@
     challengeStickers: 2,        /* stickers voor een gehaalde challenge */
     superAan: true,              /* extra sticker bij een foutloze challenge */
     schuif: {},                  /* onderwerp -> -1, 0 of +1 leerjaar */
-    instellingenVrij: false,     /* blijft alleen open zolang de app draait */
     code: "",
     cat: null,
     klokNiveau: 1,
@@ -2888,7 +2895,10 @@
     [].forEach.call(scherm.querySelectorAll("[data-beloning]"), function(k){
       k.addEventListener("click", function(){
         var nr = parseInt(k.getAttribute("data-beloning"), 10);
-        vraagCode(function(){ toonBeloningAfvinken(nr, naAfvinken); }, naAfvinken,
+        /* Eerst het stickervel terugzetten en dan pas de overlay: die legt zich
+           over het scherm heen, en anders kijk je na Annuleren tegen het
+           codescherm aan in plaats van tegen het vel. */
+        vraagCode(function(){ naAfvinken(); toonBeloningAfvinken(nr, naAfvinken); }, naAfvinken,
                   "de beloning af te vinken");
       });
     });
@@ -2986,8 +2996,10 @@
      Bewust naast S: die wordt geserialiseerd en een functie hoort daar niet in. */
   var naCode = null, naTerug = null, codeReden = "";
 
+  /* De code wordt elke keer opnieuw gevraagd. Hem één keer per sessie onthouden
+     scheelde tikwerk, maar dan staat de app open zodra een volwassene hem ooit
+     heeft ingetypt — en juist dat moet de drempel tegenhouden. */
   function vraagCode(vervolg, terug, reden){
-    if(S.instellingenVrij){ vervolg(); return; }   /* deze sessie al ingetypt */
     naCode = vervolg;
     naTerug = terug || toonHome;
     codeReden = reden || "de instellingen te openen";
@@ -3051,7 +3063,6 @@
 
   function codeNakijken(){
     if(S.code === S.wachtwoord){
-      S.instellingenVrij = true;
       klankGoed();
       var vervolg = naCode || toonInstellingen;
       naCode = null;

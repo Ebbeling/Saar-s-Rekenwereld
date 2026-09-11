@@ -51,8 +51,8 @@ Daarna start de app vanaf het beginscherm met eigen icoon, zonder adresbalk.
 
 De service worker bewaart de app op het apparaat. Als je `index.html` of `vragen.js` aanpast:
 
-1. Pas in `sw.js` de regel `var VERSIE = "rekenwereld-v20";` aan naar `v21`, `v22`, enzovoort.
-2. Pas in `index.html` de regel `var APPVERSIE = "18";` aan naar hetzelfde nummer.
+1. Pas in `sw.js` de regel `var VERSIE = "rekenwereld-v21";` aan naar `v22`, `v23`, enzovoort.
+2. Pas in `index.html` de regel `var APPVERSIE = "21";` aan naar hetzelfde nummer.
 3. Upload de gewijzigde bestanden.
 
 Zonder die ophoging blijven al geïnstalleerde tablets de oude versie tonen.
@@ -81,8 +81,9 @@ gekozen groep, de onderwerpschakelaars en het rapport horen bij die opgeslagen g
 
 Rechtsboven in de app staat **Instellingen**. Die zitten achter een code, zodat Saar ze
 niet zelf verzet. De code is standaard **0000** en kun je in dat scherm zelf wijzigen naar
-vier andere cijfers. De code blijft geldig zolang de app open is; na afsluiten moet hij
-opnieuw ingetypt worden.
+vier andere cijfers. Hij wordt **elke keer opnieuw gevraagd** — ook als je net nog in de
+instellingen was, en ook voor het afvinken van een beloning. Zo staat de app nooit open
+omdat iemand de code een keer eerder heeft ingetypt.
 
 **Vergeet hem niet.** Ben je hem kwijt, dan kun je hem terugzetten door in de browser de
 opgeslagen gegevens van de app te wissen — daarmee verdwijnen ook de punten en stickers.
