@@ -681,10 +681,7 @@
     text-align:center;
     margin:0 0 6px;
   }
-  .brief .hoi{
-    text-align:center;font-family:"Lilita One",Impact,sans-serif;
-    font-size:21px;color:var(--framboos);margin:0 0 18px;
-  }
+  .brief h2{margin-bottom:18px}
   .brief p{font-size:16px;line-height:1.65;font-weight:700;margin:0 0 14px;color:var(--inkt)}
   .brief p.zacht{color:var(--inkt-zacht)}
   .brief h3{
@@ -1052,6 +1049,19 @@
   }
   .merk.slot{background:var(--inkt);font-size:17px}
   #wachtwoord{width:96px;letter-spacing:.3em;text-align:center}
+  #app-naam{width:150px}
+  /* de naam met het icoon ernaast, zodat je meteen ziet wat het wordt */
+  .naamrij{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+  .naamveld{flex:1 1 190px}
+  .naamicoon{flex:0 0 auto;text-align:center}
+  .naamicoon img{
+    width:88px;height:88px;border-radius:20px;display:block;
+    box-shadow:0 6px 16px var(--schaduw);background:var(--rand);
+  }
+  .naamicoon span{
+    display:block;margin-top:7px;font-size:11.5px;font-weight:700;
+    letter-spacing:.06em;text-transform:uppercase;color:var(--inkt-zacht);
+  }
   .standen{display:flex;gap:4px;background:var(--papier);border-radius:999px;padding:3px;flex:none}
   .stand{
     font:inherit;font-size:12px;font-weight:900;
@@ -1264,7 +1274,8 @@
     return {van:van, tot:tot};
   }
 
-  var APPVERSIE = "21";         /* hoog dit samen met VERSIE in sw.js op */
+  var APPVERSIE = "22";         /* hoog dit samen met VERSIE in sw.js op */
+  var NAAM = "Saar";            /* van wie is deze app; in de instellingen aan te passen */
   var WACHTWOORD = "0000";      /* standaardcode; in de instellingen aan te passen */
   var PUNTEN_PER_STICKER = 10;  /* standaardwaarden */
   var STICKERS_PER_BELONING = 10;
@@ -1428,6 +1439,7 @@
     aan: {},                     /* onderwerp -> true (altijd aan) of false (uit) */
     beloningGegeven: {},         /* velnummer -> {datum, notitie}; door de ouder afgevinkt */
     superStickers: [],           /* volgnummers van stickers uit een foutloze challenge */
+    naam: NAAM,                  /* wiens app dit is; staat in de titel en op het icoon */
     wachtwoord: WACHTWOORD,      /* code voor de instellingen */
     challengeStickers: 2,        /* stickers voor een gehaalde challenge */
     superAan: true,              /* extra sticker bij een foutloze challenge */
@@ -1533,6 +1545,7 @@
       if(r.klokSoort === "analoog" || r.klokSoort === "digitaal" || r.klokSoort === "mix") S.klokSoort = r.klokSoort;
       S.bonusStickers = schoonGetal(r.bonusStickers, 0, 99999, 0);
       if(/^\d{4}$/.test(r.wachtwoord)) S.wachtwoord = r.wachtwoord;
+      if(schoonNaam(r.naam)) S.naam = schoonNaam(r.naam);
       S.challengeStickers = schoonGetal(r.challengeStickers, 0, 10, 2);
       if(typeof r.superAan === "boolean") S.superAan = r.superAan;
       if(r.stats){
@@ -1575,6 +1588,7 @@
         aan: S.aan,
         beloningGegeven: S.beloningGegeven,
         superStickers: S.superStickers,
+        naam: S.naam,
         wachtwoord: S.wachtwoord,
         challengeStickers: S.challengeStickers,
         superAan: S.superAan,
@@ -1601,6 +1615,29 @@
     waarde = Math.round(Number(waarde));
     if(!isFinite(waarde)) return terugval;
     return Math.max(laag, Math.min(hoog, waarde));
+  }
+
+  /* Een naam mag letters, spaties, koppeltekens en apostrofs bevatten, en niet
+     langer zijn dan op het icoon past. Levert "" als er niets bruikbaars staat,
+     zodat de aanroeper op de standaardnaam kan terugvallen. */
+  function schoonNaam(waarde){
+    if(typeof waarde !== "string") return "";
+    var n = waarde.replace(/[^A-Za-zÀ-ÖØ-öø-ÿ' \-]/g, "").replace(/\s+/g, " ").trim();
+    return n.slice(0, 12);
+  }
+
+  /* "Saar" wordt "Saar's Rekenwereld", maar een naam op s, x of z krijgt alleen
+     een apostrof: "Mats' Rekenwereld". */
+  function appTitel(){
+    var n = S.naam || NAAM;
+    return n + (/[sxz]$/i.test(n) ? "'" : "'s") + " Rekenwereld";
+  }
+
+  /* Voor tekst die in innerHTML terechtkomt. De naam is al geschoond, maar een
+     apostrof hoort ook dan niet rauw in een attribuut. */
+  function veiligeTekst(t){
+    return String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   }
 
   /* ----- geluid ----- */
@@ -2014,7 +2051,7 @@
     return {groep:"getallen", vorm:"getal", lijf:"vrij", ant:som / lijst.length,
             hoeveel:lijst.length, gem:gem, lijst:lijst,
             vraagje:"Wat is het gemiddelde?",
-            zin:"Saar haalde deze punten: " + lijst.join(", ") + ".",
+            zin:S.naam + " haalde deze punten: " + lijst.join(", ") + ".",
             regel:'{1}',
             sleutel:"gem " + lijst.join("-"),
             label:"gemiddelde van " + lijst.join(", "),
@@ -2077,7 +2114,7 @@
       return {groep:"geld", vorm:dec ? "komma" : "getal", lijf:"vrij", decimalen:dec,
               ant:dec ? totaal : totaal / 100, centen:centen, soort:"samen", aantal:aantal,
               vraagje:"Hoeveel kost dat samen?",
-              zin:"Saar koopt " + zinLijst(tonen) + ".",
+              zin:S.naam + " koopt " + zinLijst(tonen) + ".",
               regel:'<span class="eenheid">€</span>{1}',
               sleutel:"geld+" + centen.join("+"),
               label:tonen.join(" + "),
@@ -2091,8 +2128,9 @@
     });
     return {groep:"geld", vorm:"komma", lijf:"vrij", decimalen:2, ant:betaald - totaal,
             centen:centen, betaald:betaald, soort:"terug", aantal:aantal,
-            vraagje:"Hoeveel krijgt ze terug?",
-            zin:"Saar koopt " + zinLijst(tonen) + " en betaalt met " + euro(betaald) + ".",
+            /* niet "krijgt ze terug": de naam is instelbaar en kan ook een jongen zijn */
+            vraagje:"Hoeveel geld krijgt " + S.naam + " terug?",
+            zin:S.naam + " koopt " + zinLijst(tonen) + " en betaalt met " + euro(betaald) + ".",
             regel:'<span class="eenheid">€</span>{1}',
             sleutel:"geldT" + centen.join("+") + "/" + betaald,
             label:euro(betaald) + " − " + euro(totaal),
@@ -2108,7 +2146,7 @@
     var t1 = u1 * 60 + m1, t2 = t1 + duur;
     var u2 = Math.floor(t2 / 60) % 12; if(u2 === 0) u2 = 12;
     var m2 = t2 % 60;
-    var zin = "Saar begint om " + digitaal(u1, m1) + " en stopt om " + digitaal(u2, m2) + ".";
+    var zin = S.naam + " begint om " + digitaal(u1, m1) + " en stopt om " + digitaal(u2, m2) + ".";
     var duo = p.duo && duur >= 60;
     if(duo){
       return {groep:"meten", vorm:"duo", lijf:"vrij", doel:Math.floor(duur / 60),
@@ -2607,7 +2645,7 @@
 
     html += '<button class="welkomknop" type="button" id="voor-saar">' +
             '<span class="ster">🌟</span>' +
-            '<span><b>Voor Saar</b><span>Lees hoe het werkt en hoe je stickers verdient</span></span>' +
+            '<span><b>Voor ' + veiligeTekst(S.naam) + '</b><span>Lees hoe het werkt en hoe je stickers verdient</span></span>' +
             '</button>';
 
     /* na de update één keer vragen of de geraden groep klopt */
@@ -2915,7 +2953,7 @@
       '<div class="doos">' +
       '<div class="trofee">🎁</div>' +
       '<h2>Beloning voor vel ' + (velNr + 1) + '</h2>' +
-      '<p>Heeft Saar de beloning gekregen? Je mag er kort bij zetten wat het was.</p>' +
+      '<p>Heeft ' + veiligeTekst(S.naam) + ' de beloning gekregen? Je mag er kort bij zetten wat het was.</p>' +
       '<input class="notitieveld" id="notitie" type="text" maxlength="60" ' +
         'placeholder="bijvoorbeeld: naar het zwembad" value="' + (b.notitie || "").replace(/"/g, "&quot;") + '">' +
       '<div class="knoppen" style="margin-top:16px">' +
@@ -2956,7 +2994,7 @@
     verlaatRonde();
     var laatste = beloningen();
     var html = '<section class="sectie"><h2>Het stickerboek</h2>';
-    html += '<p class="uitlegregel">Alle vellen die Saar tot nu toe verzameld heeft, ' +
+    html += '<p class="uitlegregel">Alle vellen die ' + veiligeTekst(S.naam) + ' tot nu toe verzameld heeft, ' +
             'het nieuwste bovenaan.</p></section>';
     for(var n = laatste; n >= 0; n--){
       html += tekenVelBlok(n, false);
@@ -2970,8 +3008,7 @@
   function toonVoorSaar(){
     verlaatRonde();
     var html = '<section class="kaart brief">';
-    html += '<h2>🌟 Welkom Saar! 🌟</h2>';
-    html += '<p class="hoi">Hoi Saar! 👋😊</p>';
+    html += '<h2>🌟 Welkom ' + veiligeTekst(S.naam) + '! 🌟</h2>';
     html += '<p>Wat leuk dat je hier bent! Op deze plek kun je op een leuke manier oefenen met rekenen. 🧮✨</p>';
     html += '<p>Maak de sommen, denk goed na en probeer je best te doen. Elk goed antwoord is één punt waard! ⭐</p>';
     html += '<h3>🏆 Zo werkt het:</h3>';
@@ -2983,7 +3020,7 @@
     html += '<p>Dus... oefenen, punten verdienen en stickers verzamelen! 😄</p>';
     html += '<p class="zacht">Het allerbelangrijkste is dat je plezier hebt en steeds een beetje beter wordt. ' +
             'Een foutje maken is helemaal niet erg, want van oefenen en fouten maken kun je juist heel veel leren! 💪🧠</p>';
-    html += '<p class="slotzin">Zet hem op Saar! Jij kunt dit! 🌈🚀</p>';
+    html += '<p class="slotzin">Zet hem op ' + veiligeTekst(S.naam) + '! Jij kunt dit! 🌈🚀</p>';
     html += '</section>';
     html += '<div class="knoppen" style="margin-top:18px">' +
             '<button class="knop" type="button" id="beginnen">Beginnen!</button></div>';
@@ -3152,9 +3189,9 @@
     verlaatRonde();
     var html = '';
 
-    html += '<section class="sectie"><h2>In welke groep zit Saar?</h2>';
+    html += '<section class="sectie"><h2>In welke groep zit ' + veiligeTekst(S.naam) + '?</h2>';
     html += '<p class="uitlegregel">De groep bepaalt hoe moeilijk alles is en welke onderwerpen ' +
-            'Saar op het beginscherm ziet. <b>Let op:</b> een andere groep kiezen zet de getallen, ' +
+            veiligeTekst(S.naam) + ' op het beginscherm ziet. <b>Let op:</b> een andere groep kiezen zet de getallen, ' +
             'de tafels en het klokniveau opnieuw.</p>';
     html += '<div class="kaart"><div class="groepen">';
     for(var g = 3; g <= 8; g++){
@@ -3164,7 +3201,7 @@
     html += '</div><p class="voorbeeld" id="groep-vb">' + groepSamenvatting(S.leerjaar) + '</p></div>';
     html += '</section>';
 
-    html += '<section class="sectie" style="margin-top:22px"><h2>Welke onderwerpen ziet Saar?</h2>';
+    html += '<section class="sectie" style="margin-top:22px"><h2>Welke onderwerpen ziet ' + veiligeTekst(S.naam) + '?</h2>';
     html += '<p class="uitlegregel">Standaard volgt elk onderwerp de groep. Je kunt er hier ' +
             'eentje alvast aanzetten of juist weglaten.</p>';
     /* Per vak ingeklapt: zesentwintig rijen open maken het scherm onwerkbaar lang. */
@@ -3187,7 +3224,7 @@
     });
     html += '</section>';
 
-    html += '<section class="sectie" style="margin-top:22px"><h2>Welke getallen mag Saar krijgen?</h2>';
+    html += '<section class="sectie" style="margin-top:22px"><h2>Welke getallen mag ' + veiligeTekst(S.naam) + ' krijgen?</h2>';
     html += '<p class="uitlegregel">Je stelt in met welke getallen de sommen gemaakt worden. ' +
             'Bij min komt het grootste getal altijd vooraan, dus de uitkomst wordt nooit negatief. ' +
             'Bij deel gaat het altijd zonder rest. De tafels en het klokkijken hebben hun eigen keuzescherm.</p>';
@@ -3251,6 +3288,22 @@
             '</div>';
     html += '</div></div></section>';
 
+    html += '<section class="sectie" style="margin-top:22px"><h2>Van wie is deze app?</h2>' +
+            '<div class="kaart"><div class="naamrij">' +
+            '<div class="naamveld">' +
+              '<div class="velden"><label for="app-naam">naam ' +
+              '<input type="text" id="app-naam" maxlength="12" autocomplete="off" ' +
+              'value="' + veiligeTekst(S.naam) + '"></label></div>' +
+              '<p class="voorbeeld" id="naam-vb"></p>' +
+            '</div>' +
+            '<div class="naamicoon"><img id="icoon-vb" alt="Zo komt het icoon eruit te zien" ' +
+              'width="88" height="88"><span>het app-icoon</span></div>' +
+            '</div>' +
+            '<p class="voorbeeld" style="margin-top:14px">Staat de app al op een beginscherm? ' +
+            'Dan blijft daar het oude icoon staan: een tablet legt het icoon vast op het moment ' +
+            'dat je de app toevoegt. Haal hem eraf en zet hem er opnieuw op om het nieuwe te zien.</p>' +
+            '</div></section>';
+
     html += '<section class="sectie" style="margin-top:22px"><h2>De code van dit scherm</h2>' +
             '<div class="kaart"><div class="instellingen"><div class="instelling">' +
             '<div class="titel"><span class="merk slot">🔒</span><b>Wachtwoord</b></div>' +
@@ -3259,6 +3312,14 @@
             'value="' + S.wachtwoord + '"></label></div>' +
             '<p class="voorbeeld" id="ww-vb">Hiermee kom je in dit scherm. Vergeet hem niet.</p>' +
             '</div></div></div></section>';
+
+    html += '<section class="sectie" style="margin-top:22px"><h2>Nieuwe versie</h2>' +
+            '<div class="kaart" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">' +
+            '<p style="margin:0;flex:1 1 200px;font-size:14px;font-weight:700;color:var(--inkt-zacht)" ' +
+            'id="versie-uitleg">Je hebt nu versie ' + APPVERSIE + '. De app kijkt zelf bij elke start ' +
+            'of er iets nieuws is, maar je kunt het ook meteen laten kijken.</p>' +
+            '<button class="knop stil" type="button" id="versie-knop" style="flex:0 1 auto">Nu kijken</button>' +
+            '</div></section>';
 
     html += '<section class="sectie" style="margin-top:22px"><h2>Opnieuw beginnen</h2>' +
             '<div class="kaart" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">' +
@@ -3356,6 +3417,74 @@
     });
     ververSpaar();
 
+    /* de naam: meteen laten zien wat de titel en het icoon worden */
+    var naamVeld = document.getElementById("app-naam");
+    function ververNaam(){
+      var n = schoonNaam(naamVeld.value) || NAAM;
+      document.getElementById("naam-vb").innerHTML =
+        "De app gaat dan <b>" + veiligeTekst(n + (/[sxz]$/i.test(n) ? "'" : "'s") + " Rekenwereld") +
+        "</b> heten." + (schoonNaam(naamVeld.value) ? "" : " Leeg laten betekent " + NAAM + ".");
+      metLettertype(function(){
+        var bron = tekenIcoon(n, 176, 1);
+        var plaatje = document.getElementById("icoon-vb");
+        if(plaatje && bron) plaatje.src = bron;
+      });
+    }
+    naamVeld.addEventListener("input", ververNaam);
+    ververNaam();
+
+    /* voor wie niet wil wachten tot de app zelf een nieuwe versie opmerkt */
+    var versieKnop = document.getElementById("versie-knop");
+    var versieUitleg = document.getElementById("versie-uitleg");
+    versieKnop.addEventListener("click", function(){
+      if(versieKnop.getAttribute("data-klaar") === "ja"){
+        if(swReg && swReg.waiting) swReg.waiting.postMessage("neem-over");
+        setTimeout(function(){ location.reload(); }, 120);
+        return;
+      }
+      if(!swReg){
+        versieUitleg.textContent = "Deze app bewaart zichzelf niet op het apparaat, " +
+          "dus je hebt altijd meteen de nieuwste versie.";
+        return;
+      }
+      versieKnop.disabled = true;
+      versieUitleg.textContent = "Even kijken op de server…";
+
+      /* Deze service worker doet skipWaiting(), dus een nieuwe versie is al
+         actief voordat we hem als "wachtend" kunnen zien. updatefound is dus
+         het signaal dat er echt iets nieuws gevonden is. */
+      var gevonden = false, afgerond = false;
+      function opUpdate(){ gevonden = true; }
+      swReg.addEventListener("updatefound", opUpdate);
+
+      function klaar(tekst){
+        if(afgerond) return;
+        afgerond = true;
+        swReg.removeEventListener("updatefound", opUpdate);
+        versieKnop.disabled = false;
+        if(tekst){ versieUitleg.textContent = tekst; return; }
+        if(gevonden || swReg.waiting || swReg.installing){
+          versieUitleg.innerHTML = "<b>Er staat een nieuwe versie klaar.</b> " +
+            "Tik op Nu vernieuwen om hem te halen.";
+          versieKnop.textContent = "Nu vernieuwen";
+          versieKnop.className = "knop";
+          versieKnop.setAttribute("data-klaar", "ja");
+        } else {
+          versieUitleg.textContent = "Je hebt de nieuwste versie: versie " + APPVERSIE + ".";
+        }
+      }
+      var mislukt = "Het lukte niet om te kijken. Is er internet?";
+      try{
+        swReg.update().then(function(){ setTimeout(function(){ klaar(); }, 900); },
+                           function(){ klaar(mislukt); });
+      }catch(e){
+        klaar(mislukt);
+        return;
+      }
+      /* de belofte van update() kan zonder net lang blijven hangen */
+      setTimeout(function(){ klaar(mislukt); }, 8000);
+    });
+
     document.getElementById("bewaar-knop").addEventListener("click", function(){
       BEREIKEN.forEach(function(r){
         S.bereik[r.id] = schoonBereik(r.id,
@@ -3373,7 +3502,14 @@
       var ww = String(document.getElementById("wachtwoord").value || "").replace(/\D/g, "");
       var wwGoed = ww.length === 4;
       if(wwGoed) S.wachtwoord = ww;
+
+      /* naam: leeg of onbruikbaar valt terug op de standaardnaam */
+      var nieuweNaam = schoonNaam(document.getElementById("app-naam").value) || NAAM;
+      var naamAnders = nieuweNaam !== S.naam;
+      S.naam = nieuweNaam;
+
       bewaar();
+      if(naamAnders){ zetAppNaam(); zetAppIcoon(); }
       tekenScore();
       toonHome();
       toast(wwGoed ? "Opgeslagen!" : "Opgeslagen — maar het wachtwoord moet vier cijfers zijn, dus dat is niet gewijzigd.");
@@ -3502,7 +3638,7 @@
       goed += S.stats.groep[g.id].goed;
     });
 
-    var html = '<section class="sectie"><h2>Hoe gaat het met Saar?</h2>';
+    var html = '<section class="sectie"><h2>Hoe gaat het met ' + veiligeTekst(S.naam) + '?</h2>';
 
     if(!totaal){
       html += '<div class="kaart" style="text-align:center">' +
@@ -3597,7 +3733,7 @@
     /* advies */
     var zwak = zwaksteGroep();
     var advies;
-    if(!zwak) advies = "Oefen nog wat vaker, dan kan ik beter zien waar Saar hulp bij kan gebruiken.";
+    if(!zwak) advies = "Oefen nog wat vaker, dan kan ik beter zien waar " + S.naam + " hulp bij kan gebruiken.";
     else {
       var naam = "";
       GROEPEN.forEach(function(g){ if(g.id === zwak.id) naam = g.naam.toLowerCase(); });
@@ -4329,6 +4465,173 @@
     if(document.body.getAttribute("data-scherm") === "ronde") setTimeout(meetToetsenbord, 120);
   });
 
+  /* ---------- de naam van de app, en het icoon dat erbij hoort ----------
+     De iconen in icons/ zijn met de hand gemaakt en zeggen "Saar". Wie de naam
+     verandert, krijgt hier hetzelfde ontwerp opnieuw getekend op een canvas:
+     framboosroze met ruitjes, de naam in witte letters met een schaduw, en een
+     sterretje rechtsboven. */
+  function tekenIcoon(naam, maat, schaal){
+    var c = document.createElement("canvas");
+    c.width = c.height = maat;
+    var g = c.getContext("2d");
+    if(!g) return null;
+
+    g.fillStyle = "#FF4D6D";
+    g.fillRect(0, 0, maat, maat);
+
+    /* ruitjespapier, net als de achtergrond van de app zelf */
+    g.strokeStyle = "rgba(255,255,255,.13)";
+    g.lineWidth = maat / 110;
+    var stap = maat / 7;
+    for(var i = 1; i < 7; i++){
+      var p = i * stap;
+      g.beginPath(); g.moveTo(0, p); g.lineTo(maat, p); g.stroke();
+      g.beginPath(); g.moveTo(p, 0); g.lineTo(p, maat); g.stroke();
+    }
+
+    /* De naam, passend geschaald en een tikje scheef als een sticker. Meten op
+       de echte letterdoos, niet op de regelhoogte: anders staat korte tekst te
+       klein en zakt hij uit het midden. */
+    var basis = 100;
+    g.font = '400 ' + basis + 'px "Lilita One", Impact, sans-serif';
+    g.textAlign = "center";
+    g.textBaseline = "alphabetic";
+    var m = g.measureText(naam);
+    var links = m.actualBoundingBoxLeft, rechts = m.actualBoundingBoxRight;
+    var op = m.actualBoundingBoxAscent, neer = m.actualBoundingBoxDescent;
+    var breed = (links + rechts) || m.width || 1;
+    var hoog = (op + neer) || basis * 0.72;
+    var factor = Math.min(maat * schaal * 0.72 / breed, maat * schaal * 0.34 / hoog);
+    var xMid = -(rechts - links) / 2;      /* de letterdoos zelf midden zetten */
+    var yMid = (op - neer) / 2;
+
+    g.save();
+    g.translate(maat / 2, maat / 2 + maat * 0.012);
+    g.rotate(-5 * Math.PI / 180);
+    g.scale(factor, factor);
+    /* vullen én omlijnen, zoals de bestaande iconen: dat maakt de letters dikker */
+    g.lineWidth = maat * 0.013 / factor;
+    g.lineJoin = "round";
+    var verzet = maat * 0.014 / factor, zak = maat * 0.024 / factor;
+    g.fillStyle = g.strokeStyle = "rgba(22,36,74,.27)";
+    g.fillText(naam, xMid + verzet, yMid + zak);
+    g.strokeText(naam, xMid + verzet, yMid + zak);
+    g.fillStyle = g.strokeStyle = "#ffffff";
+    g.fillText(naam, xMid, yMid);
+    g.strokeText(naam, xMid, yMid);
+    g.restore();
+
+    /* sterretje rechtsboven */
+    var sr = maat * schaal * 0.115;
+    var sx = maat / 2 + maat * schaal * 0.335;
+    var sy = maat / 2 - maat * schaal * 0.255;
+    g.beginPath();
+    for(var n = 0; n < 10; n++){
+      var r = (n % 2 === 0) ? sr : sr * 0.46;
+      var hoek = (n * 36 - 90 + 12) * Math.PI / 180;
+      var x = sx + r * Math.cos(hoek), y = sy + r * Math.sin(hoek);
+      if(n === 0) g.moveTo(x, y); else g.lineTo(x, y);
+    }
+    g.closePath();
+    g.lineWidth = maat * 0.022;
+    g.lineJoin = "round";
+    g.strokeStyle = "#ffffff";
+    g.stroke();
+    g.fillStyle = "#FFB61E";
+    g.fill();
+
+    try{ return c.toDataURL("image/png"); }catch(e){ return null; }
+  }
+
+  /* Het lettertype moet geladen zijn vóór we tekenen, anders staat er een
+     vervangend lettertype op het icoon. */
+  function metLettertype(klaar){
+    if(!document.fonts || !document.fonts.load){ klaar(); return; }
+    try{
+      document.fonts.load('400 100px "Lilita One"').then(function(){ klaar(); },
+                          function(){ klaar(); });
+    }catch(e){ klaar(); }
+  }
+
+  /* Titel, logo en versieregel volgen de ingestelde naam. */
+  function zetAppNaam(){
+    document.title = appTitel();
+    var logo = document.querySelector(".logo");
+    if(logo){
+      logo.innerHTML = veiligeTekst(S.naam) +
+        (/[sxz]$/i.test(S.naam) ? "'" : "'s") + ' Reken<span class="w">wereld</span>';
+    }
+    toonVersie();
+  }
+
+  /* De <link>-iconen en het manifest opnieuw opbouwen. Gebeurt alleen als de
+     naam is aangepast: bij de standaardnaam blijven de bestaande bestanden
+     staan, en dan is er niets dat stuk kan gaan aan het installeren. */
+  var manifestUrl = null;
+  /* de oorspronkelijke verwijzingen, om op terug te vallen zodra de naam weer
+     de standaardnaam is */
+  var vasteLinks = (function(){
+    var uit = {};
+    ["icon", "apple-touch-icon", "manifest"].forEach(function(soort){
+      var el = document.querySelector('link[rel="' + soort + '"]');
+      if(el) uit[soort] = el.getAttribute("href");
+    });
+    return uit;
+  })();
+
+  function zetAppIcoon(){
+    if(S.naam === NAAM){
+      Object.keys(vasteLinks).forEach(function(soort){
+        var el = document.querySelector('link[rel="' + soort + '"]');
+        if(el) el.href = vasteLinks[soort];
+      });
+      if(manifestUrl){ try{ URL.revokeObjectURL(manifestUrl); }catch(e){} manifestUrl = null; }
+      return;
+    }
+    metLettertype(function(){
+      var i192 = tekenIcoon(S.naam, 192, 1);
+      var i512 = tekenIcoon(S.naam, 512, 1);
+      var iMask = tekenIcoon(S.naam, 512, 0.68);
+      if(!i192 || !i512 || !iMask) return;
+
+      var icoon = document.querySelector('link[rel="icon"]');
+      if(icoon) icoon.href = i192;
+      var appel = document.querySelector('link[rel="apple-touch-icon"]');
+      if(appel) appel.href = tekenIcoon(S.naam, 180, 1) || i192;
+
+      var mf = document.querySelector('link[rel="manifest"]');
+      if(!mf || !window.Blob || !window.URL || !URL.createObjectURL) return;
+      /* een manifest uit het geheugen: alle verwijzingen absoluut, anders zou de
+         browser ze naast de blob-URL gaan zoeken in plaats van naast de app */
+      var doc = {
+        name: appTitel(),
+        short_name: "Rekenwereld",
+        description: "Oefenen met plus, min, keer, deel, de tafels en klokkijken. " +
+                     "Punten sparen voor stickers en beloningen.",
+        lang: "nl", dir: "ltr",
+        start_url: new URL("./index.html", location.href).href,
+        scope: new URL("./", location.href).href,
+        display: "standalone",
+        display_override: ["standalone", "fullscreen", "minimal-ui"],
+        orientation: "any",
+        background_color: "#F4F8FD",
+        theme_color: "#F4F8FD",
+        categories: ["education", "kids"],
+        icons: [
+          {src: i192,  sizes: "192x192", type: "image/png", purpose: "any"},
+          {src: i512,  sizes: "512x512", type: "image/png", purpose: "any"},
+          {src: iMask, sizes: "512x512", type: "image/png", purpose: "maskable"}
+        ]
+      };
+      try{
+        if(manifestUrl) URL.revokeObjectURL(manifestUrl);
+        manifestUrl = URL.createObjectURL(
+          new Blob([JSON.stringify(doc)], {type: "application/manifest+json"}));
+        mf.href = manifestUrl;
+      }catch(e){}
+    });
+  }
+
   /* ----- als app op het beginscherm ----- */
   function alsApp(){
     return window.matchMedia("(display-mode: standalone)").matches ||
@@ -4447,7 +4750,7 @@
     html += '<div class="kaart uitlegblok" style="margin-top:18px"><h3>Lukt het niet?</h3>' +
             '<ul class="stappen" style="list-style:disc">' +
             '<li><b>Staat hij er misschien al?</b> Kijk op je beginscherm en in de app-lijst naar ' +
-            'het icoon met <b>Saar</b>. Een tweede keer installeren doet dan niets.</li>' +
+            'het icoon met <b>' + veiligeTekst(S.naam) + '</b>. Een tweede keer installeren doet dan niets.</li>' +
             '<li><b>Op een Samsung:</b> gebruik <b>Chrome</b>, niet Samsung Internet. Die laatste ' +
             'zet er vaak alleen een snelkoppeling neer in plaats van de app.</li>' +
             '<li><b>Niets zichtbaars gebeurd?</b> Ververs de pagina één keer en probeer het opnieuw. ' +
@@ -4467,7 +4770,7 @@
   /* ----- versie tonen en bijwerken ----- */
   function toonVersie(extra){
     var el = document.getElementById("versie");
-    if(el) el.textContent = "Saar's Rekenwereld · versie " + APPVERSIE + (extra ? " · " + extra : "");
+    if(el) el.textContent = appTitel() + " · versie " + APPVERSIE + (extra ? " · " + extra : "");
   }
 
   /* Of er bij het laden al een service worker de baas was. Dat moet één keer
@@ -4475,6 +4778,8 @@
      de controller ook bij een eerste installatie al gezet — en dan zou de app bij
      de allereerste start melden dat er een nieuwe versie is. */
   var alGeinstalleerd = !!(navigator.serviceWorker && navigator.serviceWorker.controller);
+  /* de registratie, zodat de knop in de instellingen zelf kan gaan kijken */
+  var swReg = null;
 
   function meldNieuweVersie(reg){
     if(!alGeinstalleerd) return;          /* eerste installatie is geen update */
@@ -4493,6 +4798,7 @@
     window.addEventListener("load", function(){
       navigator.serviceWorker.register("./sw.js").then(function(reg){
         if(!reg) return;
+        swReg = reg;
         /* staat er al een nieuwe versie klaar? */
         if(reg.waiting && navigator.serviceWorker.controller) meldNieuweVersie(reg);
         reg.addEventListener("updatefound", function(){
@@ -4511,10 +4817,11 @@
 
   /* ----- starten ----- */
   laad();
+  zetAppNaam();
+  zetAppIcoon();
   ververGeluid();
   tekenScore();
   toonHome();
-  toonVersie();
 })();
 </script>
 

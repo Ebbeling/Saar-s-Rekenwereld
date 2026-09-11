@@ -51,8 +51,8 @@ Daarna start de app vanaf het beginscherm met eigen icoon, zonder adresbalk.
 
 De service worker bewaart de app op het apparaat. Als je `index.html` of `vragen.js` aanpast:
 
-1. Pas in `sw.js` de regel `var VERSIE = "rekenwereld-v21";` aan naar `v22`, `v23`, enzovoort.
-2. Pas in `index.html` de regel `var APPVERSIE = "21";` aan naar hetzelfde nummer.
+1. Pas in `sw.js` de regel `var VERSIE = "rekenwereld-v22";` aan naar `v23`, `v24`, enzovoort.
+2. Pas in `index.html` de regel `var APPVERSIE = "22";` aan naar hetzelfde nummer.
 3. Upload de gewijzigde bestanden.
 
 Zonder die ophoging blijven al geïnstalleerde tablets de oude versie tonen.
@@ -87,6 +87,26 @@ omdat iemand de code een keer eerder heeft ingetypt.
 
 **Vergeet hem niet.** Ben je hem kwijt, dan kun je hem terugzetten door in de browser de
 opgeslagen gegevens van de app te wissen — daarmee verdwijnen ook de punten en stickers.
+
+### Van wie is deze app?
+
+Onder *Van wie is deze app?* vul je een naam in (hoogstens twaalf letters). Die naam gaat
+overal mee: de titel, het logo, de welkomkaart, de kopjes in de instellingen en het
+rapport, en de verhaaltjes over geld, tijd en gemiddelde. Naast het veld zie je meteen hoe
+het **app-icoon** eruit komt te zien; dat wordt met dezelfde vormgeving opnieuw getekend
+met de nieuwe naam. Laat je het veld leeg, dan valt alles terug op *Saar*.
+
+**Het icoon op een beginscherm verandert niet vanzelf.** Een tablet legt naam en icoon vast
+op het moment dat je de app toevoegt. Staat de app er al op, haal hem er dan af en zet hem
+opnieuw op het beginscherm. In de browser zelf — het tabbladicoon en de titel — verandert
+het meteen.
+
+### Staat er een nieuwe versie klaar?
+
+Onder *Nieuwe versie* staat welke versie er nu draait, met een knop **Nu kijken**. Die
+vraagt de server meteen of er iets nieuwers is, in plaats van te wachten tot de app dat
+bij een volgende start zelf merkt. Is er niets, dan zegt hij dat. Is er wél iets, dan
+verandert de knop in **Nu vernieuwen** en haalt één tik de nieuwe versie binnen.
 
 ### De groep (3 t/m 8)
 
