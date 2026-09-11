@@ -365,6 +365,66 @@
     font-variant-numeric:tabular-nums;
   }
   .som .op{color:var(--kleur, var(--framboos))}
+  /* ---------- splitsen ---------- */
+  /* Het schema: totaal boven, twee delen eronder, met pootjes ertussen. De
+     hokjes gebruiken dezelfde letters en kleuren als een gewone som. */
+  .splits{
+    display:flex;flex-direction:column;align-items:center;
+    font-family:"Lilita One",Impact,sans-serif;
+    font-variant-numeric:tabular-nums;
+  }
+  .splitsrij-top, .splitsdelen{display:flex;justify-content:center}
+  .splitsdelen{gap:clamp(28px,13vw,70px)}
+  .splitsbenen{
+    width:min(230px,74%);height:44px;display:block;
+    stroke:var(--kleur, var(--framboos));stroke-width:5;stroke-linecap:round;
+  }
+  .splitsvak, .splits .vak{
+    display:flex;align-items:center;justify-content:center;
+    min-width:clamp(64px,19vw,86px);
+    min-height:clamp(58px,17vw,78px);
+    padding:0 .18em;
+    font-size:clamp(30px,9vw,42px);
+    line-height:1;
+    border:3px solid var(--rand);
+    border-radius:20px;
+    background:var(--papier);
+    color:var(--inkt);
+  }
+  .splits .vak{
+    border-color:var(--kleur, var(--framboos));
+    background:var(--kaart);
+  }
+
+  /* Alle splitsingen van één getal. Twee kolommen, en elke regel een eigen
+     blokje: zonder die omlijning lopen de regels naast elkaar in elkaar over. */
+  .splitsrijen{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:9px;
+    font-family:"Lilita One",Impact,sans-serif;
+    font-variant-numeric:tabular-nums;
+    font-size:clamp(22px,5.8vw,28px);
+    line-height:1;
+  }
+  @media (max-width:330px){
+    .splitsrijen{grid-template-columns:1fr}
+  }
+  .splitsrij{
+    display:flex;align-items:center;justify-content:center;gap:.2em;
+    padding:9px 4px;border-radius:14px;
+    border:2px solid var(--rand);
+    background:var(--papier);
+  }
+  .splitsrij .op{color:var(--kleur, var(--framboos))}
+  .splitsgetal{min-width:1.2em;text-align:center}
+  .splitsrijen .vak{
+    min-width:1.9em;text-align:center;
+    border-bottom-width:5px;
+  }
+  .splitsrijen .vak.goed{color:var(--goed);border-bottom-color:var(--goed)}
+  .splitsrijen .vak.mis{color:var(--fout);border-bottom-color:var(--fout)}
+
   .vak{
     min-width:2.1em;
     padding:.04em .18em;
@@ -1303,7 +1363,7 @@
     return {van:van, tot:tot};
   }
 
-  var APPVERSIE = "23";         /* hoog dit samen met VERSIE in sw.js op */
+  var APPVERSIE = "24";         /* hoog dit samen met VERSIE in sw.js op */
   var NAAM = "Saar";            /* van wie is deze app; in de instellingen aan te passen */
   var WACHTWOORD = "0000";      /* standaardcode; in de instellingen aan te passen */
   var PUNTEN_PER_STICKER = 10;  /* standaardwaarden */
@@ -1474,6 +1534,7 @@
     superAan: true,              /* extra sticker bij een foutloze challenge */
     schuif: {},                  /* onderwerp -> -1, 0 of +1 leerjaar */
     code: "",
+    lijst: [],                   /* de vakjes van een splitsopgave met meerdere regels */
     cat: null,
     klokNiveau: 1,
     klokSoort: "mix",            /* analoog | digitaal | mix */
@@ -1942,17 +2003,42 @@
             oplossing:"het dubbele van " + n + " is " + (n * 2)};
   }
 
+  /* Splitsen in twee vormen. Meestal één schema — een totaal met twee delen
+     eronder, waarvan er één open staat. Bij kleine totalen komt daar af en toe
+     een opgave tussen waarin álle splitsingen van een getal ingevuld worden;
+     die rijen worden gerekend, niet uit een lijstje gehaald. */
   function maakSplitsen(lj, wens){
     var p = par("splitsen", wens.leerjaar);
+    var alleTot = Math.min(p.alle || 0, p.tot);
+    var soort = kies(wens, "soort", function(){
+      return (alleTot >= 2 && Math.random() < (p.alleKans || 0)) ? "alle" : "schema";
+    });
+
+    if(soort === "alle"){
+      var top = kies(wens, "heel", function(){ return rnd(2, alleTot); });
+      var rijen = [], antwoorden = [];
+      for(var d = 0; d <= top; d++){ rijen.push(d); antwoorden.push(top - d); }
+      return {groep:"getallen", vorm:"lijst", lijf:"splitslijst", soort:"alle",
+              ant:top, heel:top, rijen:rijen, antwoorden:antwoorden,
+              vraagje:"Splits het getal " + top,
+              onder:"Vul elke regel aan tot " + top,
+              sleutel:"spl alle " + top,
+              label:"alle splitsingen van " + top,
+              oplossing:"Elke regel moet samen " + top + " zijn."};
+    }
+
     var heel = kies(wens, "heel", function(){ return rnd(p.van, p.tot); });
     var deel = kies(wens, "deel", function(){ return rnd(1, heel - 1); });
-    return {groep:"getallen", vorm:"getal", lijf:"vrij", ant:heel - deel, heel:heel, deel:deel,
-            vraagje:"Hoeveel hoort erbij?",
-            regel:'<span>' + heel + '</span><span class="op">=</span><span>' + deel +
-                  '</span><span class="op">+</span>{1}',
-            sleutel:"spl " + heel + "/" + deel,
-            label:heel + " = " + deel + " + ?",
-            oplossing:heel + " = " + deel + " + " + (heel - deel)};
+    var gaten = p.gaten || ["rechts"];
+    var gat = kies(wens, "gat", function(){ return gaten[rnd(0, gaten.length - 1)]; });
+    var deel2 = heel - deel;
+    var doel = gat === "top" ? heel : (gat === "links" ? deel : deel2);
+    return {groep:"getallen", vorm:"getal", lijf:"splits", soort:"schema",
+            ant:doel, heel:heel, deel:deel, deel2:deel2, gat:gat,
+            vraagje:gat === "top" ? "Welk getal hoort bovenaan?" : "Welk getal hoort erbij?",
+            sleutel:"spl " + heel + "/" + deel + "/" + gat,
+            label:heel + " = " + deel + " + " + deel2,
+            oplossing:heel + " = " + deel + " + " + deel2};
   }
 
   function maakVergelijk(lj, wens){
@@ -4075,6 +4161,11 @@
   function tekenQuiz(){
     zetSchermstand("ronde");
     var v = S.vragen[S.i];
+    /* een lijstvraag heeft een vakje per regel; die staan klaar voordat er getekend wordt */
+    if(v && v.vorm === "lijst" && S.lijst.length !== v.antwoorden.length){
+      S.lijst = v.antwoorden.map(function(){ return ""; });
+      S.veld = 0;
+    }
     var html = '<div style="display:flex;flex-direction:column;gap:18px">';
 
     var aantalVragen = S.vragen.length;
@@ -4117,7 +4208,9 @@
         html += '<div class="klokrij">' + klokSVG(v.klokken[0][0], v.klokken[0][1], false) +
                 '<span class="pijl">→</span>' + klokSVG(v.klokken[1][0], v.klokken[1][1], false) + '</div>';
       }
-      html += v.regel
+      if(v.lijf === "splits") html += splitsSchema(v);
+      else if(v.lijf === "splitslijst") html += splitsLijst(v);
+      else html += v.regel
         ? '<div class="som">' + v.regel.replace("{1}", vakHtml(1)).replace("{2}", vakHtml(2)) + '</div>'
         : somRegel(v);
       if(v.onder) html += '<div class="onder">' + v.onder + '</div>';
@@ -4198,6 +4291,43 @@
            (tekst === "" ? "?" : tekst) + '</span>';
   }
 
+  /* Het splitsschema: het totaal bovenaan, twee delen eronder, en de pootjes
+     ertussen. Het lege vakje zit in het schema zelf, niet in een los veld. */
+  function splitsSchema(v){
+    function hok(waarde, open){
+      return open ? vakHtml(1) : '<span class="splitsvak">' + waarde + '</span>';
+    }
+    return '<div class="splits">' +
+             '<div class="splitsrij-top">' + hok(v.heel, v.gat === "top") + '</div>' +
+             '<svg class="splitsbenen" viewBox="0 0 200 44" preserveAspectRatio="none" aria-hidden="true">' +
+               '<line x1="100" y1="1" x2="30" y2="43"/><line x1="100" y1="1" x2="170" y2="43"/>' +
+             '</svg>' +
+             '<div class="splitsdelen">' +
+               hok(v.deel, v.gat === "links") + hok(v.deel2, v.gat === "rechts") +
+             '</div>' +
+           '</div>';
+  }
+
+  /* Alle splitsingen van één getal, elk op een eigen regel met een eigen vakje. */
+  function splitsLijst(v){
+    var uit = '<div class="splitsrijen">';
+    v.rijen.forEach(function(deel, n){
+      uit += '<div class="splitsrij">' +
+               '<span class="splitsgetal">' + deel + '</span>' +
+               '<span class="op">+</span>' + lijstVakHtml(n) +
+               '<span class="op">=</span>' +
+               '<span class="splitsgetal">' + v.heel + '</span>' +
+             '</div>';
+    });
+    return uit + '</div>';
+  }
+
+  function lijstVakHtml(n){
+    var tekst = S.lijst[n] || "";
+    return '<span class="vak' + (tekst === "" ? " leeg" : "") + (S.veld === n ? " caret" : "") +
+           '" id="lvak' + n + '" data-veld="' + n + '">' + (tekst === "" ? "?" : tekst) + '</span>';
+  }
+
   /* de klassieke regel a op b = ?, met het gat op een instelbare plek */
   function somRegel(v){
     var gat = v.gat || "ant", d = [];
@@ -4213,6 +4343,22 @@
   }
 
   function ververVak(){
+    var lv = S.vragen[S.i];
+    if(lv && lv.vorm === "lijst"){
+      for(var n = 0; n < S.lijst.length; n++){
+        var el = document.getElementById("lvak" + n);
+        if(!el) continue;
+        var t = S.lijst[n];
+        el.textContent = t === "" ? "?" : t;
+        el.className = "vak" + (t === "" ? " leeg" : "") + (S.veld === n ? " caret" : "");
+      }
+      /* bij een lange lijst de regel waar je bent in beeld houden */
+      var actief = document.getElementById("lvak" + S.veld);
+      if(actief && actief.scrollIntoView){
+        try{ actief.scrollIntoView({block:"nearest"}); }catch(e){}
+      }
+      return;
+    }
     [[document.getElementById("vak"), S.invoer, 0],
      [document.getElementById("vak2"), S.invoer2, 1]].forEach(function(r){
       if(!r[0]) return;
@@ -4221,10 +4367,31 @@
     });
   }
 
+  /* Bij een lijst met splitsingen is er een vakje per regel. OK springt naar de
+     eerste regel die nog leeg is; pas als alles ingevuld is wordt er nagekeken. */
+  function drukLijst(t){
+    var h = S.lijst[S.veld] || "";
+    if(t === "wis"){
+      if(h === ""){
+        if(S.veld > 0){ S.veld--; ververVak(); }
+        return;
+      }
+      S.lijst[S.veld] = h.slice(0, -1);
+      ververVak();
+      return;
+    }
+    if(t === "ok"){ nakijken(); return; }
+    if(t === "," || t === "min") return;
+    if(h.length >= 2) return;
+    S.lijst[S.veld] = (h === "0" ? "" : h) + t;
+    ververVak();
+  }
+
   function druk(t){
     if(S.bezig) return;
     var v = S.vragen[S.i], h = actieveInvoer();
     if(!v) return;
+    if(v.vorm === "lijst"){ drukLijst(t); return; }
 
     if(t === "wis"){
       if(h === "" && S.veld === 1){ S.veld = 0; ververVak(); return; }   /* terug naar het eerste vak */
@@ -4301,8 +4468,23 @@
   }
 
   function nakijken(){
-    if(S.bezig || S.invoer === "" || S.invoer === "−") return;
+    if(S.bezig) return;
     var v = S.vragen[S.i];
+    if(!v) return;
+
+    if(v.vorm === "lijst"){
+      if((S.lijst[S.veld] || "") === "") return;
+      for(var n = 0; n < S.lijst.length; n++){
+        if(S.lijst[n] === ""){ S.veld = n; ververVak(); return; }   /* eerst de rest invullen */
+      }
+      S.bezig = true;
+      var alGoed = klopt(v);
+      markeerLijst(v);
+      verwerk(alGoed, true);
+      return;
+    }
+
+    if(S.invoer === "" || S.invoer === "−") return;
     if(v.vorm === "duo"){
       if(S.veld === 0){ S.veld = 1; ververVak(); return; }   /* eerst het tweede vak vullen */
       if(S.invoer2 === "") return;
@@ -4311,8 +4493,26 @@
     verwerk(klopt(v), true);
   }
 
+  /* Bij een lijst zie je per regel wat er goed ging; een verkeerde regel krijgt
+     het juiste getal te zien, zodat er iets te leren valt. */
+  function markeerLijst(v){
+    v.antwoorden.forEach(function(goed, n){
+      var el = document.getElementById("lvak" + n);
+      if(!el) return;
+      var klopteDeze = leesGetal(S.lijst[n]) === goed;
+      if(!klopteDeze) el.textContent = String(goed);
+      el.className = "vak " + (klopteDeze ? "goed" : "mis");
+    });
+  }
+
   function klopt(v){
     var doel = (typeof v.doel === "number") ? v.doel : v.ant;
+    if(v.vorm === "lijst"){
+      for(var n = 0; n < v.antwoorden.length; n++){
+        if(leesGetal(S.lijst[n]) !== v.antwoorden[n]) return false;
+      }
+      return true;
+    }
     if(v.vorm === "komma") return naarKlein(S.invoer, v.decimalen || 0) === doel;
     if(v.vorm === "duo") return leesGetal(S.invoer) === doel && leesGetal(S.invoer2) === v.ant2;
     return leesGetal(S.invoer) === doel;
@@ -4367,6 +4567,25 @@
     document.body.classList.remove("krap");
     wrap.style.paddingBottom = "";
     if(!balk) return;
+
+    /* Een splitsopgave met alle regels is te lang om boven het toetsenbord te
+       passen. In plaats van de balk los te laten, laten we de regels zelf
+       scrollen: kop, vraag en toetsenbord blijven dan staan. */
+    var rijen = scherm.querySelector(".splitsrijen");
+    var somkaart = scherm.querySelector(".somkaart");
+    if(rijen && somkaart){
+      rijen.style.maxHeight = "";
+      rijen.style.overflowY = "";
+      /* wat er ónder de regels nog in de kaart staat telt ook mee */
+      var staart = (somkaart.offsetTop + somkaart.offsetHeight) -
+                   (rijen.offsetTop + rijen.offsetHeight);
+      var ruimte = window.innerHeight - rijen.offsetTop - staart - balk.offsetHeight - 16;
+      if(ruimte >= 150 && rijen.scrollHeight > ruimte){
+        rijen.style.maxHeight = ruimte + "px";
+        rijen.style.overflowY = "auto";
+      }
+    }
+
     /* Past de som niet boven de vaste balk, bijvoorbeeld op een klein scherm of
        in liggende stand, dan is vastzetten erger dan meescrollen: dan laten we
        de balk gewoon meelopen, zodat de som bereikbaar blijft. */
@@ -4385,6 +4604,7 @@
     S.i++;
     S.invoer = "";
     S.invoer2 = "";
+    S.lijst = [];
     S.veld = 0;
     S.bezig = false;
     if(S.i >= S.vragen.length) toonKlaar();

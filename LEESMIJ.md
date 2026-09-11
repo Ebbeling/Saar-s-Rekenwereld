@@ -51,8 +51,8 @@ Daarna start de app vanaf het beginscherm met eigen icoon, zonder adresbalk.
 
 De service worker bewaart de app op het apparaat. Als je `index.html` of `vragen.js` aanpast:
 
-1. Pas in `sw.js` de regel `var VERSIE = "rekenwereld-v23";` aan naar `v24`, `v25`, enzovoort.
-2. Pas in `index.html` de regel `var APPVERSIE = "23";` aan naar hetzelfde nummer.
+1. Pas in `sw.js` de regel `var VERSIE = "rekenwereld-v24";` aan naar `v25`, `v26`, enzovoort.
+2. Pas in `index.html` de regel `var APPVERSIE = "24";` aan naar hetzelfde nummer.
 3. Upload de gewijzigde bestanden.
 
 Zonder die ophoging blijven al geïnstalleerde tablets de oude versie tonen.
@@ -313,9 +313,34 @@ Het beginscherm is verdeeld in vier vakken. Alleen wat bij de groep past is zich
 | Meten, geld en tijd | klokkijken, tijdsduur, geld, meten, kalender, oppervlakte |
 | Deel van een geheel | breuken, procenten, verhoudingen |
 
-Vier soorten antwoorden: een getal intypen, een keuze uit knoppen (groter/kleiner, de
-klok, welke dag), een bedrag met komma, of twee vakjes naast elkaar (`17 : 5 = 3 rest 2`
-en `1 uur 20 min`). Bij twee vakjes springt OK van het eerste naar het tweede vak.
+Vijf soorten antwoorden: een getal intypen, een keuze uit knoppen (groter/kleiner, de
+klok, welke dag), een bedrag met komma, twee vakjes naast elkaar (`17 : 5 = 3 rest 2`
+en `1 uur 20 min`), of een rijtje vakjes onder elkaar (alle splitsingen van een getal).
+Bij meerdere vakjes springt OK naar het volgende dat nog leeg is; pas als alles ingevuld
+is wordt er nagekeken.
+
+## Splitsen
+
+Splitsen wordt getoond als **splitsschema**: het totaal in een hokje bovenaan, de twee
+delen eronder, met pootjes ertussen. Eén hokje staat open — bij groep 3 altijd een van de
+twee delen, vanaf groep 4 soms ook het totaal.
+
+Bij kleine totalen komt daar af en toe een andere vorm tussendoor: **alle splitsingen van
+één getal**, van `0 + □` tot `□ + 0`. Dat is bewust in beide richtingen, zodat de hele
+reeks geoefend wordt. Die vorm komt bij groep 3 in ongeveer een kwart van de vragen voor
+en bij groep 4 in ongeveer een zevende; vanaf groep 5 niet meer, want daar zijn de
+getallen er te groot voor. De regels worden gerekend, niet uit een lijstje gehaald — je
+kunt de grenzen dus in `vragen.js` verzetten zonder ergens antwoorden bij te houden:
+
+| Sleutel | Wat het doet |
+| --- | --- |
+| `van`, `tot` | tussen welke totalen de schema's liggen |
+| `gaten` | welk hokje open mag staan: `"links"`, `"rechts"`, `"top"` |
+| `alle` | tot welk totaal de vorm met alle splitsingen mag voorkomen (0 = nooit) |
+| `alleKans` | hoe vaak die vorm aan de beurt is, als kans tussen 0 en 1 |
+
+Eén vraag blijft één punt, ook als er elf regels ingevuld moeten worden. Bij een fout
+antwoord kleuren de goede regels groen en krijgen de foute het juiste getal te zien.
 
 Geld en kommagetallen worden intern in centen en tienden gerekend, nooit met kommagetallen
 in de computer zelf. Daardoor kan `0,1 + 0,2` niet als fout gerekend worden.

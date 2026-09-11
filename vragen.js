@@ -311,11 +311,17 @@ window.REKENVRAGEN = {
              niveau:{3:{tot:10}, 4:{tot:25}, 5:{tot:50}, 6:{tot:100}, 7:{tot:250}},
              zaad:{"n":"n", "half":"half"}},
 
+    /* gaten = welk vakje van het splitsschema open mag staan: rechts of links een
+       deel, of top het totaal. alle = tot welk totaal er af en toe een opgave komt
+       waarin álle splitsingen ingevuld worden; alleKans is hoe vaak dat gebeurt.
+       Vanaf groep 5 staat die vorm uit: daar zijn de getallen er te groot voor. */
     splitsen: {naam:"Splitsen", teken:"✂️", vak:"getallen", klasse:"splitsen",
                kleur:"var(--gras)", vanaf:3, maak:"maakSplitsen",
-               niveau:{3:{van:5, tot:10}, 4:{van:10, tot:20}, 5:{van:20, tot:100},
+               niveau:{3:{van:5, tot:10, gaten:["rechts","links"], alle:10, alleKans:0.25},
+                       4:{van:10, tot:20, gaten:["rechts","links","top"], alleKans:0.15},
+                       5:{van:20, tot:100, alle:0, alleKans:0},
                        6:{van:100, tot:1000}},
-               zaad:{"heel":"heel", "deel":"deel"}},
+               zaad:{"soort":"soort", "heel":"heel", "deel":"deel", "gat":"gat"}},
 
     vergelijk: {naam:"Groter of kleiner", teken:"🐊", vak:"getallen", klasse:"vergelijk",
                 kleur:"var(--zee)", vanaf:3, maak:"maakVergelijk",
