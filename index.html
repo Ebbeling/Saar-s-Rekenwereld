@@ -1402,7 +1402,7 @@
     return {van:van, tot:tot};
   }
 
-  var APPVERSIE = "28";         /* hoog dit samen met VERSIE in sw.js op */
+  var APPVERSIE = "29";         /* hoog dit samen met VERSIE in sw.js op */
   var NAAM = "Saar";            /* van wie is deze app; in de instellingen aan te passen */
   var ICOONKLEUR = "framboos";  /* kleur van het app-icoon */
   var WACHTWOORD = "0000";      /* standaardcode; in de instellingen aan te passen */
@@ -4954,8 +4954,26 @@
       reactie.textContent = TROOST[rnd(0, TROOST.length - 1)] +
                             (v.lijf === "klok" ? " Het is " : " ") + somTekst(v);
       klankFout();
-      setTimeout(volgende, 2200);
+      /* Geen aftelklok: bij een fout antwoord staat het goede antwoord in beeld
+         en mag je zelf bepalen wanneer je verder gaat, zodat er tijd is om het
+         na te rekenen. */
+      toonVolgendeKnop();
     }
+  }
+
+  function toonVolgendeKnop(){
+    var rij = scherm.querySelector(".knoppen");
+    if(!rij){ setTimeout(volgende, 2200); return; }   /* geen plek: dan toch vanzelf */
+    if(document.getElementById("volgende")) return;
+    var knop = document.createElement("button");
+    knop.className = "knop";
+    knop.type = "button";
+    knop.id = "volgende";
+    knop.textContent = (S.i + 1 >= S.vragen.length) ? "Klaar" : "Volgende";
+    rij.insertBefore(knop, rij.firstChild);
+    knop.addEventListener("click", function(){ volgende(); });
+    /* de vaste balk is een knop hoger geworden; opnieuw uitmeten */
+    if(document.body.getAttribute("data-scherm") === "ronde") meetToetsenbord();
   }
 
   function nakijken(){

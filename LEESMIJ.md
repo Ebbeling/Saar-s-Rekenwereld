@@ -78,8 +78,8 @@ Daarna start de app vanaf het beginscherm met eigen icoon, zonder adresbalk.
 
 De service worker bewaart de app op het apparaat. Als je `index.html` of `vragen.js` aanpast:
 
-1. Pas in `sw.js` de regel `var VERSIE = "rekenwereld-v28";` aan naar `v29`, `v30`, enzovoort.
-2. Pas in `index.html` de regel `var APPVERSIE = "28";` aan naar hetzelfde nummer.
+1. Pas in `sw.js` de regel `var VERSIE = "rekenwereld-v29";` aan naar `v30`, `v31`, enzovoort.
+2. Pas in `index.html` de regel `var APPVERSIE = "29";` aan naar hetzelfde nummer.
 3. Upload de gewijzigde bestanden.
 
 Zonder die ophoging blijven al geïnstalleerde tablets de oude versie tonen.
@@ -372,6 +372,11 @@ klok, welke dag), een bedrag met komma, twee vakjes naast elkaar (`17 : 5 = 3 re
 en `1 uur 20 min`), of een rijtje vakjes onder elkaar (alle splitsingen van een getal).
 Bij meerdere vakjes springt OK naar het volgende dat nog leeg is; pas als alles ingevuld
 is wordt er nagekeken.
+
+Een **goed** antwoord gaat na een korte pauze vanzelf door naar de volgende vraag. Bij een
+**fout** antwoord gebeurt dat niet: het goede antwoord blijft staan en er komt een knop
+**Volgende** bij, zodat er alle tijd is om het na te rekenen. Op de laatste vraag van een
+reeks heet die knop *Klaar*.
 
 ## Splitsen
 
