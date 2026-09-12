@@ -176,6 +176,10 @@
 
   /* ---------- scorestrook ---------- */
   .score{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  /* sparen uit: alleen de punten, en die tegel mag dan de hele breedte hebben */
+  body[data-sparen="uit"] .score{grid-template-columns:1fr}
+  body[data-sparen="uit"] .score .s,
+  body[data-sparen="uit"] .score .b{display:none}
   .score div{
     background:var(--kaart);
     border:2px solid var(--rand);
@@ -1402,7 +1406,7 @@
     return {van:van, tot:tot};
   }
 
-  var APPVERSIE = "29";         /* hoog dit samen met VERSIE in sw.js op */
+  var APPVERSIE = "30";         /* hoog dit samen met VERSIE in sw.js op */
   var NAAM = "Saar";            /* van wie is deze app; in de instellingen aan te passen */
   var ICOONKLEUR = "framboos";  /* kleur van het app-icoon */
   var WACHTWOORD = "0000";      /* standaardcode; in de instellingen aan te passen */
@@ -1647,6 +1651,7 @@
     wachtwoord: WACHTWOORD,      /* code voor de instellingen */
     challengeStickers: 2,        /* stickers voor een gehaalde challenge */
     superAan: true,              /* extra sticker bij een foutloze challenge */
+    sparen: true,                /* stickers en beloningen; uit betekent alleen punten */
     schuif: {},                  /* onderwerp -> -1, 0 of +1 leerjaar */
     code: "",
     lijst: [],                   /* de vakjes van een splitsopgave met meerdere regels */
@@ -1807,6 +1812,9 @@
       S.groepGevraagd = schoonGetal(r.groepGevraagd, 0, 9999, 0);
       S.challengeStickers = schoonGetal(r.challengeStickers, 0, 10, 2);
       if(typeof r.superAan === "boolean") S.superAan = r.superAan;
+      /* Opslag van vóór deze schakelaar heeft het veld niet; die spaart gewoon
+         door, want zo werkte de app tot nu toe. */
+      S.sparen = typeof r.sparen === "boolean" ? r.sparen : true;
       if(r.stats){
         GROEPEN.forEach(function(g){
           var b = r.stats.groep && r.stats.groep[g.id];
@@ -1854,6 +1862,7 @@
         wachtwoord: S.wachtwoord,
         challengeStickers: S.challengeStickers,
         superAan: S.superAan,
+        sparen: S.sparen,
         schuif: S.schuif,
         stats: S.stats
       }));
@@ -2914,17 +2923,25 @@
     return rij.slice(0, hoeveel).map(function(r){ return r.tafel; }).sort(function(a, b){ return a - b; });
   }
 
+  /* Sparen aan of uit. Staat het uit, dan telt de app alleen punten: geen
+     stickers, geen stickervellen en geen beloningen. */
+  function sparenAan(){ return S.sparen !== false; }
+
   function stickers(){ return Math.floor(S.punten / S.puntenPerSticker) + S.bonusStickers; }
   function beloningen(){ return Math.floor(stickers() / S.stickersPerBeloning); }
   function puntenPerBeloning(){ return S.puntenPerSticker * S.stickersPerBeloning; }
 
   function tekenScore(){
+    /* Staat het sparen uit, dan blijven alleen de punten over: de opmaak haalt de
+       twee andere tegels weg en de regel eronder heeft dan niets te vertellen. */
+    document.body.setAttribute("data-sparen", sparenAan() ? "aan" : "uit");
     document.getElementById("sc-punten").textContent = S.punten;
     document.getElementById("sc-stickers").textContent = stickers();
     document.getElementById("sc-beloningen").textContent = beloningen();
-    document.getElementById("regels").textContent =
-      S.puntenPerSticker + (S.puntenPerSticker === 1 ? " punt" : " punten") + " = 1 sticker  ·  " +
-      S.stickersPerBeloning + (S.stickersPerBeloning === 1 ? " sticker" : " stickers") + " = 1 beloning";
+    document.getElementById("regels").textContent = sparenAan()
+      ? S.puntenPerSticker + (S.puntenPerSticker === 1 ? " punt" : " punten") + " = 1 sticker  ·  " +
+        S.stickersPerBeloning + (S.stickersPerBeloning === 1 ? " sticker" : " stickers") + " = 1 beloning"
+      : "";
   }
 
   /* ----- schermen ----- */
@@ -3131,7 +3148,7 @@
 
     html += '<button class="welkomknop" type="button" id="voor-saar">' +
             '<span class="ster">🌟</span>' +
-            '<span><b>Voor ' + veiligeTekst(S.naam) + '</b><span>Lees hoe het werkt en hoe je stickers verdient</span></span>' +
+            '<span><b>Voor ' + veiligeTekst(S.naam) + '</b><span>Lees hoe het werkt en hoe je punten verdient</span></span>' +
             '</button>';
 
     /* na de update één keer vragen of de geraden groep klopt */
@@ -3157,8 +3174,11 @@
             '<button class="snel uitdaging" type="button" id="naar-challenges">' +
               '<span class="teken">🏅</span>' +
               '<span><b>Challenges</b><span>' +
-              (S.stats.challenges.gehaald ? S.stats.challenges.gehaald + " gehaald · " + S.challengeStickers + " stickers per stuk"
-                                          : S.challengeLengte + " vragen · " + S.challengeStickers + " stickers als je slaagt") +
+              (S.stats.challenges.gehaald
+                 ? S.stats.challenges.gehaald + " gehaald" +
+                   (sparenAan() ? " · " + S.challengeStickers + " stickers per stuk" : "")
+                 : S.challengeLengte + " vragen" +
+                   (sparenAan() ? " · " + S.challengeStickers + " stickers als je slaagt" : " om te halen")) +
               '</span></span></button>' +
             '<button class="snel voortgang" type="button" id="naar-rapport">' +
               '<span class="teken">📈</span>' +
@@ -3189,7 +3209,7 @@
       html += '</div></section>';
     });
 
-    html += tekenVelBlok(velInBeeld(), true);
+    if(sparenAan()) html += tekenVelBlok(velInBeeld(), true);
 
     scherm.innerHTML = html;
     document.getElementById("voor-saar").addEventListener("click", toonVoorSaar);
@@ -3526,10 +3546,14 @@
     html += '<h3>🏆 Zo werkt het:</h3>';
     html += '<ul class="trap">' +
               '<li><span class="teller">⭐</span><span>1 goed antwoord = 1 punt</span></li>' +
-              '<li><span class="teller">🎉</span><span>' + S.puntenPerSticker + ' punten = 1 leuke sticker!</span></li>' +
-              '<li><span class="teller">🎁</span><span>' + S.stickersPerBeloning + ' stickers = een verrassing!</span></li>' +
+              (sparenAan()
+                ? '<li><span class="teller">🎉</span><span>' + S.puntenPerSticker + ' punten = 1 leuke sticker!</span></li>' +
+                  '<li><span class="teller">🎁</span><span>' + S.stickersPerBeloning + ' stickers = een verrassing!</span></li>'
+                : '<li><span class="teller">🏅</span><span>Haal een challenge en verbeter je rapport!</span></li>') +
             '</ul>';
-    html += '<p>Dus... oefenen, punten verdienen en stickers verzamelen! 😄</p>';
+    html += sparenAan()
+      ? '<p>Dus... oefenen, punten verdienen en stickers verzamelen! 😄</p>'
+      : '<p>Dus... oefenen, punten verdienen en steeds een beetje beter worden! 😄</p>';
     html += '<p class="zacht">Het allerbelangrijkste is dat je plezier hebt en steeds een beetje beter wordt. ' +
             'Een foutje maken is helemaal niet erg, want van oefenen en fouten maken kun je juist heel veel leren! 💪🧠</p>';
     html += '<p class="slotzin">Zet hem op ' + veiligeTekst(S.naam) + '! Jij kunt dit! 🌈🚀</p>';
@@ -3838,7 +3862,16 @@
 
     html += '<div class="tabvlak" data-vlak="sparen"' + (instelTab === 'sparen' ? '' : ' hidden') + '>';
 
-    html += '<section class="sectie"><h2>Hoe lang is een reeks?</h2>';
+    html += '<section class="sectie"><h2>Stickers en beloningen</h2>' +
+            '<div class="kaart"><div class="instellingen"><div class="instelling">' +
+            '<div class="titel"><span class="merk sticker">★</span><b>Sparen voor stickers</b></div>' +
+            '<div class="velden"><label class="vinkje" for="sparen-aan">' +
+              '<input type="checkbox" id="sparen-aan"' + (sparenAan() ? " checked" : "") + '>' +
+              ' stickers en beloningen gebruiken</label></div>' +
+            '<p class="voorbeeld" id="sparen-vb"></p>' +
+            '</div></div></div></section>';
+
+    html += '<section class="sectie" style="margin-top:22px"><h2>Hoe lang is een reeks?</h2>';
     html += '<div class="kaart"><div class="instellingen">';
     html += '<div class="instelling">' +
               '<div class="titel"><span class="merk ronde">●</span><b>Gewoon oefenen</b></div>' +
@@ -3852,17 +3885,18 @@
               '<div class="velden"><label for="challenge-lengte">' +
                 '<input type="number" inputmode="numeric" id="challenge-lengte" data-lengte="1" min="5" max="100" value="' +
                 S.challengeLengte + '"> vragen per challenge</label></div>' +
-              '<div class="velden"><label for="challenge-stickers">levert ' +
+              '<div class="velden" data-spaarveld="1"><label for="challenge-stickers">levert ' +
                 '<input type="number" inputmode="numeric" id="challenge-stickers" data-lengte="1" min="0" max="10" value="' +
                 S.challengeStickers + '"> stickers op</label></div>' +
-              '<div class="velden"><label class="vinkje" for="super-aan">' +
+              '<div class="velden" data-spaarveld="1"><label class="vinkje" for="super-aan">' +
                 '<input type="checkbox" id="super-aan" data-lengte="1"' + (S.superAan ? " checked" : "") + '>' +
                 ' bij alles goed ook de supersticker</label></div>' +
               '<p class="voorbeeld" id="lengte-vb"></p>' +
             '</div>';
     html += '</div></div></section>';
 
-    html += '<section class="sectie" style="margin-top:22px"><h2>Sparen voor een beloning</h2>';
+    html += '<section class="sectie" style="margin-top:22px" data-spaarveld="1">' +
+            '<h2>Sparen voor een beloning</h2>';
     html += '<div class="kaart"><div class="instellingen">';
     html += '<div class="instelling">' +
               '<div class="titel"><span class="merk sticker">★</span><b>Punten voor 1 sticker</b></div>' +
@@ -4050,6 +4084,22 @@
     });
     ververSpaar();
 
+    /* De schakelaar voor het sparen. De velden eronder gaan mee in en uit,
+       zodat je niet zit te draaien aan iets dat toch niets doet. */
+    var sparenVak = document.getElementById("sparen-aan");
+    function ververSparen(){
+      var aan = !!sparenVak.checked;
+      document.getElementById("sparen-vb").innerHTML = aan
+        ? "Goede antwoorden worden stickers, en volle stickervellen een beloning."
+        : "<b>Uit:</b> alleen punten. Geen stickers, geen stickervellen en geen beloningen. " +
+          "Wat al gespaard is blijft bewaard en komt terug zodra je dit weer aanzet.";
+      [].forEach.call(scherm.querySelectorAll("[data-spaarveld]"), function(sec){
+        sec.hidden = !aan;
+      });
+    }
+    sparenVak.addEventListener("change", ververSparen);
+    ververSparen();
+
     document.getElementById("naar-beginscherm").addEventListener("click", toonInstalleren);
 
     /* het wachtwoord staat verborgen; even kijken kan met de knop ernaast */
@@ -4166,6 +4216,7 @@
       S.challengeLengte = schoonGetal(document.getElementById("challenge-lengte").value, 5, 100, CHALLENGE_LENGTE);
       S.challengeStickers = schoonGetal(document.getElementById("challenge-stickers").value, 0, 10, 2);
       S.superAan = !!document.getElementById("super-aan").checked;
+      S.sparen = !!document.getElementById("sparen-aan").checked;
 
       /* wachtwoord: alleen overnemen als het echt vier cijfers zijn */
       var ww = String(document.getElementById("wachtwoord").value || "").replace(/\D/g, "");
@@ -4194,6 +4245,7 @@
       S.challengeLengte = CHALLENGE_LENGTE;
       S.challengeStickers = 2;
       S.superAan = true;
+      S.sparen = true;
       zetGroep(S.leerjaar);        /* zet meteen de bereiken, tafels en klok terug */
       bewaar();
       tekenScore();
@@ -4588,9 +4640,12 @@
     var lijst = challengeLijst();
     var html = '<section class="sectie"><h2>Challenges</h2>';
     html += '<p class="uitlegregel">Een challenge is ' + S.challengeLengte + ' vragen lang en wat pittiger ' +
-            'dan gewoon oefenen. Heb je er ' + challengeNodig(S.challengeLengte) + ' goed? Dan krijg je <b>' +
-            S.challengeStickers + (S.challengeStickers === 1 ? " sticker" : " stickers") + '</b> erbij' +
-            (S.superAan ? ', en bij <b>alles goed</b> nog de supersticker.' : '.') + '</p>';
+            'dan gewoon oefenen. Heb je er ' + challengeNodig(S.challengeLengte) + ' goed? Dan is hij gehaald' +
+            (sparenAan()
+               ? ' en krijg je <b>' + S.challengeStickers +
+                 (S.challengeStickers === 1 ? " sticker" : " stickers") + '</b> erbij' +
+                 (S.superAan ? ', en bij <b>alles goed</b> nog de supersticker.' : '.')
+               : '.') + '</p>';
     html += '<div class="challenges">';
     lijst.forEach(function(c){
       html += '<button class="challenge" type="button" data-challenge="' + c.id + '" ' +
@@ -4607,8 +4662,8 @@
             '<p style="margin:0;font-weight:700;font-size:14px;color:var(--inkt-zacht)">' +
             (ch.gedaan === 0
               ? "Je hebt nog geen challenge gedaan. Spannend!"
-              : ch.gehaald + " van de " + ch.gedaan + " challenges gehaald · dat leverde " +
-                (ch.gehaald * 2) + " extra stickers op") +
+              : ch.gehaald + " van de " + ch.gedaan + " challenges gehaald" +
+                (sparenAan() ? " · dat leverde " + (ch.gehaald * S.challengeStickers) + " extra stickers op" : "")) +
             '</p></div>';
     html += '<div class="knoppen" style="margin-top:18px">' +
             '<button class="knop stil" type="button" id="terug">Terug</button></div>';
@@ -4938,7 +4993,7 @@
                             (S.challenge ? "" : " +1 punt");
       klankGoed();
       tekenScore();
-      if(!S.challenge && stickers() > vorigeStickers){
+      if(sparenAan() && !S.challenge && stickers() > vorigeStickers){
         var nr = stickers();
         setTimeout(function(){
           klankSticker();
@@ -5131,14 +5186,17 @@
       S.stats.challenges.gedaan++;
       if(gehaald){
         S.stats.challenges.gehaald++;
+        if(foutloos) S.stats.challenges.foutloos = (S.stats.challenges.foutloos || 0) + 1;
         /* Alles goed geeft een sticker extra: de supersticker. Die onthouden we
-           op zijn volgnummer, zodat hij op het stickervel bijzonder blijft. */
-        if(foutloos){
-          S.superStickers.push(stickers() + S.challengeStickers);
-          S.stats.challenges.foutloos = (S.stats.challenges.foutloos || 0) + 1;
-          S.bonusStickers += S.challengeStickers + 1;
-        } else {
-          S.bonusStickers += S.challengeStickers;
+           op zijn volgnummer, zodat hij op het stickervel bijzonder blijft.
+           Zonder sparen blijft een gehaalde challenge gewoon een gehaalde challenge. */
+        if(sparenAan()){
+          if(foutloos){
+            S.superStickers.push(stickers() + S.challengeStickers);
+            S.bonusStickers += S.challengeStickers + 1;
+          } else {
+            S.bonusStickers += S.challengeStickers;
+          }
         }
       }
       bewaar();
@@ -5166,7 +5224,7 @@
     html += '<div class="van">van de ' + aantal + ' goed' +
             (challenge ? ' · ' + challenge.nodig + ' nodig' : '') + '</div>';
     html += '<p class="woord">' + woord + '</p>';
-    if(challenge && gehaald){
+    if(challenge && gehaald && sparenAan()){
       var aantalStickers = S.challengeStickers + (S.challengeStickers === 1 ? " sticker" : " stickers");
       html += foutloos
         ? '<p class="prijs super">🌟 Alles goed! Je verdient ' + aantalStickers +
@@ -5205,14 +5263,16 @@
       if(foutloos){
         vierFeest();
         klankSuper();
-        toast("Foutloos! " + stickerWoord + " én de supersticker 🌟");
+        toast(sparenAan() ? "Foutloos! " + stickerWoord + " én de supersticker 🌟"
+                          : "Foutloos! Alles goed 🌟");
       } else {
-        toast("Challenge gehaald! " + stickerWoord + " erbij 🏅");
+        toast(sparenAan() ? "Challenge gehaald! " + stickerWoord + " erbij 🏅"
+                          : "Challenge gehaald! 🏅");
       }
     }
 
     var kaarten = beloningen();
-    if(kaarten > S.beloningenVoor){
+    if(sparenAan() && kaarten > S.beloningenVoor){
       setTimeout(function(){ toonBeloning(kaarten); }, gehaald ? 1400 : 500);
     }
   }

@@ -78,8 +78,8 @@ Daarna start de app vanaf het beginscherm met eigen icoon, zonder adresbalk.
 
 De service worker bewaart de app op het apparaat. Als je `index.html` of `vragen.js` aanpast:
 
-1. Pas in `sw.js` de regel `var VERSIE = "rekenwereld-v29";` aan naar `v30`, `v31`, enzovoort.
-2. Pas in `index.html` de regel `var APPVERSIE = "29";` aan naar hetzelfde nummer.
+1. Pas in `sw.js` de regel `var VERSIE = "rekenwereld-v30";` aan naar `v31`, `v32`, enzovoort.
+2. Pas in `index.html` de regel `var APPVERSIE = "30";` aan naar hetzelfde nummer.
 3. Upload de gewijzigde bestanden.
 
 Zonder die ophoging blijven al geïnstalleerde tablets de oude versie tonen.
@@ -242,6 +242,23 @@ Bij de challenge stel je daar ook in **hoeveel stickers** hij oplevert (0 t/m 10
 2) en of er **bij alles goed een supersticker** bij komt. Zet je die uit, dan is een
 foutloze challenge gewoon een gehaalde challenge. Onder de velden staat meteen wat je
 keuzes betekenen.
+
+### Stickers en beloningen uitzetten
+
+Bovenaan het tabblad **Sparen** staat een vinkje *stickers en beloningen gebruiken*. Dat
+staat standaard **aan** en dan werkt de app zoals hij altijd deed.
+
+Zet je het uit, dan blijven alleen de punten over. Weg zijn: de tegels *Stickers* en
+*Beloningen* (de puntentegel neemt de hele breedte), het stickervel op het beginscherm, het
+stickerboek, het afvinken van beloningen, de melding bij een nieuwe sticker, en het venster
+bij een vol stickervel. Een challenge blijft gewoon te halen — hij levert er alleen niets
+extra's voor op, ook niet bij alles goed. De velden die alleen over stickers gaan
+verdwijnen dan ook uit de instellingen, zodat je niet zit te draaien aan iets dat toch
+niets doet.
+
+**Wat al gespaard is blijft bewaard.** Punten, stickers en afgevinkte beloningen blijven
+gewoon in de opslag staan; zet je het vinkje weer aan, dan staat alles er precies zoals je
+het achterliet.
 
 ### Sparen voor een beloning
 
