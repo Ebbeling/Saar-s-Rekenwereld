@@ -83,8 +83,8 @@ Daarna start de app vanaf het beginscherm met eigen icoon, zonder adresbalk.
 
 De service worker bewaart de app op het apparaat. Als je `index.html` of `vragen.js` aanpast:
 
-1. Pas in `sw.js` de regel `var VERSIE = "rekenwereld-v33";` aan naar `v34`, `v35`, enzovoort.
-2. Pas in `index.html` de regel `var APPVERSIE = "33";` aan naar hetzelfde nummer.
+1. Pas in `sw.js` de regel `var VERSIE = "rekenwereld-v34";` aan naar `v35`, `v36`, enzovoort.
+2. Pas in `index.html` de regel `var APPVERSIE = "34";` aan naar hetzelfde nummer.
 3. Upload de gewijzigde bestanden.
 
 Zonder die ophoging blijven al geïnstalleerde tablets de oude versie tonen.
@@ -299,6 +299,27 @@ challenge schuift automatisch mee: vier van de vijf goed, dus 20 bij 25 vragen e
 Er mag altijd minstens één fout gemaakt worden.
 
 
+### Komen missers terug?
+
+Onder *Hoe lang is een reeks?* staat een rijtje van drie knoppen:
+
+| Keuze | Wat er gebeurt |
+| --- | --- |
+| *niet* | missers komen alleen terug in de challenge **Herkansing** |
+| *soms* (standaard) | er komt één eerdere misser per gewone ronde terug |
+| *vaak* | er komen er twee per ronde terug |
+
+De app bewaart maximaal veertig fout beantwoorde sommen. Die komen ergens midden in
+een ronde terug — nooit als eerste vraag, nooit als laatste — met precies de getallen van
+toen. Nooit meer dan een derde van de reeks, dus bij een ronde van drie sommen blijft het
+bij één.
+
+Een misser verdwijnt uit de lijst zodra hij goed gemaakt is. Oefen je *Keer*, dan komen
+alleen keer-missers terug; bij *Alles door elkaar* alle onderwerpen die op dat moment op
+het beginscherm staan.
+
+Onder de knoppen staat hoeveel missers er op dit moment klaarstaan.
+
 ### Wanneer tellen de punten?
 
 Op het tabblad **Sparen**, onder een eigen kopje, staan twee knoppen:
@@ -322,6 +343,28 @@ Een **challenge** werkt hoe dan ook zo: losse antwoorden leveren daar niets op, 
 komen aan het eind en alleen als de challenge gehaald is. Daar verandert deze knop niets
 aan. Ook het voortgangsrapport blijft gewoon elk antwoord noteren — dat gaat over oefenen,
 niet over belonen.
+
+### Uitleg bij een fout antwoord
+
+Bij een fout antwoord staat het goede antwoord in beeld, en waar het kan een tussenstap
+eronder — niet wát het is, maar hoe je eraan komt:
+
+| Soort som | Wat erbij komt te staan |
+| --- | --- |
+| keer en de tafels | *10 × 8 = 80, en 7 × 8 is 3 keer 8 minder: 56.* |
+| twee keer iets | *2 × 9 is het dubbele van 9: 18.* |
+| vijf keer iets | *10 × 8 = 80, en 5 × 8 is de helft: 40.* |
+| deel en de deeltafels | *8 × 7 = 56, dus 56 : 8 = 7.* |
+| deel met rest | *4 × 5 = 20, en van 23 blijft er dan 3 over.* |
+| plus over het tiental | *37 + 3 = 40, en dan nog 5 erbij: 45.* |
+| min over het tiental | *52 − 2 = 50, en dan nog 5 eraf: 45.* |
+
+De tafel waarmee gerekend wordt is altijd een getal t/m tien — de tafel van twaalf kent een
+kind niet — en als de som omgekeerd stond eindigt de uitleg met de vraag zoals hij er stond.
+
+Past er geen tussenstap bij, dan komt er niets. Dat geldt voor alle andere onderwerpen, en
+ook voor sommen die zichzelf uitleggen zoals `10 × 8` of `40 + 8`. Er valt hier niets in te
+stellen: de tekst wordt uit de getallen van de som zelf afgeleid.
 
 ### Stoppen midden in een reeks
 
@@ -387,6 +430,18 @@ instellingen én het afvinken open tot de app wordt afgesloten.
 
 Staat ook in het instellingenscherm, achter dezelfde code, en vraagt om een tweede tik
 ter bevestiging. De ingestelde getallen blijven daarbij staan.
+
+## Vandaag geoefend
+
+Onder de knop *Voor Saar* staat een smalle regel met wat er vandaag al gedaan is, en hoe
+veel dagen er achter elkaar geoefend is: *🔥 vandaag 11 sommen · 6 dagen achter elkaar*.
+
+Elk beantwoord vraagje telt mee, goed of fout. De reeks loopt door zolang er elke dag iets
+gedaan wordt; sla je een dag over, dan begint hij opnieuw bij één. De dag erna staat hij er
+nog — je kunt hem dan nog voortzetten — en pas daarna verdwijnt hij. Is er vandaag nog
+niets gedaan en gisteren wel, dan staat er *gisteren geoefend*.
+
+Valt er niets te melden, dan staat de regel er ook niet. *Punten wissen* wist de teller mee.
 
 ## Rapport en challenges
 

@@ -454,6 +454,11 @@
   }
   .reactie.juist{color:var(--goed)}
   .reactie.mis{color:var(--fout)}
+  /* de tussenstap bij een fout antwoord: rustiger dan het antwoord erboven */
+  .reactie .hoe{
+    display:block;margin-top:7px;
+    font-size:14.5px;font-weight:700;color:var(--inkt-zacht);
+  }
 
   /* vrije vraagvorm: zinnetje, eenheid, labelrij onder de vakken */
   .zin{
@@ -640,6 +645,13 @@
   .overlay .doos .trofee{font-size:64px;line-height:1}
   .overlay .doos h2{font-size:27px;margin:10px 0 6px}
   .overlay .doos p{margin:0 0 20px;font-weight:700;color:var(--inkt-zacht)}
+
+  /* wat er vandaag al gedaan is, onder de knoppen op het beginscherm */
+  .dagstrook{
+    margin:12px 0 0;display:flex;align-items:center;justify-content:center;gap:8px;
+    font-size:13.5px;font-weight:900;color:var(--inkt-zacht);
+  }
+  .dagstrook span{font-size:17px;line-height:1}
 
   .voet{font-size:12.5px;font-weight:700;color:var(--inkt-zacht);text-align:center}
   .versieregel{font-size:11.5px;opacity:.75;margin-top:-14px}
@@ -1515,7 +1527,7 @@
     return {van:van, tot:tot};
   }
 
-  var APPVERSIE = "33";         /* hoog dit samen met VERSIE in sw.js op */
+  var APPVERSIE = "34";         /* hoog dit samen met VERSIE in sw.js op */
   var NAAM = "Saar";            /* van wie is deze app; in de instellingen aan te passen */
   var ICOONKLEUR = "framboos";  /* kleur van het app-icoon */
   var WACHTWOORD = "0000";      /* standaardcode; in de instellingen aan te passen */
@@ -1762,6 +1774,8 @@
     superAan: true,              /* extra sticker bij een foutloze challenge */
     sparen: true,                /* stickers en beloningen; uit betekent alleen punten */
     puntenDirect: true,          /* punten meteen bijschrijven, of pas als de reeks af is */
+    herhaalMissers: 1,           /* hoeveel eerdere missers er per ronde terugkomen */
+    dagen: {laatste:"", reeks:0, vandaag:0},   /* geoefend vandaag, en hoeveel dagen achter elkaar */
     geldStap: 0,                 /* 0 = volgt groep, anders 100, 50 of 1 cent */
     schuif: {},                  /* onderwerp -> -1, 0 of +1 leerjaar */
     code: "",
@@ -1928,6 +1942,15 @@
          door, want zo werkte de app tot nu toe. */
       S.sparen = typeof r.sparen === "boolean" ? r.sparen : true;
       S.puntenDirect = typeof r.puntenDirect === "boolean" ? r.puntenDirect : true;
+      S.herhaalMissers = herhaalGeldig(r.herhaalMissers) ? r.herhaalMissers : 1;
+      if(r.dagen && typeof r.dagen === "object"){
+        S.dagen = {
+          laatste: /^\d{4}-\d{1,2}-\d{1,2}$/.test(r.dagen.laatste) ? r.dagen.laatste : "",
+          reeks: schoonGetal(r.dagen.reeks, 0, 100000, 0),
+          vandaag: schoonGetal(r.dagen.vandaag, 0, 1000000, 0)
+        };
+        if(!S.dagen.laatste){ S.dagen.reeks = 0; S.dagen.vandaag = 0; }
+      }
       S.geldStap = geldStapGeldig(r.geldStap) ? r.geldStap : 0;
       if(r.stats){
         GROEPEN.forEach(function(g){
@@ -1978,6 +2001,8 @@
         superAan: S.superAan,
         sparen: S.sparen,
         puntenDirect: S.puntenDirect,
+        herhaalMissers: S.herhaalMissers,
+        dagen: S.dagen,
         geldStap: S.geldStap,
         schuif: S.schuif,
         stats: S.stats
@@ -2023,6 +2048,42 @@
     var uit = ICOONKLEUREN[0];
     ICOONKLEUREN.forEach(function(k){ if(k.id === S.icoonKleur) uit = k; });
     return uit;
+  }
+
+  /* Dezelfde datumvorm als bij het afvinken van een beloning: jaar-maand-dag,
+     zonder voorloopnullen, zodat velDatum hem kan lezen. */
+  function datumVan(d){
+    return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate();
+  }
+
+  function vandaagDatum(nu){ return datumVan(nu || new Date()); }
+
+  function gisterenDatum(nu){
+    var d = new Date(nu || new Date());
+    d.setDate(d.getDate() - 1);
+    return datumVan(d);
+  }
+
+  /* Eén goed of fout antwoord telt als oefenen vandaag. Was het gisteren ook, dan
+     loopt de reeks door; sloeg je een dag over, dan begint hij opnieuw bij één. */
+  function noteerDag(nu){
+    var d = S.dagen, vandaag = vandaagDatum(nu);
+    if(d.laatste === vandaag){ d.vandaag++; return; }
+    d.reeks = d.laatste === gisterenDatum(nu) ? d.reeks + 1 : 1;
+    d.laatste = vandaag;
+    d.vandaag = 1;
+  }
+
+  /* De reeks is alleen nog geldig als er vandaag of gisteren geoefend is. */
+  function dagReeks(nu){
+    var d = S.dagen;
+    if(!d.laatste) return 0;
+    if(d.laatste === vandaagDatum(nu) || d.laatste === gisterenDatum(nu)) return d.reeks;
+    return 0;
+  }
+
+  function dagVandaag(nu){
+    return S.dagen.laatste === vandaagDatum(nu) ? S.dagen.vandaag : 0;
   }
 
   /* Welk schooljaar er nu loopt. Vanaf 31 juli hoort een nieuw jaar erbij, want
@@ -2920,10 +2981,38 @@
     return v.sleutel || ((v.onderwerp || v.groep) + " " + v.a + v.op + v.b);
   }
 
+  /* Hoort deze misser bij de gekozen soort sommen? Bij "alles" telt elk onderwerp
+     mee dat op dit moment op het beginscherm staat. */
+  function misserPast(f, cat){
+    var id = f.vraag && f.vraag.onderwerp;
+    if(!id || !ONDERWERPEN[id]) return false;
+    if(cat === "alles") return zichtbaar(id);
+    return id === cat;
+  }
+
+  /* De missers die als eerste terug mogen komen: die het vaakst fout gingen staan
+     vooraan in de lijst, dus de volgorde van S.stats.fouten is al de goede. */
+  function herhaalVragen(cat, hoeveel){
+    var uit = [];
+    if(hoeveel < 1) return uit;
+    S.stats.fouten.forEach(function(f){
+      if(uit.length >= hoeveel || !misserPast(f, cat)) return;
+      var v = herbouwVraag(f.vraag);
+      if(v) uit.push(v);              /* rommel uit een oudere versie slaan we over */
+    });
+    return uit;
+  }
+
   function maakRonde(cat){
     var lengte = S.rondeLengte;
     var lijst = [], gezien = {}, pogingen = 0;
-    while(lijst.length < lengte && pogingen < lengte * 30){
+
+    /* Eerst een paar missers, zodat wat fout ging vanzelf terugkomt in plaats van
+       alleen in de herkansingschallenge. Nooit meer dan een derde van de ronde. */
+    var herhaal = herhaalVragen(cat, Math.min(S.herhaalMissers, Math.floor(lengte / 3)));
+    herhaal.forEach(function(v){ gezien[dedupeSleutel(v)] = true; });
+
+    while(lijst.length < lengte - herhaal.length && pogingen < lengte * 30){
       pogingen++;
       var s = maakVraag(cat);
       var sl = dedupeSleutel(s);
@@ -2931,7 +3020,13 @@
       gezien[sl] = true;
       lijst.push(s);
     }
-    while(lijst.length < lengte) lijst.push(maakVraag(cat));
+    while(lijst.length < lengte - herhaal.length) lijst.push(maakVraag(cat));
+
+    /* Ertussen schuiven, niet vooraan: de eerste vraag hoort een makkelijke start
+       te zijn, en achteraan zou hij samenvallen met het einde van de reeks. */
+    herhaal.forEach(function(v){
+      lijst.splice(rnd(1, Math.max(1, lijst.length - 1)), 0, v);
+    });
     return lijst;
   }
 
@@ -2983,6 +3078,7 @@
   }
 
   function noteer(v, juist){
+    noteerDag();
     var g = S.stats.groep[v.groep];
     if(g){ g.totaal++; if(juist) g.goed++; }
     if(v.onderwerp){
@@ -3071,6 +3167,25 @@
     {direct:false, naam:"pas na de reeks",
      uitleg:"de punten van een reeks komen er pas bij als de reeks helemaal af is; stop je halverwege, dan tellen ze niet mee"}
   ];
+
+  /* Hoeveel eerder fout beantwoorde sommen er in een gewone ronde terugkomen. */
+  var HERHALINGEN = [
+    {aantal:0, naam:"niet",  uitleg:"missers komen alleen terug in de herkansingschallenge"},
+    {aantal:1, naam:"soms",  uitleg:"er komt één eerdere misser per ronde terug"},
+    {aantal:2, naam:"vaak",  uitleg:"er komen twee eerdere missers per ronde terug"}
+  ];
+
+  function herhaalGeldig(n){
+    var goed = false;
+    HERHALINGEN.forEach(function(h){ if(h.aantal === n) goed = true; });
+    return goed;
+  }
+
+  function herhaalNu(){
+    var uit = HERHALINGEN[1];
+    HERHALINGEN.forEach(function(h){ if(h.aantal === S.herhaalMissers) uit = h; });
+    return uit;
+  }
 
   function geldStapGeldig(n){
     var goed = false;
@@ -3324,6 +3439,20 @@
                 '<button class="knop" type="button" id="groep-ja">Ja, groep ' + (S.leerjaar + 1) + '</button>' +
                 '<button class="knop stil" type="button" id="groep-nee">Nee, blijft groep ' + S.leerjaar + '</button>' +
               '</span></div>';
+    }
+
+    /* Wat er vandaag al gedaan is, en hoe lang de reeks loopt. Alleen als er iets
+       te zeggen valt; een lege strook motiveert niemand. */
+    var reeks = dagReeks(), vandaag = dagVandaag();
+    if(reeks || vandaag){
+      var stukjes = [];
+      if(vandaag) stukjes.push("vandaag " + vandaag + (vandaag === 1 ? " som" : " sommen"));
+      if(reeks > 1) stukjes.push(reeks + " dagen achter elkaar");
+      else if(reeks === 1 && !vandaag) stukjes.push("gisteren geoefend");
+      if(stukjes.length){
+        html += '<p class="dagstrook"><span>' + (reeks > 1 ? "🔥" : "📅") + '</span>' +
+                stukjes.join(" · ") + '</p>';
+      }
     }
 
     html += '<div class="snelrij">' +
@@ -3871,6 +4000,7 @@
     if(S.rondeLengte !== RONDE_LENGTE) melden("sparen", S.rondeLengte + " sommen per ronde");
     if(S.challengeLengte !== CHALLENGE_LENGTE) melden("sparen", S.challengeLengte + " vragen per challenge");
     if(!S.puntenDirect) melden("sparen", "punten tellen pas na de reeks");
+    if(S.herhaalMissers !== 1) melden("sparen", S.herhaalMissers ? "twee missers per ronde" : "missers komen niet terug");
     if(!S.sparen) melden("sparen", "stickers en beloningen staan uit");
     if(S.challengeStickers !== 2) melden("sparen", S.challengeStickers + " stickers per challenge");
     if(!S.superAan) melden("sparen", "geen supersticker");
@@ -3959,6 +4089,18 @@
              '" data-geldstap="' + g.stap + '">' + g.naam + '</button>';
     });
     return uit + '</span></div>';
+  }
+
+  /* Of eerdere missers terugkomen; dezelfde knoppenrij als bij de bedragen. */
+  function herhaalBlok(){
+    var uit = '<div class="instelling">' +
+      '<div class="titel"><span class="merk ronde">🔁</span><b>Komen missers terug?</b></div>' +
+      '<div class="velden keuzerij"><span class="standen">';
+    HERHALINGEN.forEach(function(h){
+      uit += '<button type="button" class="stand' + (S.herhaalMissers === h.aantal ? " nu" : "") +
+             '" data-herhaal="' + h.aantal + '">' + h.naam + '</button>';
+    });
+    return uit + '</span></div><p class="voorbeeld" id="herhaal-vb"></p></div>';
   }
 
   /* Wanneer de punten geteld worden; dezelfde knoppenrij als bij de bedragen. */
@@ -4246,6 +4388,7 @@
                 S.challengeLengte + '"> vragen per challenge</label></div>' +
               '<p class="voorbeeld" id="lengte-vb"></p>' +
             '</div>';
+    html += herhaalBlok();
     html += '</div></div></section>';
 
     /* Dit hoort niet bij het sparen: ook zonder stickers bepaalt het wanneer een
@@ -4532,6 +4675,29 @@
       ververAfwijkingen();
     });
     ververSparen();
+
+    /* of eerdere missers terugkomen in een gewone ronde */
+    [].forEach.call(scherm.querySelectorAll("[data-herhaal]"), function(k){
+      k.addEventListener("click", function(){
+        S.herhaalMissers = parseInt(k.getAttribute("data-herhaal"), 10) || 0;
+        bewaar();
+        [].forEach.call(scherm.querySelectorAll("[data-herhaal]"), function(a){
+          a.classList.toggle("nu", a === k);
+        });
+        ververHerhaal();
+        ververAfwijkingen();
+      });
+    });
+    function ververHerhaal(){
+      var regel = document.getElementById("herhaal-vb");
+      if(!regel) return;
+      var hoeveel = S.stats.fouten.length;
+      regel.textContent = "Herhalen: " + herhaalNu().uitleg + "." +
+        (S.herhaalMissers && !hoeveel
+          ? " Er staan er nu geen klaar."
+          : S.herhaalMissers ? " Er staan er nu " + hoeveel + " klaar." : "");
+    }
+    ververHerhaal();
 
     /* wanneer de punten geteld worden */
     [].forEach.call(scherm.querySelectorAll("[data-puntmoment]"), function(k){
@@ -4822,6 +4988,7 @@
       S.superAan = true;
       S.sparen = true;
       S.puntenDirect = true;
+      S.herhaalMissers = 1;
       S.geldStap = 0;
       zetGroep(S.leerjaar);        /* zet meteen de bereiken, tafels en klok terug */
       bewaar();
@@ -4846,6 +5013,7 @@
       clearTimeout(wisTimer);
       S.punten = 0;
       S.bonusStickers = 0;
+      S.dagen = {laatste:"", reeks:0, vandaag:0};
       S.stats = legeStats();
       S.beloningGegeven = {};
       S.superStickers = [];
@@ -5564,6 +5732,68 @@
     return v.a + " " + v.op + " " + v.b + " = " + v.ant;
   }
 
+  /* ----- uitleg bij een fout antwoord -----
+     Het goede antwoord alleen leert weinig; een tussenstap wel. Die wordt hier uit
+     de getallen van de vraag zelf afgeleid — dus geen veld op de vraag, geen
+     wijziging in vragen.js, en niets dat de vraaggeneratie kan raken.
+     Past er geen tussenstap bij, dan komt er niets: liever niets dan flauwekul. */
+  function uitlegVan(v){
+    if(!v || typeof v.ant !== "number") return null;
+    var a = v.a, b = v.b;
+    if(typeof a !== "number" || typeof b !== "number") return null;
+
+    /* keer: reken vanaf een tafel die je wél weet. De tafel is altijd een getal
+       t/m 10 — de tafel van 12 kent een kind niet — en het andere getal is het
+       aantal keer dat je die tafel neemt. */
+    if(v.op === "×"){
+      if(a < 2 || b < 2 || a > 12 || b > 12) return null;
+      var klein = Math.min(a, b), groot = Math.max(a, b);
+      if(klein === 10 || groot === 10) return null;    /* tien keer iets legt zichzelf uit */
+      var tafel = groot > 10 ? klein : groot;
+      var keer = groot > 10 ? groot : klein;
+
+      /* Staat de som omgekeerd, dan sluiten we af met de vraag zoals hij er stond —
+         anders zie je "7 × 4" en gaat de uitleg over "4 × 7". */
+      var slot = (a === keer ? ": " + v.ant + "." : ". Dus " + a + " × " + b + " = " + v.ant + ".");
+
+      if(keer === 2) return "2 × " + tafel + " is het dubbele van " + tafel + slot;
+      if(keer === 5){
+        return "10 × " + tafel + " = " + (10 * tafel) + ", en 5 × " + tafel + " is de helft" + slot;
+      }
+
+      var anker = keer > 5 ? 10 : 5;
+      var stappen = Math.abs(anker - keer);
+      return anker + " × " + tafel + " = " + (anker * tafel) + ", en " + keer + " × " + tafel +
+             " is " + (stappen === 1 ? "één keer " : stappen + " keer ") + tafel +
+             (keer < anker ? " minder" : " erbij") + slot;
+    }
+
+    /* deel: de omgekeerde tafel, met of zonder rest */
+    if(v.op === ":"){
+      if(b < 2 || v.ant < 1) return null;
+      if(v.rest && typeof v.ant2 === "number"){
+        return b + " × " + v.ant + " = " + (b * v.ant) + ", en van " + a + " blijft er dan " +
+               v.ant2 + " over.";
+      }
+      return b + " × " + v.ant + " = " + a + ", dus " + a + " : " + b + " = " + v.ant + ".";
+    }
+
+    /* plus en min: eerst naar het ronde tiental, dan de rest erbij of eraf */
+    if(v.op === "+" || v.op === "−"){
+      if(a < 10 || b < 2 || b > 99) return null;
+      var rest = a % 10;
+      if(!rest) return null;                           /* al rond: niets uit te leggen */
+      var eerste = v.op === "+" ? 10 - rest : rest;
+      if(eerste >= b) return null;                     /* je komt niet eens over het tiental */
+      var tussen = v.op === "+" ? a + eerste : a - eerste;
+      var tweede = b - eerste;
+      return a + " " + v.op + " " + eerste + " = " + tussen + ", en dan nog " + tweede +
+             (v.op === "+" ? " erbij" : " eraf") + ": " + v.ant + ".";
+    }
+
+    return null;
+  }
+
   function verwerk(juist, schudKaart){
     var v = S.vragen[S.i];
     var kaart = document.getElementById("somkaart");
@@ -5603,6 +5833,15 @@
       reactie.className = "reactie mis";
       reactie.textContent = TROOST[rnd(0, TROOST.length - 1)] +
                             (v.lijf === "klok" ? " Het is " : " ") + somTekst(v);
+      /* en waar het kan een tussenstap, op een eigen regel zodat het niet één
+         lange zin wordt */
+      var stap = uitlegVan(v);
+      if(stap){
+        var uitleg = document.createElement("span");
+        uitleg.className = "hoe";
+        uitleg.textContent = stap;
+        reactie.appendChild(uitleg);
+      }
       klankFout();
       /* Geen aftelklok: bij een fout antwoord staat het goede antwoord in beeld
          en mag je zelf bepalen wanneer je verder gaat, zodat er tijd is om het
