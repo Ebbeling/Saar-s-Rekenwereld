@@ -195,6 +195,13 @@
     font-variant-numeric:tabular-nums;
   }
   .score span{font-size:12px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--inkt-zacht)}
+  /* punten die nog op het eind van de reeks wachten */
+  .score .wacht{
+    display:block;margin-top:3px;
+    font-style:normal;font-size:11.5px;font-weight:900;
+    letter-spacing:.03em;text-transform:none;color:var(--gras);
+  }
+  .score .wacht[hidden]{display:none}
   .score .p b{color:var(--zee)}
   .score .s b{color:var(--framboos)}
   .score .b b{color:var(--zon)}
@@ -1227,9 +1234,9 @@
     letter-spacing:.06em;text-transform:uppercase;color:var(--inkt-zacht);
   }
   .standen{display:flex;gap:4px;background:var(--papier);border-radius:999px;padding:3px;flex:none}
-  /* de vier keuzes bij Geld mogen op een smal scherm afbreken */
-  .geldrij{display:flex}
-  .geldrij .standen{flex-wrap:wrap}
+  /* een rij keuzeknoppen mag op een smal scherm afbreken */
+  .keuzerij{display:flex}
+  .keuzerij .standen{flex-wrap:wrap}
   .stand{
     font:inherit;font-size:12px;font-weight:900;
     cursor:pointer;border:none;border-radius:999px;
@@ -1365,7 +1372,7 @@
   </button>
 
   <div class="score">
-    <div class="p"><b id="sc-punten">0</b><span>Punten</span></div>
+    <div class="p"><b id="sc-punten">0</b><span>Punten</span><i class="wacht" id="sc-wacht" hidden></i></div>
     <div class="s"><b id="sc-stickers">0</b><span>Stickers</span></div>
     <div class="b"><b id="sc-beloningen">0</b><span>Beloningen</span></div>
   </div>
@@ -1458,7 +1465,7 @@
     return {van:van, tot:tot};
   }
 
-  var APPVERSIE = "31";         /* hoog dit samen met VERSIE in sw.js op */
+  var APPVERSIE = "32";         /* hoog dit samen met VERSIE in sw.js op */
   var NAAM = "Saar";            /* van wie is deze app; in de instellingen aan te passen */
   var ICOONKLEUR = "framboos";  /* kleur van het app-icoon */
   var WACHTWOORD = "0000";      /* standaardcode; in de instellingen aan te passen */
@@ -1704,6 +1711,7 @@
     challengeStickers: 2,        /* stickers voor een gehaalde challenge */
     superAan: true,              /* extra sticker bij een foutloze challenge */
     sparen: true,                /* stickers en beloningen; uit betekent alleen punten */
+    puntenDirect: true,          /* punten meteen bijschrijven, of pas als de reeks af is */
     geldStap: 0,                 /* 0 = volgt groep, anders 100, 50 of 1 cent */
     schuif: {},                  /* onderwerp -> -1, 0 of +1 leerjaar */
     code: "",
@@ -1718,6 +1726,7 @@
     veld: 0,                     /* welk vak de toetsen krijgt: 0 of 1 */
     bezig: false,
     fouten: [],
+    wachtpunten: 0,              /* punten van deze reeks die nog niet geteld zijn */
     goed: 0
   };
 
@@ -1868,6 +1877,7 @@
       /* Opslag van vóór deze schakelaar heeft het veld niet; die spaart gewoon
          door, want zo werkte de app tot nu toe. */
       S.sparen = typeof r.sparen === "boolean" ? r.sparen : true;
+      S.puntenDirect = typeof r.puntenDirect === "boolean" ? r.puntenDirect : true;
       S.geldStap = geldStapGeldig(r.geldStap) ? r.geldStap : 0;
       if(r.stats){
         GROEPEN.forEach(function(g){
@@ -1917,6 +1927,7 @@
         challengeStickers: S.challengeStickers,
         superAan: S.superAan,
         sparen: S.sparen,
+        puntenDirect: S.puntenDirect,
         geldStap: S.geldStap,
         schuif: S.schuif,
         stats: S.stats
@@ -3003,6 +3014,14 @@
     {stap:1,   naam:"tot op de cent", uitleg:"elk bedrag, dus ook € 3,47"}
   ];
 
+  /* Wanneer een goed antwoord een punt oplevert: meteen, of pas als de reeks af is. */
+  var PUNTMOMENTEN = [
+    {direct:true,  naam:"meteen",
+     uitleg:"elk goed antwoord telt meteen mee; stop je halverwege, dan houd je wat je tot dan toe verdiend hebt"},
+    {direct:false, naam:"pas na de reeks",
+     uitleg:"de punten van een reeks komen er pas bij als de reeks helemaal af is; stop je halverwege, dan tellen ze niet mee"}
+  ];
+
   function geldStapGeldig(n){
     var goed = false;
     GELDSTAPPEN.forEach(function(g){ if(g.stap === n) goed = true; });
@@ -3018,6 +3037,11 @@
        twee andere tegels weg en de regel eronder heeft dan niets te vertellen. */
     document.body.setAttribute("data-sparen", sparenAan() ? "aan" : "uit");
     document.getElementById("sc-punten").textContent = S.punten;
+    /* Tellen de punten pas na de reeks, dan staat er onder de teller hoeveel
+       er onderweg zijn. Zonder dat zou het lijken alsof goed rekenen niets doet. */
+    var wacht = document.getElementById("sc-wacht");
+    wacht.textContent = S.wachtpunten ? "+" + S.wachtpunten + " straks" : "";
+    wacht.hidden = !S.wachtpunten;
     document.getElementById("sc-stickers").textContent = stickers();
     document.getElementById("sc-beloningen").textContent = beloningen();
     document.getElementById("regels").textContent = sparenAan()
@@ -3788,12 +3812,24 @@
      de drie standen. Bij "volgt groep" staat erbij wat dat op dit moment betekent. */
   /* Hele euro's, halve euro's of tot op de cent — of gewoon wat de groep zegt. */
   function geldStapRij(){
-    var uit = '<div class="geldrij"><span class="standen">';
+    var uit = '<div class="keuzerij"><span class="standen">';
     GELDSTAPPEN.forEach(function(g){
       uit += '<button type="button" class="stand' + (S.geldStap === g.stap ? " nu" : "") +
              '" data-geldstap="' + g.stap + '">' + g.naam + '</button>';
     });
     return uit + '</span></div>';
+  }
+
+  /* Wanneer de punten geteld worden; dezelfde knoppenrij als bij de bedragen. */
+  function puntMomentBlok(){
+    var uit = '<div class="instelling">' +
+      '<div class="titel"><span class="merk ronde">●</span><b>Wanneer tellen de punten?</b></div>' +
+      '<div class="velden keuzerij"><span class="standen">';
+    PUNTMOMENTEN.forEach(function(m){
+      uit += '<button type="button" class="stand' + (S.puntenDirect === m.direct ? " nu" : "") +
+             '" data-puntmoment="' + (m.direct ? "direct" : "eind") + '">' + m.naam + '</button>';
+    });
+    return uit + '</span></div><p class="voorbeeld" id="puntmoment-vb"></p></div>';
   }
 
   function schakelRij(o){
@@ -3956,14 +3992,14 @@
 
     html += '<div class="tabvlak" data-vlak="sparen"' + (instelTab === 'sparen' ? '' : ' hidden') + '>';
 
-    html += '<section class="sectie"><h2>Stickers en beloningen</h2>' +
+    html += '<section class="sectie"><h2>Punten, stickers en beloningen</h2>' +
             '<div class="kaart"><div class="instellingen"><div class="instelling">' +
             '<div class="titel"><span class="merk sticker">★</span><b>Sparen voor stickers</b></div>' +
             '<div class="velden"><label class="vinkje" for="sparen-aan">' +
               '<input type="checkbox" id="sparen-aan"' + (sparenAan() ? " checked" : "") + '>' +
               ' stickers en beloningen gebruiken</label></div>' +
             '<p class="voorbeeld" id="sparen-vb"></p>' +
-            '</div></div></div></section>';
+            '</div>' + puntMomentBlok() + '</div></div></section>';
 
     html += '<section class="sectie" style="margin-top:22px"><h2>Hoe lang is een reeks?</h2>';
     html += '<div class="kaart"><div class="instellingen">';
@@ -4194,6 +4230,25 @@
     sparenVak.addEventListener("change", ververSparen);
     ververSparen();
 
+    /* wanneer de punten geteld worden */
+    [].forEach.call(scherm.querySelectorAll("[data-puntmoment]"), function(k){
+      k.addEventListener("click", function(){
+        S.puntenDirect = k.getAttribute("data-puntmoment") === "direct";
+        [].forEach.call(scherm.querySelectorAll("[data-puntmoment]"), function(a){
+          a.classList.toggle("nu", a === k);
+        });
+        ververPuntMoment();
+      });
+    });
+    function ververPuntMoment(){
+      var regel = document.getElementById("puntmoment-vb");
+      if(!regel) return;
+      var nu = PUNTMOMENTEN[0];
+      PUNTMOMENTEN.forEach(function(m){ if(m.direct === S.puntenDirect) nu = m; });
+      regel.textContent = "Punten: " + nu.uitleg + ".";
+    }
+    ververPuntMoment();
+
     /* de nauwkeurigheid van de bedragen bij Geld */
     [].forEach.call(scherm.querySelectorAll("[data-geldstap]"), function(k){
       k.addEventListener("click", function(){
@@ -4359,6 +4414,7 @@
       S.challengeStickers = 2;
       S.superAan = true;
       S.sparen = true;
+      S.puntenDirect = true;
       S.geldStap = 0;
       zetGroep(S.leerjaar);        /* zet meteen de bereiken, tafels en klok terug */
       bewaar();
@@ -4814,7 +4870,9 @@
     S.fouten = [];
     S.goed = 0;
     S.uitslag = [];
+    S.wachtpunten = 0;
     S.beloningenVoor = beloningen();
+    tekenScore();
     tekenQuiz();
   }
 
@@ -4939,7 +4997,7 @@
         ververVak();
       });
     });
-    document.getElementById("stop").addEventListener("click", toonHome);
+    document.getElementById("stop").addEventListener("click", stopRonde);
   }
 
   /* één antwoordvak; nr is 1 of 2 */
@@ -5098,8 +5156,12 @@
       var vorigeStickers = stickers();
       S.goed++;
       /* In een challenge leveren losse antwoorden niets op: de hele beloning komt
-         aan het eind, en alleen als de challenge gehaald is. */
-      if(!S.challenge) S.punten++;
+         aan het eind, en alleen als de challenge gehaald is. Bij gewoon oefenen
+         hangt het aan de instelling: nu bijschrijven, of pas als de reeks af is. */
+      if(!S.challenge){
+        if(S.puntenDirect) S.punten++;
+        else S.wachtpunten++;
+      }
       bewaar();
       kaart.classList.add("juist");
       reactie.className = "reactie juist";
@@ -5107,14 +5169,14 @@
                             (S.challenge ? "" : " +1 punt");
       klankGoed();
       tekenScore();
-      if(sparenAan() && !S.challenge && stickers() > vorigeStickers){
+      if(sparenAan() && !S.challenge && S.puntenDirect && stickers() > vorigeStickers){
         var nr = stickers();
         setTimeout(function(){
           klankSticker();
           toast("Nieuwe sticker verdiend! " + STICKERS[(nr - 1) % STICKERS.length] + "  (" + nr + " in totaal)");
         }, 350);
       }
-      setTimeout(volgende, 900);
+      volgendeTimer = setTimeout(volgende, 900);
     } else {
       S.fouten.push(v);
       bewaar();
@@ -5132,7 +5194,7 @@
 
   function toonVolgendeKnop(){
     var rij = scherm.querySelector(".knoppen");
-    if(!rij){ setTimeout(volgende, 2200); return; }   /* geen plek: dan toch vanzelf */
+    if(!rij){ volgendeTimer = setTimeout(volgende, 2200); return; }   /* geen plek: dan toch vanzelf */
     if(document.getElementById("volgende")) return;
     var knop = document.createElement("button");
     knop.className = "knop";
@@ -5218,8 +5280,13 @@
 
   /* ronde verlaten: een lopende vertraging mag het nieuwe scherm niet overschrijven */
   function verlaatRonde(){
+    clearTimeout(volgendeTimer);
+    volgendeTimer = null;
     S.vragen = [];
     S.bezig = false;
+    /* Punten die op het eind van de reeks stonden te wachten, vervallen hier:
+       wie halverwege weggaat, maakt de reeks niet af. */
+    if(S.wachtpunten){ S.wachtpunten = 0; tekenScore(); }
     zetSchermstand("");
   }
 
@@ -5277,7 +5344,11 @@
     wrap.style.paddingBottom = (balk.offsetHeight + 14) + "px";
   }
 
+  /* de klok die na een goed antwoord vanzelf doortelt; bij stoppen zetten we hem stil */
+  var volgendeTimer = null;
+
   function volgende(){
+    volgendeTimer = null;
     if(!S.vragen.length) return;
     S.i++;
     S.invoer = "";
@@ -5289,11 +5360,83 @@
     else tekenQuiz();
   }
 
+  /* Stoppen midden in een reeks kost iets — een challenge telt niet, en punten die
+     op het eind staan te wachten vervallen. Daarom eerst even vragen. */
+  function stopRonde(){
+    var gedaan = S.i + (S.bezig ? 1 : 0);
+    if(!gedaan){ toonHome(); return; }        /* nog niets gedaan: niets te verliezen */
+
+    /* een goed antwoord loopt vanzelf door; dat zetten we stil zolang de vraag staat */
+    var liep = volgendeTimer !== null;
+    clearTimeout(volgendeTimer);
+    volgendeTimer = null;
+
+    var zover = "Je hebt er " + gedaan + " van de " + S.vragen.length + " gedaan. ";
+    var staart;
+    if(S.challenge){
+      staart = "Een challenge telt alleen als je hem helemaal afmaakt.";
+    } else if(!S.puntenDirect){
+      staart = !S.wachtpunten
+        ? "De punten van een reeks tellen pas als hij af is."
+        : S.wachtpunten === 1
+          ? "Het punt dat je nu hebt telt pas als de reeks af is — stop je nu, dan is het weg."
+          : "De " + S.wachtpunten + " punten van deze reeks tellen pas als hij af is — " +
+            "stop je nu, dan zijn ze weg.";
+    } else {
+      staart = "De punten die je al hebt, blijven gewoon staan.";
+    }
+
+    vraagZeker("Stoppen met deze reeks?", zover + staart, "Toch stoppen",
+      toonHome,
+      function(){ if(liep) volgende(); });
+  }
+
+  /* Een vraag met twee knoppen in dezelfde doos als de beloning. De veilige keuze
+     staat vooraan en krijgt de aandacht, zodat een misklik niets kapotmaakt. */
+  function vraagZeker(titel, tekst, jaTekst, doeJa, doeNee){
+    var ov = document.createElement("div");
+    ov.className = "overlay";
+    ov.innerHTML = '<div class="doos"><h2>' + titel + '</h2><p>' + tekst + '</p>' +
+      '<div class="knoppen">' +
+      '<button class="knop" type="button" data-zeker="nee">Doorgaan</button>' +
+      '<button class="knop stil" type="button" data-zeker="ja">' + jaTekst + '</button>' +
+      '</div></div>';
+    document.body.appendChild(ov);
+
+    function sluit(){
+      ov.remove();
+      document.removeEventListener("keydown", ontsnap, true);
+    }
+    function ontsnap(e){ if(e.key === "Escape"){ sluit(); if(doeNee) doeNee(); } }
+    document.addEventListener("keydown", ontsnap, true);
+
+    ov.querySelector('[data-zeker="nee"]').addEventListener("click", function(){
+      sluit(); if(doeNee) doeNee();
+    });
+    ov.querySelector('[data-zeker="ja"]').addEventListener("click", function(){
+      sluit(); doeJa();
+    });
+    ov.querySelector('[data-zeker="nee"]').focus();
+  }
+
   function toonKlaar(){
     zetSchermstand("klaar");
     var aantal = S.vragen.length;
     var challenge = S.challenge;
     var gehaald = challenge ? (S.goed >= challenge.nodig) : false;
+
+    /* De reeks is af, dus nu tellen de punten die stonden te wachten. Dit is het
+       enige punt waar dat gebeurt: stoppen of weglopen laat ze vervallen. */
+    var geboekt = 0, nieuweStickers = 0;
+    if(S.wachtpunten){
+      var stickersVoor = stickers();
+      geboekt = S.wachtpunten;
+      S.punten += S.wachtpunten;
+      S.wachtpunten = 0;
+      nieuweStickers = stickers() - stickersVoor;
+      bewaar();
+      tekenScore();
+    }
 
     var foutloos = challenge && gehaald && S.goed === aantal && S.superAan;
     if(challenge){
@@ -5347,6 +5490,10 @@
             ? '<p class="prijs">🎉 Je verdient ' + aantalStickers + ' erbij!</p>'
             : '');
     }
+    if(geboekt){
+      html += '<p class="prijs">🎉 ' + geboekt + (geboekt === 1 ? " punt" : " punten") +
+              ' erbij, want de reeks is af!</p>';
+    }
     if(S.fouten.length){
       html += '<div class="foutenlijst"><h3>Deze mag je nog een keer oefenen</h3><ul>';
       S.fouten.slice(0, 12).forEach(function(v){
@@ -5385,6 +5532,17 @@
       }
     }
 
+    var kaartenNu = beloningen();
+    if(sparenAan() && nieuweStickers > 0 && kaartenNu <= S.beloningenVoor){
+      setTimeout(function(){
+        klankSticker();
+        var nr = stickers();
+        toast(nieuweStickers === 1
+          ? "Nieuwe sticker verdiend! " + STICKERS[(nr - 1) % STICKERS.length] + "  (" + nr + " in totaal)"
+          : nieuweStickers + " nieuwe stickers verdiend!  (" + nr + " in totaal)");
+      }, 500);
+    }
+
     var kaarten = beloningen();
     if(sparenAan() && kaarten > S.beloningenVoor){
       setTimeout(function(){ toonBeloning(kaarten); }, gehaald ? 1400 : 500);
@@ -5417,6 +5575,9 @@
 
   /* ----- toetsenbord ----- */
   document.addEventListener("keydown", function(e){
+    /* Staat er een venster overheen, dan hoort het toetsenbord daarbij en mag een
+       cijfer niet stiekem als antwoord op de som eronder tellen. */
+    if(document.querySelector(".overlay")) return;
     if(document.getElementById("code-vakjes")){
       if(e.key >= "0" && e.key <= "9"){ codeToets(e.key); e.preventDefault(); }
       else if(e.key === "Backspace"){ codeToets("wis"); e.preventDefault(); }

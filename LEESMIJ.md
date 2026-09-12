@@ -83,8 +83,8 @@ Daarna start de app vanaf het beginscherm met eigen icoon, zonder adresbalk.
 
 De service worker bewaart de app op het apparaat. Als je `index.html` of `vragen.js` aanpast:
 
-1. Pas in `sw.js` de regel `var VERSIE = "rekenwereld-v31";` aan naar `v32`, `v33`, enzovoort.
-2. Pas in `index.html` de regel `var APPVERSIE = "31";` aan naar hetzelfde nummer.
+1. Pas in `sw.js` de regel `var VERSIE = "rekenwereld-v32";` aan naar `v33`, `v34`, enzovoort.
+2. Pas in `index.html` de regel `var APPVERSIE = "32";` aan naar hetzelfde nummer.
 3. Upload de gewijzigde bestanden.
 
 Zonder die ophoging blijven al geïnstalleerde tablets de oude versie tonen.
@@ -271,6 +271,39 @@ Bij de challenge stel je daar ook in **hoeveel stickers** hij oplevert (0 t/m 10
 2) en of er **bij alles goed een supersticker** bij komt. Zet je die uit, dan is een
 foutloze challenge gewoon een gehaalde challenge. Onder de velden staat meteen wat je
 keuzes betekenen.
+
+### Wanneer tellen de punten?
+
+Op het tabblad **Sparen**, onder het vinkje voor de stickers, staan twee knoppen:
+
+| Keuze | Wat er gebeurt |
+| --- | --- |
+| *meteen* (standaard) | elk goed antwoord levert meteen een punt op, zoals de app het altijd deed |
+| *pas na de reeks* | de punten van een reeks komen er pas bij als de reeks helemaal af is |
+
+Staat hij op *pas na de reeks*, dan blijft de puntenteller tijdens het oefenen stilstaan
+en verschijnt eronder in het groen hoeveel punten er onderweg zijn: *+3 straks*. Bij de
+laatste som worden ze in één keer bijgeschreven, en het klaarscherm meldt dat: *10 punten
+erbij, want de reeks is af*. Levert dat nieuwe stickers op, dan komt die melding daar ook
+pas.
+
+Stop je halverwege, of loop je weg naar het beginscherm, dan **vervallen die punten**.
+Dat is precies de bedoeling van de instelling: een reeks afmaken wordt er iets waard door.
+De app waarschuwt ervoor in het venster dat bij *Stoppen* verschijnt.
+
+Een **challenge** werkt hoe dan ook zo: losse antwoorden leveren daar niets op, de stickers
+komen aan het eind en alleen als de challenge gehaald is. Daar verandert deze knop niets
+aan. Ook het voortgangsrapport blijft gewoon elk antwoord noteren — dat gaat over oefenen,
+niet over belonen.
+
+### Stoppen midden in een reeks
+
+**Stoppen vraagt eerst.** Tik je tijdens een reeks op *Stoppen*, dan verschijnt er een
+venster: *Stoppen met deze reeks?* Het vertelt hoever je bent en wat het kost — bij een
+challenge dat die alleen telt als je hem afmaakt, en bij punten die pas na de reeks tellen
+dat ze dan weg zijn. *Doorgaan* zet je terug in de reeks, *Toch stoppen* brengt je naar het
+beginscherm. Heb je nog geen enkele som beantwoord, dan komt het venster niet: er valt dan
+niets te verliezen.
 
 ### Stickers en beloningen uitzetten
 
