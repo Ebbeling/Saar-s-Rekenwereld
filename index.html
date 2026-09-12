@@ -1164,12 +1164,6 @@
   .groepknop.uit:active{box-shadow:0 1px 0 var(--rand)}
 
   .schakelaars{display:flex;flex-direction:column;gap:10px}
-  .vakkop{
-    font-family:"Lilita One",Impact,sans-serif;font-weight:400;
-    font-size:15px;letter-spacing:.04em;text-transform:uppercase;
-    color:var(--inkt-zacht);margin:10px 0 2px;
-  }
-  .vakkop:first-child{margin-top:0}
   .schakelrij{
     display:flex;align-items:center;justify-content:space-between;
     gap:12px;flex-wrap:wrap;
@@ -1214,6 +1208,52 @@
   .vaktelling{font-size:12.5px;font-weight:700;color:var(--inkt-zacht);white-space:nowrap}
   .vakblok .kaart{border:none;border-radius:0;padding:0 16px 16px}
 
+  /* Eén rij per onderwerp: aan of uit én de getallen, allebei op dezelfde plek.
+     Alleen een haarlijn ertussen — een kader binnen een kader eet op een telefoon
+     de breedte op die de invoervelden nodig hebben. */
+  .owlijst{display:flex;flex-direction:column}
+  .owblok{border-top:2px solid var(--rand)}
+  .owblok:first-child{border-top:none}
+  /* Een rooster in plaats van een flexrij: de naam en het pijltje horen op dezelfde
+     hoogte te staan, met de samenvatting eronder in dezelfde kolom als de naam. */
+  .owblok > summary{
+    cursor:pointer;list-style:none;
+    padding:11px 0;
+    display:grid;
+    grid-template-columns:auto auto 1fr auto;
+    align-items:center;
+    column-gap:9px;row-gap:2px;
+  }
+  .owblok > summary::-webkit-details-marker{display:none}
+  .owblok > summary > .bol{grid-area:1 / 1}
+  .owblok > summary > .merk{grid-area:1 / 2}
+  .ownaam{grid-area:1 / 3;font-weight:900;font-size:14.5px}
+  .owkort{grid-area:2 / 3 / 3 / 5;font-size:12px;font-weight:700;color:var(--inkt-zacht)}
+  .owblok > summary::after{
+    content:"▾";grid-area:1 / 4;
+    font-size:13px;color:var(--inkt-zacht);
+    transition:transform .18s ease;
+  }
+  .owblok[open] > summary::after{transform:rotate(180deg)}
+  .owblok .merk{width:28px;height:28px;border-radius:9px;font-size:16px}
+  .owdetail{display:grid;gap:10px;padding:2px 0 14px 47px}
+  /* zonder dit krimpt een rooster-onderdeel nooit onder zijn inhoud, en loopt de
+     knoppenrij bij Geld op een telefoon buiten de kaart */
+  .owdetail > *{min-width:0}
+  /* de doorverwijzing naar het tafel- of klokscherm; een gewone knop zou hier veel
+     te veel aandacht trekken naast de drie standen */
+  .owkiezer{
+    justify-self:start;
+    font:inherit;font-weight:900;font-size:13px;
+    color:var(--zee);background:var(--kaart);
+    border:2px solid var(--zee);border-radius:999px;
+    padding:7px 14px;cursor:pointer;
+  }
+
+  /* wat er afwijkt van de groep, bovenaan het tabblad */
+  .afwijkkaart{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .afwijkkaart p{margin:0;flex:1 1 200px;font-size:14px;font-weight:700;color:var(--inkt-zacht)}
+
   .velden label.vinkje{gap:9px;font-size:13.5px}
   .velden input[type="checkbox"]{
     width:22px;height:22px;flex:none;accent-color:var(--zee);
@@ -1236,7 +1276,9 @@
   .standen{display:flex;gap:4px;background:var(--papier);border-radius:999px;padding:3px;flex:none}
   /* een rij keuzeknoppen mag op een smal scherm afbreken */
   .keuzerij{display:flex}
-  .keuzerij .standen{flex-wrap:wrap}
+  /* De rij mag afbreken, maar dan moet hij ook kúnnen krimpen: met de flex:none
+     van .standen blijft hij zijn volle breedte houden en loopt hij buiten de kaart. */
+  .keuzerij .standen{flex:0 1 auto;min-width:0;flex-wrap:wrap}
   .stand{
     font:inherit;font-size:12px;font-weight:900;
     cursor:pointer;border:none;border-radius:999px;
@@ -1286,6 +1328,14 @@
     .keuze .woorden{font-size:12px}
     .velden label{font-size:13px}
     .velden input{width:74px}
+
+    /* op een telefoon is er geen ruimte om onder het merkje te laten inspringen */
+    .owkort{grid-area:2 / 1 / 3 / 5}
+    .owdetail{padding-left:0}
+    .vakblok .kaart{padding:0 12px 14px}
+    /* en de telling achter een vaknaam mag dan onder de naam vallen */
+    .vakblok > summary{flex-wrap:wrap}
+    .vaktelling{white-space:normal}
   }
 
   @media (max-width:400px){
@@ -1465,7 +1515,7 @@
     return {van:van, tot:tot};
   }
 
-  var APPVERSIE = "32";         /* hoog dit samen met VERSIE in sw.js op */
+  var APPVERSIE = "33";         /* hoog dit samen met VERSIE in sw.js op */
   var NAAM = "Saar";            /* van wie is deze app; in de instellingen aan te passen */
   var ICOONKLEUR = "framboos";  /* kleur van het app-icoon */
   var WACHTWOORD = "0000";      /* standaardcode; in de instellingen aan te passen */
@@ -3351,9 +3401,16 @@
     });
   }
 
-  function toonTafelkiezer(){
+  /* Vanuit de instellingen is dit scherm geen aanloop naar een ronde maar een
+     keuzescherm: dan bewaart Terug de keuze in plaats van hem weg te gooien. */
+  function toonTafelkiezer(uitInstellingen){
     verlaatRonde();
     var gekozen = S.tafels.slice();
+    function bewaarTafels(){
+      if(!gekozen.length) return;
+      S.tafels = gekozen.slice().sort(function(a, b){ return a - b; });
+      bewaar();
+    }
 
     function tafelZin(){
       var lijst = gekozen.slice().sort(function(a, b){ return a - b; });
@@ -3379,7 +3436,8 @@
             '<button class="knop stil" type="button" id="allemaal">Alles aan of uit</button></div>';
     html += '<div class="knoppen" style="margin-top:10px">' +
             '<button class="knop" type="button" id="start-tafels">' + tafelZin() + '</button>' +
-            '<button class="knop stil" type="button" id="terug">Terug</button></div>';
+            '<button class="knop stil" type="button" id="terug">' +
+            (uitInstellingen ? "Klaar" : "Terug") + '</button></div>';
     scherm.innerHTML = html;
 
     var startKnop = document.getElementById("start-tafels");
@@ -3411,12 +3469,14 @@
 
     startKnop.addEventListener("click", function(){
       if(!gekozen.length) return;
-      S.tafels = gekozen.slice().sort(function(a, b){ return a - b; });
-      bewaar();
+      bewaarTafels();
       start("tafels");
     });
 
-    document.getElementById("terug").addEventListener("click", toonHome);
+    document.getElementById("terug").addEventListener("click", function(){
+      if(uitInstellingen){ bewaarTafels(); toonInstellingen(); return; }
+      toonHome();
+    });
     ververStart();
   }
 
@@ -3685,8 +3745,17 @@
     toonSlot();
   }
 
+  /* Binnenkomen begint schoon: alles dicht, bovenaan, op het eerste tabblad.
+     toonInstellingen zelf tekent alleen wat er in S en in die standen staat. */
+  function openInstellingen(){
+    instelTab = "niveau";
+    instelOpen = {};
+    instelScroll = 0;
+    toonInstellingen();
+  }
+
   function opnaarInstellingen(){
-    vraagCode(toonInstellingen, toonHome, "de instellingen te openen");
+    vraagCode(openInstellingen, toonHome, "de instellingen te openen");
   }
 
   function toonSlot(){
@@ -3743,7 +3812,7 @@
   function codeNakijken(){
     if(S.code === S.wachtwoord){
       klankGoed();
-      var vervolg = naCode || toonInstellingen;
+      var vervolg = naCode || openInstellingen;
       naCode = null;
       vervolg();
       return;
@@ -3764,6 +3833,74 @@
 
   /* Wat de gekozen groep concreet betekent, uit de trap gehaald zodat deze zin
      niet kan verouderen. */
+  /* Wat er is afgeweken van de standaard, per tabblad. Zonder dit overzicht kan een
+     ouder alleen door alle rijen te lopen zien wat hij ooit heeft aangeraakt. */
+  function afwijkingen(){
+    var uit = [];
+    function melden(waar, tekst){ uit.push({waar:waar, tekst:tekst}); }
+
+    /* ----- tabblad Niveau ----- */
+    var handmatig = 0;
+    for(var id in S.aan){ if(Object.prototype.hasOwnProperty.call(S.aan, id)) handmatig++; }
+    if(handmatig){
+      melden("niveau", handmatig + (handmatig === 1 ? " onderwerp staat" : " onderwerpen staan") +
+                       " vast aan of uit");
+    }
+
+    var eigen = 0;
+    onderwerpLijst().forEach(function(o){ if(!o.meta && eigenBereik(o.id)) eigen++; });
+    if(eigen){
+      melden("niveau", eigen + (eigen === 1 ? " onderwerp heeft" : " onderwerpen hebben") +
+                       " eigen getallen");
+    }
+
+    if(S.geldStap) melden("niveau", "geld: " + geldStapNu().naam);
+
+    var standaardTafels = S.leerjaar >= 5 ? [1,2,3,4,5,6,7,8,9,10] : [1,2,3,4,5,10];
+    if(S.tafels.slice().sort(function(a, b){ return a - b; }).join(",") !== standaardTafels.join(",")){
+      melden("niveau", "eigen tafels");
+    }
+    var standaardKlok = S.leerjaar <= 3 ? 1 : S.leerjaar === 4 ? 2 : 3;
+    if(S.klokNiveau !== standaardKlok || S.klokSoort !== "mix") melden("niveau", "eigen klokkeuze");
+
+    var schuif = 0;
+    for(var sid in S.schuif){ if(Object.prototype.hasOwnProperty.call(S.schuif, sid)) schuif++; }
+    if(schuif) melden("niveau", schuif + " onderwerpen staan een groep hoger of lager");
+
+    /* ----- tabblad Sparen ----- */
+    if(S.rondeLengte !== RONDE_LENGTE) melden("sparen", S.rondeLengte + " sommen per ronde");
+    if(S.challengeLengte !== CHALLENGE_LENGTE) melden("sparen", S.challengeLengte + " vragen per challenge");
+    if(!S.puntenDirect) melden("sparen", "punten tellen pas na de reeks");
+    if(!S.sparen) melden("sparen", "stickers en beloningen staan uit");
+    if(S.challengeStickers !== 2) melden("sparen", S.challengeStickers + " stickers per challenge");
+    if(!S.superAan) melden("sparen", "geen supersticker");
+    if(S.puntenPerSticker !== PUNTEN_PER_STICKER) melden("sparen", S.puntenPerSticker + " punten per sticker");
+    if(S.stickersPerBeloning !== STICKERS_PER_BELONING) melden("sparen", S.stickersPerBeloning + " stickers per beloning");
+
+    /* ----- tabblad De app ----- */
+    if(S.naam !== NAAM) melden("app", "eigen naam");
+    if(S.icoonKleur !== ICOONKLEUR) melden("app", "eigen kleur");
+    if(S.wachtwoord !== WACHTWOORD) melden("app", "eigen code");
+
+    return uit;
+  }
+
+  /* alleen wat er op het tabblad Niveau afwijkt, want daar staat de kaart */
+  function afwijkingKaart(){
+    var rijen = afwijkingen();
+    var hier = [], elders = 0;
+    rijen.forEach(function(r){ if(r.waar === "niveau") hier.push(r.tekst); else elders++; });
+    var zin = hier.length
+      ? "Anders dan groep " + S.leerjaar + ": " + hier.join(" · ") + "."
+      : "Alles volgt groep " + S.leerjaar + ".";
+    if(elders){
+      zin += elders === 1
+        ? " Op een ander tabblad staat er nog één ding anders dan standaard."
+        : " Op de andere tabbladen staan er nog " + elders + " dingen anders dan standaard.";
+    }
+    return {zin:zin, eigen:hier.length > 0};
+  }
+
   function groepSamenvatting(lj){
     var was = S.leerjaar;
     S.leerjaar = lj;
@@ -3808,9 +3945,13 @@
     bewaar();
   }
 
-  /* Eén rij in de onderwerpenlijst: naam, een stoplichtje of hij aanstaat, en
-     de drie standen. Bij "volgt groep" staat erbij wat dat op dit moment betekent. */
   /* Hele euro's, halve euro's of tot op de cent — of gewoon wat de groep zegt. */
+  function geldStapNu(){
+    var uit = GELDSTAPPEN[0];
+    GELDSTAPPEN.forEach(function(g){ if(g.stap === S.geldStap) uit = g; });
+    return uit;
+  }
+
   function geldStapRij(){
     var uit = '<div class="keuzerij"><span class="standen">';
     GELDSTAPPEN.forEach(function(g){
@@ -3832,35 +3973,221 @@
     return uit + '</span></div><p class="voorbeeld" id="puntmoment-vb"></p></div>';
   }
 
-  function schakelRij(o){
-    var stand = S.aan[o.id] === true ? "aan" : S.aan[o.id] === false ? "uit" : "volgt";
+  /* ----- de onderwerpenlijst in de instellingen -----
+     De kop van een rij en de knoppen eronder staan los van elkaar, zodat een klik
+     alleen de kop hoeft te hertekenen en de rij daarbij open kan blijven staan. */
+
+  function owStand(id){
+    return S.aan[id] === true ? "aan" : S.aan[id] === false ? "uit" : "volgt";
+  }
+
+  function standKnoppen(o){
+    var stand = owStand(o.id);
+    return '<span class="standen">' +
+             '<button type="button" class="stand' + (stand === "uit" ? " nu" : "") +
+               '" data-schakel="' + o.id + '" data-stand="uit">uit</button>' +
+             '<button type="button" class="stand' + (stand === "volgt" ? " nu" : "") +
+               '" data-schakel="' + o.id + '" data-stand="volgt">volgt groep</button>' +
+             '<button type="button" class="stand' + (stand === "aan" ? " nu" : "") +
+               '" data-schakel="' + o.id + '" data-stand="aan">aan</button>' +
+           '</span>';
+  }
+
+  function standUitleg(o){
+    var stand = owStand(o.id);
+    if(stand === "aan") return "altijd aan, ook onder groep " + o.vanaf;
+    if(stand === "uit") return "uitgezet";
+    return "vanaf groep " + o.vanaf + " · staat nu " + (zichtbaar(o.id) ? "aan" : "uit");
+  }
+
+  /* Wijkt het getalbereik af van wat de groep zou geven? Bij plus, min, keer en
+     deel staat er altijd iets in S.bereik, dus daar helpt alleen vergelijken. */
+  function eigenBereik(id){
+    if(klassiekBereik(id)){
+      var g = groepBereik(S.leerjaar)[id], e = S.bereik[id];
+      return !!(g && e && (g.van !== e.van || g.tot !== e.tot));
+    }
+    return !!S.bereik[id];
+  }
+
+  /* De regel onder de naam van een dichtgeklapt onderwerp: staat het aan, en met
+     welke getallen. Zo hoef je niet open te klappen om te zien wat er geldt. */
+  function owSamenvatting(o){
+    var delen = [];
+    var stand = owStand(o.id);
+    delen.push(stand === "uit" ? "uit"
+             : stand === "aan" ? "altijd aan"
+             : (zichtbaar(o.id) ? "aan" : "uit") + ", volgt de groep");
+
+    if(o.id === "tafels") delen.push(tafelsKort().toLowerCase());
+    else if(o.id === "klok") delen.push(klokKort().toLowerCase());
+    else {
+      var b = huidigBereik(o.id);
+      if(b){
+        delen.push((typeof b.van === "number" ? b.van + " t/m " + b.tot : "t/m " + b.tot) +
+                   (eigenBereik(o.id) ? " (zelf)" : ""));
+      }
+      if(o.id === "geld" && S.geldStap) delen.push(geldStapNu().naam);
+    }
+    return delen.join(" · ");
+  }
+
+  /* de onderwerpen van één vak, in dezelfde volgorde als op het beginscherm */
+  function vakOnderwerpen(vakId){
+    var uit = [];
+    onderwerpLijst().forEach(function(o){ if(o.vak === vakId && !o.meta) uit.push(o); });
+    uit.sort(function(a, b){ return (a.orde || 50) - (b.orde || 50); });
+    return uit;
+  }
+
+  function vakTelling(vakId){
+    var lijst = vakOnderwerpen(vakId);
+    var aan = 0, eigen = 0;
+    lijst.forEach(function(o){
+      if(zichtbaar(o.id)) aan++;
+      if(eigenBereik(o.id) || (o.id === "geld" && S.geldStap)) eigen++;
+    });
+    return aan + " van de " + lijst.length + " aan" +
+           (eigen ? " · " + eigen + " zelf ingesteld" : "");
+  }
+
+  /* de hele inhoud van één samenvouwbare kop; apart, omdat een klik alleen dit
+     stukje hoeft te vervangen */
+  function owKop(o){
     var nuAan = zichtbaar(o.id);
-    var onder = stand === "volgt"
-      ? "vanaf groep " + o.vanaf + " · staat nu " + (nuAan ? "aan" : "uit")
-      : (stand === "aan" ? "altijd aan, ook onder groep " + o.vanaf : "uitgezet");
-    return '<div class="schakelrij">' +
-             '<span class="naam"><b class="bol ' + (nuAan ? "aan" : "uit") + '" ' +
-               'title="' + (nuAan ? "staat aan" : "staat uit") + '"></b>' + o.naam +
-               '<i>' + onder + '</i></span>' +
-             '<span class="standen">' +
-               '<button type="button" class="stand' + (stand === "uit" ? " nu" : "") +
-                 '" data-schakel="' + o.id + '" data-stand="uit">uit</button>' +
-               '<button type="button" class="stand' + (stand === "volgt" ? " nu" : "") +
-                 '" data-schakel="' + o.id + '" data-stand="volgt">volgt groep</button>' +
-               '<button type="button" class="stand' + (stand === "aan" ? " nu" : "") +
-                 '" data-schakel="' + o.id + '" data-stand="aan">aan</button>' +
-             '</span></div>';
+    return '<b class="bol ' + (nuAan ? "aan" : "uit") + '" ' +
+             'title="' + (nuAan ? "staat aan" : "staat uit") + '"></b>' +
+           '<span class="merk" style="background:' + o.kleur + '">' + o.teken + '</span>' +
+           '<span class="ownaam">' + o.naam + '</span>' +
+           '<span class="owkort">' + owSamenvatting(o) + '</span>';
+  }
+
+  /* Waarom er bij dit onderwerp geen getal in te stellen valt. Die uitleg hoort bij
+     het onderwerp zelf, niet in een alinea onderaan het scherm. */
+  function geenBereikUitleg(o){
+    if(o.id === "deeltafels") return "Volgt de tafels die je bij Tafels kiest.";
+    if(o.id === "afronden") return "Hoe moeilijk dit is hangt niet aan één getal maar aan " +
+                                   "waar je op afrondt. Dat volgt de groep.";
+    return "Hoe moeilijk dit is hangt niet aan één getal maar aan de soort vraag. " +
+           "Dat volgt de groep.";
+  }
+
+  /* Het uitgeklapte deel van een rij: eerst de drie standen, daarna wat er bij dit
+     onderwerp valt in te stellen. Elk onderwerp valt in precies één van vier
+     gevallen, en het laatste legt uit waarom er niets te kiezen is. */
+  function owDetail(o){
+    var uit = '<div class="keuzerij">' + standKnoppen(o) + '</div>';
+
+    if(klassiekBereik(o.id)){
+      var r = null;
+      BEREIKEN.forEach(function(x){ if(x.id === o.id) r = x; });
+      var b = S.bereik[o.id];
+      return uit + '<div class="velden">' +
+               '<label for="' + o.id + '-van">van <input type="number" inputmode="numeric" ' +
+                 'id="' + o.id + '-van" data-bereik="' + o.id + '" min="0" max="' + r.grens +
+                 '" value="' + b.van + '"></label>' +
+               '<label for="' + o.id + '-tot">tot en met <input type="number" inputmode="numeric" ' +
+                 'id="' + o.id + '-tot" data-bereik="' + o.id + '" min="0" max="' + r.grens +
+                 '" value="' + b.tot + '"></label>' +
+             '</div>' +
+             '<p class="voorbeeld" id="' + o.id + '-vb">Bijvoorbeeld: ' +
+               voorbeeldSom(o.id, b.van, b.tot) + '</p>' +
+             (o.id === "min"
+               ? '<p class="voorbeeld">Het grootste getal komt altijd vooraan, dus de uitkomst ' +
+                 'wordt nooit negatief.</p>'
+               : o.id === "deel"
+                 ? '<p class="voorbeeld">Gaat altijd zonder rest; daarvoor is er ' +
+                   '<b>Deel met rest</b>.</p>'
+                 : '');
+    }
+
+    var basis = niveauBereik(o.id);
+    if(basis){
+      var h = huidigBereik(o.id);
+      var hint = (o.bereik && o.bereik.uitleg) || "";
+      uit += '<div class="velden">';
+      if(basis.van !== null){
+        uit += '<label for="b-' + o.id + '-van">van <input type="number" inputmode="numeric" ' +
+               'id="b-' + o.id + '-van" data-anderbereik="' + o.id + '" min="0" max="100000" ' +
+               'value="' + h.van + '"></label>';
+      }
+      uit += '<label for="b-' + o.id + '-tot">tot en met <input type="number" inputmode="numeric" ' +
+             'id="b-' + o.id + '-tot" data-anderbereik="' + o.id + '" min="1" max="100000" ' +
+             'value="' + h.tot + '"></label></div>';
+      if(o.id === "geld") uit += geldStapRij();
+      return uit + '<p class="voorbeeld" id="b-' + o.id + '-vb">' + hint + (hint ? " · " : "") +
+             (S.bereik[o.id]
+               ? "zelf ingesteld; groep " + effGroep(o.id) + " geeft " +
+                 (basis.van !== null ? basis.van + " t/m " : "t/m ") + basis.tot
+               : "volgt groep " + effGroep(o.id)) + '</p>';
+    }
+
+    /* De tafels en het klokkijken hebben hun eigen scherm; van hieruit kom je er nu ook. */
+    if(o.kiezer === "tafels"){
+      return uit + '<button class="owkiezer" type="button" data-kiezer="tafels">' +
+             'Tafels kiezen…</button><p class="voorbeeld">' + tafelsKort() + '.</p>';
+    }
+    if(o.kiezer === "klok"){
+      return uit + '<button class="owkiezer" type="button" data-kiezer="klok">' +
+             'Klokkijken instellen…</button><p class="voorbeeld">' + klokKort() + '.</p>';
+    }
+    return uit + '<p class="voorbeeld">' + geenBereikUitleg(o) + '</p>';
+  }
+
+  /* Eén lijst voor alles: of een onderwerp aanstaat én met welke getallen staan in
+     dezelfde rij. Twee aparte lijsten met dezelfde vaknamen lieten je raden waar je
+     moest zijn. */
+  function owSectie(){
+    var html = '<section class="sectie" style="margin-top:22px">' +
+               '<h2>Wat oefent ' + veiligeTekst(S.naam) + ', en met welke getallen?</h2>' +
+               '<p class="uitlegregel">Elk onderwerp volgt standaard de groep: of het op het ' +
+               'beginscherm staat, én met welke getallen. Tik een onderwerp open om er iets ' +
+               'anders van te maken.</p>';
+    VAKKEN.forEach(function(vak){
+      var lijst = vakOnderwerpen(vak.id);
+      if(!lijst.length) return;
+      html += '<details class="vakblok" data-open="vak:' + vak.id + '"' +
+              (instelOpen["vak:" + vak.id] ? " open" : "") + '><summary>' +
+              '<span class="vaknaam">' + vak.naam + '</span>' +
+              '<span class="vaktelling">' + vakTelling(vak.id) + '</span>' +
+              '</summary><div class="kaart"><div class="owlijst">';
+      lijst.forEach(function(o){
+        html += '<details class="owblok" data-ow="' + o.id + '" data-open="ow:' + o.id + '"' +
+                (instelOpen["ow:" + o.id] ? " open" : "") + '>' +
+                '<summary>' + owKop(o) + '</summary>' +
+                '<div class="owdetail">' + owDetail(o) + '</div></details>';
+      });
+      html += '</div></div></details>';
+    });
+    return html + '</section>';
   }
 
   /* Het instellingenscherm werd te lang om in één keer te overzien. De vlakken
-     staan er alle drie in en worden alleen verborgen, zodat Opslaan ook de
-     velden van een tabblad kan lezen dat niet in beeld staat. */
+     staan er alle drie in en worden alleen verborgen: zo blijven de opengeklapte
+     rijen en de half ingetypte velden van een ander tabblad gewoon staan. */
   var TABS = [
     {id:"niveau", naam:"Niveau"},
     {id:"sparen", naam:"Sparen"},
     {id:"app",    naam:"De app"}
   ];
   var instelTab = "niveau";
+  /* Welke vakken en onderwerpen opengeklapt staan, en waar je stond. Zo blijf je na
+     een groepswissel of een terugzetting op dezelfde plek in het scherm. */
+  var instelOpen = {};
+  var instelScroll = 0;
+  /* De schakelaars hangen aan #scherm, en dat element blijft staan als de inhoud
+     wordt vervangen. Zonder deze verwijzing zou elke hertekening er een luisteraar
+     bij plakken, en de tweede zou dan over een al vervangen rij struikelen. */
+  var instelKlik = null;
+
+  /* Opnieuw tekenen zonder je plek kwijt te raken: welke vakken open stonden zit
+     in instelOpen, de scrollpositie onthouden we hier. */
+  function hertekenInstellingen(){
+    if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    instelScroll = window.pageYOffset || document.documentElement.scrollTop || 0;
+    toonInstellingen();
+    window.scrollTo(0, instelScroll);
+  }
 
   function toonInstellingen(){
     verlaatRonde();
@@ -3876,7 +4203,16 @@
 
     html += '<div class="tabvlak" data-vlak="niveau"' + (instelTab === 'niveau' ? '' : ' hidden') + '>';
 
-    html += '<section class="sectie"><h2>In welke groep zit ' + veiligeTekst(S.naam) + '?</h2>';
+    /* Bovenaan in één regel wat er afwijkt, met een knop die alleen dít tabblad
+       terugzet — de knop onderaan zet ook de stickerinstellingen terug. */
+    var afw = afwijkingKaart();
+    html += '<section class="sectie"><div class="kaart afwijkkaart">' +
+            '<p id="afwijk-vb">' + afw.zin + '</p>' +
+            '<button class="knop stil" type="button" id="herstel-niveau" style="flex:0 1 auto"' +
+            (afw.eigen ? '' : ' hidden') + '>Terug naar groep ' + S.leerjaar + '</button>' +
+            '</div></section>';
+
+    html += '<section class="sectie" style="margin-top:22px"><h2>In welke groep zit ' + veiligeTekst(S.naam) + '?</h2>';
     html += '<p class="uitlegregel">De groep bepaalt hoe moeilijk alles is en welke onderwerpen ' +
             veiligeTekst(S.naam) + ' op het beginscherm ziet. <b>Let op:</b> een andere groep kiezen zet de getallen, ' +
             'de tafels en het klokniveau opnieuw.</p>';
@@ -3888,120 +4224,13 @@
     html += '</div><p class="voorbeeld" id="groep-vb">' + groepSamenvatting(S.leerjaar) + '</p></div>';
     html += '</section>';
 
-    html += '<section class="sectie" style="margin-top:22px"><h2>Welke onderwerpen ziet ' + veiligeTekst(S.naam) + '?</h2>';
-    html += '<p class="uitlegregel">Standaard volgt elk onderwerp de groep. Je kunt er hier ' +
-            'eentje alvast aanzetten of juist weglaten.</p>';
-    /* Per vak ingeklapt: zesentwintig rijen open maken het scherm onwerkbaar lang. */
-    VAKKEN.forEach(function(vak){
-      var lijst = [];
-      onderwerpLijst().forEach(function(o){ if(o.vak === vak.id && !o.meta) lijst.push(o); });
-      if(!lijst.length) return;
-      lijst.sort(function(a, b){ return (a.orde || 50) - (b.orde || 50); });
-      var aanTal = 0;
-      lijst.forEach(function(o){ if(zichtbaar(o.id)) aanTal++; });
-
-      html += '<details class="vakblok"><summary>' +
-              '<span class="vaknaam">' + vak.naam + '</span>' +
-              '<span class="vaktelling">' + aanTal + ' van de ' + lijst.length + ' aan</span>' +
-              '</summary><div class="kaart"><div class="schakelaars">';
-      lijst.forEach(function(o){
-        html += schakelRij(o);
-      });
-      html += '</div></div></details>';
-    });
-    html += '</section>';
-
-    html += '<section class="sectie" style="margin-top:22px"><h2>Welke getallen mag ' + veiligeTekst(S.naam) + ' krijgen?</h2>';
-    html += '<p class="uitlegregel">Elk onderwerp krijgt zijn getallen van de groep, maar je kunt ' +
-            'ze hier bijstellen. Een andere groep kiezen zet ze allemaal weer terug. ' +
-            'Bij min komt het grootste getal altijd vooraan, dus de uitkomst wordt nooit negatief. ' +
-            'Bij deel gaat het altijd zonder rest. De tafels en het klokkijken hebben hun eigen keuzescherm.</p>';
-    html += '<div class="kaart"><div class="instellingen">';
-    BEREIKEN.forEach(function(r){
-      var b = S.bereik[r.id];
-      html += '<div class="instelling">' +
-                '<div class="titel"><span class="merk ' + r.id + '">' + r.teken + '</span><b>' + r.naam + '</b></div>' +
-                '<div class="velden">' +
-                  '<label for="' + r.id + '-van">van <input type="number" inputmode="numeric" id="' + r.id + '-van" ' +
-                    'data-bereik="' + r.id + '" min="0" max="' + r.grens + '" value="' + b.van + '"></label>' +
-                  '<label for="' + r.id + '-tot">tot en met <input type="number" inputmode="numeric" id="' + r.id + '-tot" ' +
-                    'data-bereik="' + r.id + '" min="0" max="' + r.grens + '" value="' + b.tot + '"></label>' +
-                '</div>' +
-                '<p class="voorbeeld" id="' + r.id + '-vb">Bijvoorbeeld: ' + voorbeeldSom(r.id, b.van, b.tot) + '</p>' +
-              '</div>';
-    });
-    html += '</div></div>';
-
-    /* De overige onderwerpen, per vak ingeklapt. Alleen wie een bovengrens heeft
-       staat erbij; de rest volgt de groep of heeft een eigen keuzescherm. */
-    var anders = bereikLijst();
-    VAKKEN.forEach(function(vak){
-      var lijst = anders.filter(function(o){ return o.vak === vak.id; });
-      if(!lijst.length) return;
-      var gezet = lijst.filter(function(o){ return !!S.bereik[o.id]; }).length;
-      html += '<details class="vakblok"><summary>' +
-              '<span class="vaknaam">' + vak.naam + '</span>' +
-              '<span class="vaktelling">' + (gezet ? gezet + " zelf ingesteld" : "volgt de groep") + '</span>' +
-              '</summary><div class="kaart"><div class="instellingen">';
-      lijst.forEach(function(o){
-        var b = huidigBereik(o.id);
-        var basis = niveauBereik(o.id);
-        var eigen = !!S.bereik[o.id];
-        var hint = (o.bereik && o.bereik.uitleg) || "";
-        html += '<div class="instelling">' +
-                  /* het merkje krijgt de eigen kleur van het onderwerp; zonder achtergrond
-                     valt een teken als ⌗ of ½ weg tegen de witte kaart */
-                  '<div class="titel"><span class="merk" style="background:' + o.kleur + '">' +
-                  o.teken + '</span><b>' + o.naam + '</b></div>' +
-                  '<div class="velden">';
-        if(basis.van !== null){
-          html += '<label for="b-' + o.id + '-van">van <input type="number" inputmode="numeric" ' +
-                  'id="b-' + o.id + '-van" data-anderbereik="' + o.id + '" min="0" max="100000" ' +
-                  'value="' + b.van + '"></label>';
-        }
-        html += '<label for="b-' + o.id + '-tot">tot en met <input type="number" inputmode="numeric" ' +
-                'id="b-' + o.id + '-tot" data-anderbereik="' + o.id + '" min="1" max="100000" ' +
-                'value="' + b.tot + '"></label>' +
-                '</div>';
-        if(o.id === "geld") html += geldStapRij();
-        html += '<p class="voorbeeld" id="b-' + o.id + '-vb">' + hint +
-                (hint ? " · " : "") + (eigen ? "zelf ingesteld; groep " + effGroep(o.id) + " geeft " +
-                  (basis.van !== null ? basis.van + " t/m " : "t/m ") + basis.tot
-                  : "volgt groep " + effGroep(o.id)) + '</p>' +
-                '</div>';
-      });
-      html += '</div></div></details>';
-    });
-
-    /* wat er niet bij staat, en waarom: anders blijft het gissen */
-    var zonder = [];
-    onderwerpLijst().forEach(function(o){
-      if(o.meta || klassiekBereik(o.id) || niveauBereik(o.id)) return;
-      if(o.id === "tafels" || o.id === "klok" || o.id === "deeltafels") return;
-      zonder.push(o.naam);
-    });
-    if(zonder.length){
-      html += '<p class="uitlegregel" style="margin-top:14px">Bij <b>' + zonder.join('</b>, <b>') +
-              '</b> bepaalt niet één getal hoe moeilijk het is — bij afronden hangt het aan ' +
-              'waar je op afrondt, bij de andere aan de soort vraag. Die volgen dus alleen de groep, ' +
-              'net als de tafels en het klokkijken, die hun eigen keuzescherm hebben.</p>';
-    }
-    html += '</section>';
+    html += owSectie();
 
     html += '</div>';
 
     html += '<div class="tabvlak" data-vlak="sparen"' + (instelTab === 'sparen' ? '' : ' hidden') + '>';
 
-    html += '<section class="sectie"><h2>Punten, stickers en beloningen</h2>' +
-            '<div class="kaart"><div class="instellingen"><div class="instelling">' +
-            '<div class="titel"><span class="merk sticker">★</span><b>Sparen voor stickers</b></div>' +
-            '<div class="velden"><label class="vinkje" for="sparen-aan">' +
-              '<input type="checkbox" id="sparen-aan"' + (sparenAan() ? " checked" : "") + '>' +
-              ' stickers en beloningen gebruiken</label></div>' +
-            '<p class="voorbeeld" id="sparen-vb"></p>' +
-            '</div>' + puntMomentBlok() + '</div></div></section>';
-
-    html += '<section class="sectie" style="margin-top:22px"><h2>Hoe lang is een reeks?</h2>';
+    html += '<section class="sectie"><h2>Hoe lang is een reeks?</h2>';
     html += '<div class="kaart"><div class="instellingen">';
     html += '<div class="instelling">' +
               '<div class="titel"><span class="merk ronde">●</span><b>Gewoon oefenen</b></div>' +
@@ -4015,26 +4244,30 @@
               '<div class="velden"><label for="challenge-lengte">' +
                 '<input type="number" inputmode="numeric" id="challenge-lengte" data-lengte="1" min="5" max="100" value="' +
                 S.challengeLengte + '"> vragen per challenge</label></div>' +
-              '<div class="velden" data-spaarveld="1"><label for="challenge-stickers">levert ' +
-                '<input type="number" inputmode="numeric" id="challenge-stickers" data-lengte="1" min="0" max="10" value="' +
-                S.challengeStickers + '"> stickers op</label></div>' +
-              '<div class="velden" data-spaarveld="1"><label class="vinkje" for="super-aan">' +
-                '<input type="checkbox" id="super-aan" data-lengte="1"' + (S.superAan ? " checked" : "") + '>' +
-                ' bij alles goed ook de supersticker</label></div>' +
               '<p class="voorbeeld" id="lengte-vb"></p>' +
             '</div>';
     html += '</div></div></section>';
 
-    html += '<section class="sectie" style="margin-top:22px" data-spaarveld="1">' +
-            '<h2>Sparen voor een beloning</h2>';
-    html += '<div class="kaart"><div class="instellingen">';
-    html += '<div class="instelling">' +
+    /* Dit hoort niet bij het sparen: ook zonder stickers bepaalt het wanneer een
+       punt telt. Daarom een eigen kopje en geen data-spaarveld. */
+    html += '<section class="sectie" style="margin-top:22px"><h2>Wanneer tellen de punten?</h2>';
+    html += '<div class="kaart"><div class="instellingen">' + puntMomentBlok() + '</div></div></section>';
+
+    html += '<section class="sectie" style="margin-top:22px"><h2>Stickers en beloningen</h2>';
+    html += '<div class="kaart"><div class="instellingen"><div class="instelling">' +
+            '<div class="titel"><span class="merk sticker">★</span><b>Sparen voor stickers</b></div>' +
+            '<div class="velden"><label class="vinkje" for="sparen-aan">' +
+              '<input type="checkbox" id="sparen-aan"' + (sparenAan() ? " checked" : "") + '>' +
+              ' stickers en beloningen gebruiken</label></div>' +
+            '<p class="voorbeeld" id="sparen-vb"></p>' +
+            '</div>';
+    html += '<div class="instelling" data-spaarveld="1">' +
               '<div class="titel"><span class="merk sticker">★</span><b>Punten voor 1 sticker</b></div>' +
               '<div class="velden"><label for="per-sticker">elke ' +
                 '<input type="number" inputmode="numeric" id="per-sticker" data-spaar="1" min="1" max="100" value="' +
                 S.puntenPerSticker + '"> goede antwoorden</label></div>' +
             '</div>';
-    html += '<div class="instelling">' +
+    html += '<div class="instelling" data-spaarveld="1">' +
               '<div class="titel"><span class="merk beloning">🏆</span><b>Stickers voor 1 beloning</b></div>' +
               '<div class="velden"><label for="per-beloning">elke ' +
                 '<input type="number" inputmode="numeric" id="per-beloning" data-spaar="1" min="1" max="50" value="' +
@@ -4043,6 +4276,16 @@
               '<p class="voorbeeld">Let op: verander je dit later, dan worden de ' +
               'stickervellen opnieuw ingedeeld. Een ouder vel bevat dan andere stickers ' +
               'dan destijds, en de afgevinkte beloningen schuiven mee.</p>' +
+            '</div>';
+    html += '<div class="instelling" data-spaarveld="1">' +
+              '<div class="titel"><span class="merk uitdaging">🏅</span><b>Een gehaalde challenge</b></div>' +
+              '<div class="velden"><label for="challenge-stickers">levert ' +
+                '<input type="number" inputmode="numeric" id="challenge-stickers" data-lengte="1" min="0" max="10" value="' +
+                S.challengeStickers + '"> stickers op</label></div>' +
+              '<div class="velden"><label class="vinkje" for="super-aan">' +
+                '<input type="checkbox" id="super-aan" data-lengte="1"' + (S.superAan ? " checked" : "") + '>' +
+                ' bij alles goed ook de supersticker</label></div>' +
+              '<p class="voorbeeld" id="challenge-vb"></p>' +
             '</div>';
     html += '</div></div></section>';
 
@@ -4110,15 +4353,26 @@
     html += '</div>';
 
     html += '<div class="knoppen" style="margin-top:18px">' +
-            '<button class="knop" type="button" id="bewaar-knop">Opslaan</button>' +
-            '<button class="knop stil" type="button" id="standaard-knop">Standaard terugzetten</button>' +
-            '<button class="knop stil" type="button" id="terug">Terug</button></div>';
+            '<button class="knop" type="button" id="terug">Klaar</button>' +
+            '<button class="knop stil" type="button" id="standaard-knop">Alles terug naar de standaard</button>' +
+            '</div>';
+    html += '<p class="voorbeeld" style="margin-top:10px;text-align:center">' +
+            'Alles wat je hier verandert, is meteen bewaard.</p>';
     scherm.innerHTML = html;
+
+    /* Onthouden wat er open staat. Een toggle bubbelt niet, dus dit kan niet
+       gedelegeerd; de luisteraars verdwijnen met de rijen waar ze aan hangen. */
+    [].forEach.call(scherm.querySelectorAll("[data-open]"), function(d){
+      d.addEventListener("toggle", function(){
+        instelOpen[d.getAttribute("data-open")] = d.open;
+      });
+    });
 
     /* van tabblad wisselen: alleen tonen en verbergen, niets opnieuw opbouwen,
        zodat half ingevulde velden blijven staan */
     [].forEach.call(scherm.querySelectorAll("[data-tab]"), function(knop){
       knop.addEventListener("click", function(){
+        if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
         instelTab = knop.getAttribute("data-tab");
         [].forEach.call(scherm.querySelectorAll("[data-tab]"), function(k){
           var aan = k.getAttribute("data-tab") === instelTab;
@@ -4129,6 +4383,7 @@
           v.hidden = v.getAttribute("data-vlak") !== instelTab;
         });
         scherm.scrollIntoView({block:"start"});
+        instelScroll = 0;
       });
     });
 
@@ -4147,14 +4402,15 @@
         var g = parseInt(k.getAttribute("data-groep"), 10);
         if(g === S.leerjaar && S.leerjaarGekozen) return;
         zetGroep(g);
-        toonInstellingen();
+        hertekenInstellingen();
         toast("Groep " + g + " ingesteld. De getallen en de tafels staan nu daarop.");
       });
     });
 
     /* Eén luisteraar voor alle schakelaars. De rijen worden na een klik opnieuw
        getekend, dus losse luisteraars per knop zouden zich opstapelen. */
-    scherm.addEventListener("click", function(e){
+    if(instelKlik) scherm.removeEventListener("click", instelKlik);
+    instelKlik = function(e){
       var knop = e.target;
       while(knop && knop !== scherm && !knop.getAttribute("data-schakel")) knop = knop.parentNode;
       if(!knop || knop === scherm) return;
@@ -4166,40 +4422,67 @@
       else delete S.aan[id];
       bewaar();
 
-      /* alleen deze rij opnieuw tekenen, zodat het ingeklapte deel blijft staan */
+      /* De knoppen zelf bijwerken, en alleen de kop van deze rij opnieuw tekenen.
+         Een summary vervangen sluit de details niet, dus de rij blijft open staan. */
       var rij = knop;
-      while(rij && rij.className !== "schakelrij") rij = rij.parentNode;
+      while(rij && !rij.getAttribute("data-ow")) rij = rij.parentNode;
       if(!rij) return;
-      var blok = rij.parentNode;
-      var houder = document.createElement("div");
-      houder.innerHTML = schakelRij(ONDERWERPEN[id]);
-      blok.replaceChild(houder.firstChild, rij);
+      [].forEach.call(rij.querySelectorAll("[data-stand]"), function(b){
+        b.classList.toggle("nu", b === knop);
+      });
+      var kop = rij.querySelector("summary");
+      if(kop) kop.innerHTML = owKop(ONDERWERPEN[id]);
 
       /* en de teller in de kop van dit vak */
-      var details = blok;
-      while(details && details.tagName !== "DETAILS") details = details.parentNode;
-      if(!details) return;
-      var telling = details.querySelector(".vaktelling");
-      var knoppen = details.querySelectorAll('[data-stand="aan"]');
-      var aantalAan = 0;
-      [].forEach.call(knoppen, function(b){
-        if(zichtbaar(b.getAttribute("data-schakel"))) aantalAan++;
-      });
-      if(telling) telling.textContent = aantalAan + " van de " + knoppen.length + " aan";
-    });
+      var vak = rij.parentNode;
+      while(vak && !(vak.getAttribute && (vak.getAttribute("data-open") || "").indexOf("vak:") === 0)){
+        vak = vak.parentNode;
+      }
+      if(!vak) return;
+      var telling = vak.querySelector(".vaktelling");
+      if(telling) telling.textContent = vakTelling(vak.getAttribute("data-open").slice(4));
+      ververAfwijkingen();
+    };
+    scherm.addEventListener("click", instelKlik);
 
     function ververLengte(){
       var lang = schoonGetal(document.getElementById("challenge-lengte").value, 5, 100, S.challengeLengte);
+      document.getElementById("lengte-vb").innerHTML =
+        "Gehaald met <b>" + challengeNodig(lang) + " van de " + lang + "</b> goed.";
+      ververChallenge();
+    }
+
+    function ververChallenge(){
+      var regel = document.getElementById("challenge-vb");
+      if(!regel) return;
       var st = schoonGetal(document.getElementById("challenge-stickers").value, 0, 10, S.challengeStickers);
       var super_ = !!document.getElementById("super-aan").checked;
-      document.getElementById("lengte-vb").innerHTML =
-        "Gehaald met <b>" + challengeNodig(lang) + " van de " + lang + "</b> goed, en dat levert <b>" +
-        st + (st === 1 ? " sticker" : " stickers") + "</b> op" +
-        (super_ ? ", bij alles goed <b>" + (st + 1) + "</b>." : ".");
+      regel.innerHTML = st
+        ? "Een gehaalde challenge levert <b>" + st + (st === 1 ? " sticker" : " stickers") + "</b> op" +
+          (super_ ? ", bij alles goed <b>" + (st + 1) + "</b>." : ".")
+        : "Een gehaalde challenge levert geen stickers op" +
+          (super_ ? ", behalve de supersticker bij alles goed." : ".");
     }
+    /* de lengtes en de challengebeloning; grenzen gelijk aan wat het veld toestaat */
+    var LENGTEVELDEN = {
+      "ronde-lengte":     {min:3, max:50,  standaard:RONDE_LENGTE,      sleutel:"rondeLengte"},
+      "challenge-lengte": {min:5, max:100, standaard:CHALLENGE_LENGTE,  sleutel:"challengeLengte"},
+      "challenge-stickers": {min:0, max:10, standaard:2,                sleutel:"challengeStickers"}
+    };
     [].forEach.call(scherm.querySelectorAll("[data-lengte]"), function(veld){
       veld.addEventListener("input", ververLengte);
-      veld.addEventListener("change", ververLengte);
+      veld.addEventListener("change", function(){
+        var r = LENGTEVELDEN[veld.id];
+        if(r){
+          S[r.sleutel] = schoonGetal(veld.value, r.min, r.max, r.standaard);
+          veld.value = S[r.sleutel];
+        } else if(veld.id === "super-aan"){
+          S.superAan = !!veld.checked;
+        }
+        bewaar();
+        ververLengte();
+        ververAfwijkingen();
+      });
     });
     ververLengte();
 
@@ -4209,8 +4492,22 @@
       document.getElementById("spaar-vb").innerHTML =
         "Een beloning kost dan <b>" + (perSticker * perBeloning) + "</b> goede antwoorden.";
     }
+    var SPAARVELDEN = {
+      "per-sticker":  {min:1, max:100, standaard:PUNTEN_PER_STICKER,    sleutel:"puntenPerSticker"},
+      "per-beloning": {min:1, max:50,  standaard:STICKERS_PER_BELONING, sleutel:"stickersPerBeloning"}
+    };
     [].forEach.call(scherm.querySelectorAll("[data-spaar]"), function(veld){
       veld.addEventListener("input", ververSpaar);
+      veld.addEventListener("change", function(){
+        var r = SPAARVELDEN[veld.id];
+        if(!r) return;
+        S[r.sleutel] = schoonGetal(veld.value, r.min, r.max, r.standaard);
+        veld.value = S[r.sleutel];
+        bewaar();
+        ververSpaar();
+        tekenScore();        /* het aantal stickers en beloningen verandert mee */
+        ververAfwijkingen();
+      });
     });
     ververSpaar();
 
@@ -4227,17 +4524,25 @@
         sec.hidden = !aan;
       });
     }
-    sparenVak.addEventListener("change", ververSparen);
+    sparenVak.addEventListener("change", function(){
+      S.sparen = !!sparenVak.checked;
+      bewaar();
+      ververSparen();
+      tekenScore();
+      ververAfwijkingen();
+    });
     ververSparen();
 
     /* wanneer de punten geteld worden */
     [].forEach.call(scherm.querySelectorAll("[data-puntmoment]"), function(k){
       k.addEventListener("click", function(){
         S.puntenDirect = k.getAttribute("data-puntmoment") === "direct";
+        bewaar();
         [].forEach.call(scherm.querySelectorAll("[data-puntmoment]"), function(a){
           a.classList.toggle("nu", a === k);
         });
         ververPuntMoment();
+        ververAfwijkingen();
       });
     });
     function ververPuntMoment(){
@@ -4249,22 +4554,51 @@
     }
     ververPuntMoment();
 
+    /* de regel bovenaan die vertelt wat er van de groep afwijkt */
+    function ververAfwijkingen(){
+      var regel = document.getElementById("afwijk-vb");
+      var knop = document.getElementById("herstel-niveau");
+      if(!regel) return;
+      var a = afwijkingKaart();
+      regel.textContent = a.zin;
+      if(knop) knop.hidden = !a.eigen;
+    }
+
+    if(document.getElementById("herstel-niveau")){
+      document.getElementById("herstel-niveau").addEventListener("click", function(){
+        S.aan = {};
+        S.schuif = {};
+        S.geldStap = 0;
+        zetGroep(S.leerjaar);       /* zet de bereiken, de tafels en de klok terug, en bewaart */
+        hertekenInstellingen();
+        toast("De onderwerpen en de getallen volgen weer groep " + S.leerjaar + ".");
+      });
+    }
+
+    /* de tafels en het klokkijken hebben hun eigen scherm; Terug komt hier weer uit */
+    [].forEach.call(scherm.querySelectorAll("[data-kiezer]"), function(k){
+      k.addEventListener("click", function(){
+        if(k.getAttribute("data-kiezer") === "tafels") toonTafelkiezer(true);
+        else toonKlokkiezer(true);
+      });
+    });
+
     /* de nauwkeurigheid van de bedragen bij Geld */
     [].forEach.call(scherm.querySelectorAll("[data-geldstap]"), function(k){
       k.addEventListener("click", function(){
         S.geldStap = parseInt(k.getAttribute("data-geldstap"), 10) || 0;
+        bewaar();
         [].forEach.call(scherm.querySelectorAll("[data-geldstap]"), function(a){
           a.classList.toggle("nu", a === k);
         });
         ververGeldUitleg();
+        naWijziging("geld");
       });
     });
     function ververGeldUitleg(){
       var regel = document.getElementById("b-geld-vb");
       if(!regel) return;
-      var nu = GELDSTAPPEN[0];
-      GELDSTAPPEN.forEach(function(g){ if(g.stap === S.geldStap) nu = g; });
-      regel.textContent = "Bedragen: " + nu.uitleg + ".";
+      regel.textContent = "Bedragen: " + geldStapNu().uitleg + ".";
     }
     ververGeldUitleg();
 
@@ -4278,6 +4612,32 @@
       wwVeld.type = stondOpen ? "password" : "text";
       wwToon.textContent = stondOpen ? "Tonen" : "Verbergen";
       wwToon.setAttribute("aria-pressed", stondOpen ? "false" : "true");
+    });
+
+    /* Dit is het enige veld dat niet zomaar mee kan met "alles meteen": een code
+       van drie cijfers bestaat niet. Klopt het niet, dan zetten we de oude code
+       terug en zeggen we dat erbij — dan zie je altijd wat er echt geldt. */
+    var wwUitleg = document.getElementById("ww-vb");
+    wwVeld.addEventListener("input", function(){
+      var cijfers = String(wwVeld.value || "").replace(/\D/g, "").slice(0, 4);
+      if(wwVeld.value !== cijfers) wwVeld.value = cijfers;
+      if(wwUitleg){
+        wwUitleg.textContent = cijfers.length === 4
+          ? "Klaar — deze code geldt zodra je verder klikt."
+          : "Nog " + (4 - cijfers.length) + (4 - cijfers.length === 1 ? " cijfer." : " cijfers.");
+      }
+    });
+    wwVeld.addEventListener("change", function(){
+      var ww = String(wwVeld.value || "").replace(/\D/g, "");
+      if(ww.length === 4){
+        S.wachtwoord = ww;
+        bewaar();
+        if(wwUitleg) wwUitleg.textContent = "De nieuwe code is bewaard.";
+      } else {
+        wwVeld.value = S.wachtwoord;
+        if(wwUitleg) wwUitleg.textContent = "Een code is vier cijfers — de oude code staat er weer in.";
+      }
+      ververAfwijkingen();
     });
 
     /* De naam en de kleur: meteen laten zien wat het wordt, maar pas vastleggen
@@ -4298,13 +4658,30 @@
       });
     }
     naamVeld.addEventListener("input", ververNaam);
+    /* Pas bij het verlaten van het veld, niet bij elke toetsaanslag: zetAppIcoon
+       tekent vier iconen en stelt het manifest opnieuw samen. */
+    naamVeld.addEventListener("change", function(){
+      var nieuw = schoonNaam(naamVeld.value) || NAAM;
+      if(nieuw === S.naam) return;
+      S.naam = nieuw;
+      bewaar();
+      zetAppNaam();
+      zetAppIcoon();
+      hertekenInstellingen();   /* de naam staat ook in de koppen van dit scherm */
+    });
     [].forEach.call(scherm.querySelectorAll("[data-instelkleur]"), function(k){
       k.addEventListener("click", function(){
         gekozenKleur = k.getAttribute("data-instelkleur");
+        if(kleurBestaat(gekozenKleur)){
+          S.icoonKleur = gekozenKleur;
+          bewaar();
+          zetAppIcoon();
+        }
         [].forEach.call(scherm.querySelectorAll("[data-instelkleur]"), function(a){
           a.classList.toggle("aan", a === k);
         });
         ververNaam();
+        ververAfwijkingen();
       });
     });
     ververNaam();
@@ -4361,47 +4738,77 @@
       setTimeout(function(){ klaar(mislukt); }, 8000);
     });
 
-    document.getElementById("bewaar-knop").addEventListener("click", function(){
-      BEREIKEN.forEach(function(r){
-        S.bereik[r.id] = schoonBereik(r.id,
-          document.getElementById(r.id + "-van").value,
-          document.getElementById(r.id + "-tot").value);
-      });
-      /* de overige onderwerpen: alleen bewaren wat afwijkt van de groep, zodat een
-         onaangeraakt onderwerp de groep blijft volgen als die verandert */
-      bereikLijst().forEach(function(o){
-        var totVeld = document.getElementById("b-" + o.id + "-tot");
-        if(!totVeld) return;
-        var vanVeld = document.getElementById("b-" + o.id + "-van");
-        var nieuw = schoonAnderBereik(o.id, vanVeld ? vanVeld.value : null, totVeld.value);
-        var basis = niveauBereik(o.id);
-        if(nieuw.tot === basis.tot && (basis.van === null || nieuw.van === basis.van)) delete S.bereik[o.id];
-        else S.bereik[o.id] = nieuw;
-      });
-      S.puntenPerSticker = schoonGetal(document.getElementById("per-sticker").value, 1, 100, PUNTEN_PER_STICKER);
-      S.stickersPerBeloning = schoonGetal(document.getElementById("per-beloning").value, 1, 50, STICKERS_PER_BELONING);
-      S.rondeLengte = schoonGetal(document.getElementById("ronde-lengte").value, 3, 50, RONDE_LENGTE);
-      S.challengeLengte = schoonGetal(document.getElementById("challenge-lengte").value, 5, 100, CHALLENGE_LENGTE);
-      S.challengeStickers = schoonGetal(document.getElementById("challenge-stickers").value, 0, 10, 2);
-      S.superAan = !!document.getElementById("super-aan").checked;
-      S.sparen = !!document.getElementById("sparen-aan").checked;
+    /* ----- alles slaat meteen op -----
+       Een getalveld legt zich vast als je het verlaat, niet bij elke toetsaanslag:
+       tijdens het typen van 200 is 2 geen bedoelde waarde. Wat er wordt opgeslagen
+       schrijven we terug in het veld, want de opschoonfuncties verwisselen van en
+       tot en klemmen op de grenzen — zonder terugschrijven zou het scherm iets
+       anders tonen dan wat er geldt. */
 
-      /* wachtwoord: alleen overnemen als het echt vier cijfers zijn */
-      var ww = String(document.getElementById("wachtwoord").value || "").replace(/\D/g, "");
-      var wwGoed = ww.length === 4;
-      if(wwGoed) S.wachtwoord = ww;
-
-      /* naam en kleur: leeg of onbruikbaar valt terug op de standaardnaam */
-      var nieuweNaam = schoonNaam(document.getElementById("app-naam").value) || NAAM;
-      var uiterlijkAnders = nieuweNaam !== S.naam || gekozenKleur !== S.icoonKleur;
-      S.naam = nieuweNaam;
-      if(kleurBestaat(gekozenKleur)) S.icoonKleur = gekozenKleur;
-
+    function legVast(id){
+      var vanVeld = document.getElementById(id + "-van");
+      var totVeld = document.getElementById(id + "-tot");
+      if(!vanVeld || !totVeld) return;
+      var b = schoonBereik(id, vanVeld.value, totVeld.value);   /* altijd allebei lezen */
+      S.bereik[id] = b;
+      vanVeld.value = b.van;
+      totVeld.value = b.tot;
       bewaar();
-      if(uiterlijkAnders){ zetAppNaam(); zetAppIcoon(); }
-      tekenScore();
-      toonHome();
-      toast(wwGoed ? "Opgeslagen!" : "Opgeslagen — maar het wachtwoord moet vier cijfers zijn, dus dat is niet gewijzigd.");
+      ververVoorbeeld(id);
+      naWijziging(id);
+    }
+
+    /* de overige onderwerpen: alleen bewaren wat afwijkt van de groep, zodat een
+       onaangeraakt onderwerp de groep blijft volgen als die verandert */
+    function legAnderVast(id){
+      var totVeld = document.getElementById("b-" + id + "-tot");
+      if(!totVeld) return;
+      var vanVeld = document.getElementById("b-" + id + "-van");
+      var nieuw = schoonAnderBereik(id, vanVeld ? vanVeld.value : null, totVeld.value);
+      var basis = niveauBereik(id);
+      if(nieuw.tot === basis.tot && (basis.van === null || nieuw.van === basis.van)) delete S.bereik[id];
+      else S.bereik[id] = nieuw;
+      if(vanVeld) vanVeld.value = nieuw.van;
+      totVeld.value = nieuw.tot;
+      bewaar();
+      ververBereikUitleg(id);
+      naWijziging(id);
+    }
+
+    /* de regel onder de velden, die vertelt of dit de groep volgt of zelf gezet is */
+    function ververBereikUitleg(id){
+      var regel = document.getElementById("b-" + id + "-vb");
+      if(!regel) return;
+      if(id === "geld"){ ververGeldUitleg(); return; }
+      var o = ONDERWERPEN[id], basis = niveauBereik(id);
+      var hint = (o.bereik && o.bereik.uitleg) || "";
+      regel.innerHTML = hint + (hint ? " · " : "") +
+        (S.bereik[id] ? "zelf ingesteld; groep " + effGroep(id) + " geeft " +
+                        (basis.van !== null ? basis.van + " t/m " : "t/m ") + basis.tot
+                      : "volgt groep " + effGroep(id));
+    }
+
+    /* de kop van de rij en de telling van het vak lopen mee met wat je instelt */
+    function naWijziging(id){
+      var rij = scherm.querySelector('[data-ow="' + id + '"]');
+      if(rij){
+        var kop = rij.querySelector("summary");
+        if(kop) kop.innerHTML = owKop(ONDERWERPEN[id]);
+      }
+      var vak = ONDERWERPEN[id] && ONDERWERPEN[id].vak;
+      var vakBlok = vak && scherm.querySelector('[data-open="vak:' + vak + '"]');
+      if(vakBlok){
+        var telling = vakBlok.querySelector(".vaktelling");
+        if(telling) telling.textContent = vakTelling(vak);
+      }
+      ververAfwijkingen();
+    }
+
+    [].forEach.call(scherm.querySelectorAll("[data-bereik]"), function(veld){
+      veld.addEventListener("change", function(){ legVast(veld.getAttribute("data-bereik")); });
+    });
+    [].forEach.call(scherm.querySelectorAll("[data-anderbereik]"), function(veld){
+      veld.addEventListener("change", function(){ legAnderVast(veld.getAttribute("data-anderbereik")); });
     });
 
     document.getElementById("standaard-knop").addEventListener("click", function(){
@@ -4419,7 +4826,7 @@
       zetGroep(S.leerjaar);        /* zet meteen de bereiken, tafels en klok terug */
       bewaar();
       tekenScore();
-      toonInstellingen();
+      hertekenInstellingen();
       toast("Alles staat weer op de standaardwaarden.");
     });
 
@@ -4448,10 +4855,15 @@
       toast("Alles is gewist. Veel plezier met opnieuw sparen!");
     });
 
-    document.getElementById("terug").addEventListener("click", toonHome);
+    /* Blur eerst: staat de cursor nog in een getalveld, dan zou de change van dat
+       veld pas ná het wegklikken komen — of helemaal niet. */
+    document.getElementById("terug").addEventListener("click", function(){
+      if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
+      toonHome();
+    });
   }
 
-  function toonKlokkiezer(){
+  function toonKlokkiezer(uitInstellingen){
     verlaatRonde();
     var niveau = S.klokNiveau;
     var soort = S.klokSoort;
@@ -4477,7 +4889,8 @@
             '<p style="margin:0;font-weight:700;font-size:14px;color:var(--inkt-zacht)" id="klok-uitleg"></p></div>';
     html += '<div class="knoppen" style="margin-top:18px">' +
             '<button class="knop" type="button" id="start-klok">Start met 10 klokken</button>' +
-            '<button class="knop stil" type="button" id="terug">Terug</button></div>';
+            '<button class="knop stil" type="button" id="terug">' +
+            (uitInstellingen ? "Klaar" : "Terug") + '</button></div>';
     scherm.innerHTML = html;
 
     function ververUitleg(){
@@ -4512,13 +4925,19 @@
       });
     });
 
-    document.getElementById("start-klok").addEventListener("click", function(){
+    function bewaarKlok(){
       S.klokNiveau = niveau;
       S.klokSoort = soort;
       bewaar();
+    }
+    document.getElementById("start-klok").addEventListener("click", function(){
+      bewaarKlok();
       start("klok");
     });
-    document.getElementById("terug").addEventListener("click", toonHome);
+    document.getElementById("terug").addEventListener("click", function(){
+      if(uitInstellingen){ bewaarKlok(); toonInstellingen(); return; }
+      toonHome();
+    });
     ververUitleg();
   }
 

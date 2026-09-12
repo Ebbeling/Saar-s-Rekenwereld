@@ -83,8 +83,8 @@ Daarna start de app vanaf het beginscherm met eigen icoon, zonder adresbalk.
 
 De service worker bewaart de app op het apparaat. Als je `index.html` of `vragen.js` aanpast:
 
-1. Pas in `sw.js` de regel `var VERSIE = "rekenwereld-v32";` aan naar `v33`, `v34`, enzovoort.
-2. Pas in `index.html` de regel `var APPVERSIE = "32";` aan naar hetzelfde nummer.
+1. Pas in `sw.js` de regel `var VERSIE = "rekenwereld-v33";` aan naar `v34`, `v35`, enzovoort.
+2. Pas in `index.html` de regel `var APPVERSIE = "33";` aan naar hetzelfde nummer.
 3. Upload de gewijzigde bestanden.
 
 Zonder die ophoging blijven al geïnstalleerde tablets de oude versie tonen.
@@ -118,15 +118,39 @@ instellingen was, en ook voor het afvinken van een beloning. Zo staat de app noo
 omdat iemand de code een keer eerder heeft ingetypt.
 
 Het scherm is verdeeld in drie tabbladen: **Niveau** (groep, onderwerpen, getallen),
-**Sparen** (lengte van een reeks, challenge, punten en stickers) en **De app** (naam en
-icoon, de code, de versie, opnieuw beginnen). *Opslaan* onderaan bewaart alle drie
-tegelijk; je hoeft dus niet eerst terug naar het tabblad waar je iets hebt gewijzigd.
+**Sparen** (lengte van een reeks, punten, stickers) en **De app** (naam en icoon, de code,
+de versie, opnieuw beginnen).
+
+**Alles wat je verandert is meteen bewaard.** Er is geen *Opslaan*-knop: een knop werkt
+zodra je hem aantikt, en een invulveld zodra je het verlaat. Onderaan staat alleen *Klaar*
+om het scherm te sluiten, en *Alles terug naar de standaard* als je terug wilt.
+
+Wat je in een getalveld typt wordt bij het verlaten opgeschoond en **teruggeschreven in
+het veld**: te grote getallen worden afgekapt, en een *van* die hoger is dan de *tot* wordt
+omgewisseld. Zo zie je altijd wat er werkelijk geldt.
+
+Eén uitzondering: **de code**. Een code van drie cijfers bestaat niet, dus die wordt pas
+overgenomen als er vier cijfers staan. Klopt het niet, dan komt de oude code terug in het
+veld en staat eronder waarom.
 
 Het wachtwoord staat als stipjes in beeld. Met de knop **Tonen** ernaast kun je even
 kijken wat er staat.
 
 **Vergeet hem niet.** Ben je hem kwijt, dan kun je hem terugzetten door in de browser de
 opgeslagen gegevens van de app te wissen — daarmee verdwijnen ook de punten en stickers.
+
+### Wat staat er anders dan de groep?
+
+Bovenaan het tabblad **Niveau** staat één regel die vertelt wat er is afgeweken van wat de
+groep zou geven: *Anders dan groep 5: 2 onderwerpen staan vast aan of uit · 1 onderwerp
+heeft eigen getallen.* Wijkt er niets af, dan staat er *Alles volgt groep 5.*
+
+Zodra er iets afwijkt verschijnt ernaast de knop **Terug naar groep N**. Die zet alleen dít
+tabblad terug: de onderwerpen, de getallen, de geldkeuze, de tafels en het klokniveau. De
+knop onderaan, **Alles terug naar de standaard**, doet dat óók, plus de lengtes, de punten
+en de stickerinstellingen — en dat is precies waarom het er twee zijn.
+
+Geen van beide raakt de punten, de stickers of het rapport aan; daarvoor is *Punten wissen*.
 
 ### Van wie is deze app?
 
@@ -190,17 +214,19 @@ staan tot er een van beide gekozen is — hij verdwijnt dus niet als je hem wegk
 gaat de groep één omhoog en groeien de sommen mee; bij *nee* verandert er niets. Daarna komt
 hij pas het jaar erop weer terug. In groep 8 wordt er niets meer gevraagd.
 
-### Welke onderwerpen ziet Saar?
+### Onderwerpen en getallen
 
-De app heeft zesentwintig onderwerpen, verdeeld over vier vakken. Elk vak staat
-**ingeklapt** met een teller erachter — *3 van de 8 aan* — zodat het scherm kort blijft.
-Tik een vak open om de onderwerpen te zien.
+De app heeft vijfentwintig onderwerpen, verdeeld over vier vakken. Elk vak staat
+**ingeklapt** met een teller erachter — *3 van de 8 aan · 2 zelf ingesteld* — zodat het
+scherm kort blijft. Tik een vak open om de onderwerpen te zien.
 
-Per onderwerp staat er een **groen of rood bolletje** voor de naam: staat dit onderwerp op
-dit moment op het beginscherm of niet. Daaronder staat wat de gekozen stand betekent,
-bijvoorbeeld *vanaf groep 4 · staat nu uit*.
+Elk onderwerp is **één rij**: of het op het beginscherm staat én met welke getallen. Voor de
+naam staat een **groen of rood bolletje** — staat dit onderwerp nu op het beginscherm of
+niet — en eronder een samenvatting, bijvoorbeeld *aan, volgt de groep · 1 t/m 20*. Is er
+iets zelf ingesteld, dan staat er *(zelf)* achter.
 
-Elk onderwerp heeft drie standen:
+Tik een rij open en je krijgt alles wat er bij dit onderwerp te kiezen valt. Eerst de drie
+standen:
 
 - **volgt groep** (standaard) — zichtbaar zodra de groep het toelaat
 - **aan** — ook zichtbaar onder de eigen groep, om vooruit te werken
@@ -208,15 +234,16 @@ Elk onderwerp heeft drie standen:
 
 Uitzetten wist geen cijfers: het rapport blijft alles bijhouden.
 
-### Getallen voor de sommen
+Daaronder staat, afhankelijk van het onderwerp, één van vier dingen:
 
-Elk onderwerp krijgt zijn getallen van de groep, maar je kunt ze per onderwerp bijstellen.
-Plus, min, keer en deel staan bovenaan met een voorbeeldsom die meteen meeverandert. De
-overige onderwerpen staan eronder, per vak ingeklapt; achter de vaknaam zie je of er iets
-zelf ingesteld is of dat alles de groep volgt. Onder elk veld staat welke groep het nu
-volgt, of wat de groep zou geven als je het zelf hebt gezet.
+| Onderwerpen | Wat je krijgt |
+| --- | --- |
+| plus, min, keer, deel | *van* en *tot en met*, met een voorbeeldsom die meteen meeverandert |
+| vijftien andere | *tot en met* (bij *Splitsen* ook een *van*), met eronder welke groep het nu volgt |
+| Tafels, Klokkijken | een knop naar hun eigen keuzescherm |
+| Afronden, Kalender, Verhoudingen, Deeltafels | een regel die uitlegt waarom er niets in te stellen valt |
 
-Negentien onderwerpen zijn zo bij te stellen. Bij de meeste is het simpelweg het grootste
+Negentien onderwerpen zijn dus bij te stellen. Bij de meeste is het simpelweg het grootste
 getal dat in de som mag voorkomen; bij een paar betekent het iets specifieks, en dat staat
 er dan bij: bij *Kommagetallen* het hele getal vóór de komma, bij *Geld* het hoogste bedrag
 in hele euro's, bij *Meten* het getal vóór het omrekenen (9 bij `9 m = 900 cm`), bij
@@ -225,21 +252,25 @@ in hele euro's, bij *Meten* het getal vóór het omrekenen (9 bij `9 m = 900 cm`
 Alleen *Splitsen* heeft een ondergrens én een bovengrens. Bij de andere bepaalt de
 generator zelf waar hij begint — meestal 1 of 2 — en stel je alleen het maximum in.
 
-**Een andere groep kiezen zet alles weer terug**, ook deze bereiken; hetzelfde geldt voor
-*Standaard terugzetten*. Wat je niet aanraakt blijft de groep volgen, ook na een wissel.
-
-*Afronden*, *Kalender* en *Verhoudingen* staan er niet bij: daar bepaalt niet één getal de
-moeilijkheid. De tafels en het klokkijken houden hun eigen keuzescherm.
-
 Bij min wordt het grootste getal altijd vooraan gezet, dus de uitkomst is nooit negatief.
 Bij *Deel* gaat het altijd zonder rest; daarvoor is er een apart onderwerp *Deel met rest*.
+Dat staat ook in die rijen zelf.
 
-De tafels en het klokkijken houden hun eigen keuzescherm.
+**Een andere groep kiezen zet alles weer terug**, ook deze bereiken. Wat je niet aanraakt
+blijft de groep volgen, ook na een wissel.
+
+De **tafelkiezer** en de **klokkiezer** zijn vanuit hun eigen rij te bereiken. Kom je daar
+vandaan, dan heet de knop daar *Klaar* en bewaart hij je keuze; kom je er via de tegel op
+het beginscherm, dan blijft het zoals het was en start je vanaf daar een ronde.
+
+Een groepswissel of een terugzetting laat de opengeklapte vakken en je plek op het scherm
+staan, zodat je kunt zien wat er verandert. Verlaat je de instellingen en kom je terug, dan
+staat alles weer dicht.
 
 ### Hele euro's, halve of tot op de cent
 
-In hetzelfde vak *Meten, geld en tijd*, onder het bedrag van **Geld**, staat een rijtje van
-vier knoppen voor de nauwkeurigheid van de bedragen:
+Klap in het vak *Meten, geld en tijd* de rij **Geld** open. Onder het bedrag staat een
+rijtje van vier knoppen voor de nauwkeurigheid van de bedragen:
 
 | Keuze | Wat je krijgt |
 | --- | --- |
@@ -267,14 +298,10 @@ en hoeveel vragen een challenge telt (5 t/m 100, standaard 25). De slaaggrens va
 challenge schuift automatisch mee: vier van de vijf goed, dus 20 bij 25 vragen en 8 bij 10.
 Er mag altijd minstens één fout gemaakt worden.
 
-Bij de challenge stel je daar ook in **hoeveel stickers** hij oplevert (0 t/m 10, standaard
-2) en of er **bij alles goed een supersticker** bij komt. Zet je die uit, dan is een
-foutloze challenge gewoon een gehaalde challenge. Onder de velden staat meteen wat je
-keuzes betekenen.
 
 ### Wanneer tellen de punten?
 
-Op het tabblad **Sparen**, onder het vinkje voor de stickers, staan twee knoppen:
+Op het tabblad **Sparen**, onder een eigen kopje, staan twee knoppen:
 
 | Keuze | Wat er gebeurt |
 | --- | --- |
@@ -321,6 +348,16 @@ niets doet.
 **Wat al gespaard is blijft bewaard.** Punten, stickers en afgevinkte beloningen blijven
 gewoon in de opslag staan; zet je het vinkje weer aan, dan staat alles er precies zoals je
 het achterliet.
+
+### Wat een challenge oplevert
+
+Onder *Stickers en beloningen*: **hoeveel stickers** een gehaalde challenge oplevert
+(0 t/m 10, standaard 2) en of er **bij alles goed een supersticker** bij komt. Zet je die
+uit, dan is een foutloze challenge gewoon een gehaalde challenge. Onder de velden staat
+meteen wat je keuzes betekenen.
+
+Dit stond eerder bij de lengte van een challenge; het hoort bij de stickers, en daar staat
+het nu ook.
 
 ### Sparen voor een beloning
 
@@ -490,8 +527,15 @@ tijd opzoeken, of door elkaar) en hoe moeilijk de tijden zijn (hele en halve ure
 ook kwartieren, of stappen van vijf minuten). Beide keuzes worden onthouden en staan
 samengevat op de knop op het beginscherm.
 
+Je komt er op twee manieren: via de tegel op het beginscherm, en via de rij
+**Klokkijken** in de instellingen. In dat tweede geval heet de knop onderin *Klaar* en
+bewaart hij je keuze zonder een ronde te starten.
+
 ## Tafels kiezen
 
 Onder **Tafels** tik je aan welke tafels je wilt oefenen — één, een paar (bijvoorbeeld 6,
 7 en 8) of allemaal. De sommen komen er dan door elkaar uit. Gekozen tafels zijn geel,
 niet-gekozen zijn leeg. De keuze wordt onthouden en staat op de knop op het beginscherm.
+
+Ook hier geldt: kom je uit de instellingen, via de rij **Tafels**, dan heet de knop
+onderin *Klaar* en bewaart hij je keuze zonder een ronde te starten.
