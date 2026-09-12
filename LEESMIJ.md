@@ -63,6 +63,11 @@ geïnstalleerde app de opslag van de browser niet deelt. Bij het opstarten worde
 waarden alleen gebruikt als er nog helemaal niets bewaard is; wat je later in de
 instellingen verandert wordt er dus nooit door overschreven.
 
+**Tijdens het laden** staat er een kort tussenschermpje met drie stuiterende stippen en
+*Even laden…*. Dat vervangt het witte vlak dat je anders ziet terwijl de browser de app uit
+de cache haalt. Het verdwijnt zodra het eerste scherm klaarstaat, en anders sowieso na acht
+seconden — zo blijft een app die ergens op vastloopt nooit achter een laadscherm hangen.
+
 ## Op de tablet zetten
 
 **Android / Chrome:** open de pagina. Rechtsboven verschijnt een groene knop
@@ -78,8 +83,8 @@ Daarna start de app vanaf het beginscherm met eigen icoon, zonder adresbalk.
 
 De service worker bewaart de app op het apparaat. Als je `index.html` of `vragen.js` aanpast:
 
-1. Pas in `sw.js` de regel `var VERSIE = "rekenwereld-v30";` aan naar `v31`, `v32`, enzovoort.
-2. Pas in `index.html` de regel `var APPVERSIE = "30";` aan naar hetzelfde nummer.
+1. Pas in `sw.js` de regel `var VERSIE = "rekenwereld-v31";` aan naar `v32`, `v33`, enzovoort.
+2. Pas in `index.html` de regel `var APPVERSIE = "31";` aan naar hetzelfde nummer.
 3. Upload de gewijzigde bestanden.
 
 Zonder die ophoging blijven al geïnstalleerde tablets de oude versie tonen.
@@ -230,6 +235,30 @@ Bij min wordt het grootste getal altijd vooraan gezet, dus de uitkomst is nooit 
 Bij *Deel* gaat het altijd zonder rest; daarvoor is er een apart onderwerp *Deel met rest*.
 
 De tafels en het klokkijken houden hun eigen keuzescherm.
+
+### Hele euro's, halve of tot op de cent
+
+In hetzelfde vak *Meten, geld en tijd*, onder het bedrag van **Geld**, staat een rijtje van
+vier knoppen voor de nauwkeurigheid van de bedragen:
+
+| Keuze | Wat je krijgt |
+| --- | --- |
+| *volgt groep* | zoals altijd: groep 3 en 4 hele euro's, hoger ook centen |
+| *hele euro's* | alleen bedragen als € 3 en € 12, nooit een komma |
+| *halve euro's* | hele en halve bedragen, dus ook € 3,50 |
+| *tot op de cent* | elk bedrag, dus ook € 3,47 |
+
+Onder de knoppen staat meteen een voorbeeld van wat je gekozen hebt.
+
+Kies je zelf iets, dan geldt dat voor alle geldvragen, ongeacht de groep. Handig als het
+rekenen met komma's nog te vroeg komt, of juist als het al te makkelijk is. Een bedrag
+blijft altijd binnen het maximum dat erboven staat.
+
+Een **bewaarde** vraag — een misser die in het rapport terugkomt — houdt de vorm waarin hij
+gesteld werd. Stond er € 3,47 in, dan vraagt hij ook na een wissel naar hele euro's nog om
+een bedrag met komma. Anders zou het antwoord van toen ineens niet meer kloppen.
+
+**Een andere groep kiezen en *Standaard terugzetten* zetten dit weer op *volgt groep*.**
 
 ### Lengte van een reeks
 

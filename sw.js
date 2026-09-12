@@ -1,6 +1,6 @@
 /* Service worker voor Saar's Rekenwereld.
    Verhoog VERSIE na elke wijziging aan index.html of vragen.js, dan halen tablets de nieuwe versie op. */
-var VERSIE = "rekenwereld-v30";
+var VERSIE = "rekenwereld-v31";
 
 /* Hier legt de app een zelfgemaakt manifest neer als de naam is aangepast. Deze
    cache hoort niet bij een versie en wordt dus nooit opgeruimd: zo houdt het
